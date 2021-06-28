@@ -412,8 +412,16 @@ set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 
 %% KEROSENE heater experiment
-clear;close all;
+
+clearvars -except DATA
+
+%clear;close all;
 load('Data_processed_Heaters/Data_processed_Kerosene_Heaters.mat')
+
+% DATA: 
+% AeroTrak (6 colmns), CPC, DustTrak, Ptrak, SidePak
+% LCS_G1, LCS_G2_01, LCS_G2_02
+% PMD, PMSD, PND, PNSD
 
 figure(1); fig=gcf;
 hold on
@@ -429,7 +437,8 @@ ylim([1e-2 1e6])
 hold off
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 %% NATURAL GAS heater experiment
-clear; close all;
+%clear; close all;
+clearvars -except DATA
 load('Data_processed_Heaters/Data_processed_NaturalGas_Heaters.mat')
 
 figure(1); fig=gcf;
@@ -445,3 +454,77 @@ set(gca, 'YScale', 'log')
 ylim([1e-2 1e6])
 hold off
 set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+%% QUESTIONS AND ANSWERS BY TAREQ:
+% Q1 Ptrak has one type of aerosol size in your data, what is the particle size?
+% A1: This one is monitored total particle number concentration for
+% everything larger than 25 nm, CPC is the same as Ptrak, but 10 nm instead of 25 nm
+%
+% Q2 SidePak has also one type of aerosol size in your data, 
+% what is the particle size? Is it PM.5 like the first smoking experiment?
+% A2: Yes PM2.5
+%
+% Q3 DustTrak has five type of aerosol size in your data, what is the particle size?
+% A3: This one is the same as sidepak but provides 5 classes: 
+% PM1, PM2.5, PM4, PM10, TOTAL
+%
+% Q4: What about PND and PMSD, what instruments did you use for obtaining 
+% these concentrations? and what are they for each column?
+% A4: These were a combination from CPC (1 col), PTRAK (1), AEROTRAK (6)
+%
+% Q5: OK, did you place them in this order?
+% AeroTrak (6 channels: 0.3-0.5, 0.5-1, 1- 2.5, 2.5 -5, 5-10, 10-45 )
+% CPC (above 10nm)
+% Ptrak (above 25nm)
+% the total should be 8 columns, instead for PMD, PMSD, PND and PNSD, 
+% you have 9 columns for the concentrations
+%
+% A5: Yes, 
+% CPC - PTRAK == 10 - 25 nm
+% Ptrak - sum(aerotrak) == 25 - 300 nm
+% These are the first two bins
+% Then comes the aerotrak bins
+%
+% Q6: what are the differences between three four variables: PMD, PMSD, PND
+% and PNSD?
+% A6: PND is just number concentration in each size bin
+% PNSD is the normalized concentration to the width of each size bin
+% dN/dlog(Dp)
+% Same for PMD PMSD
+%
+% Q7: so, the raw data from all instruments are either PND or PMD, right?
+% Q7: the instruments do not give normalized numbers?
+%
+% A7: The raw data is PN
+% I generate PND and PNSD
+% then calculate PMD PMSD
+
+%% UNDERSTANDING THE DATA:
+clc
+n = 2020
+
+sum(PND(n,2:end-1))
+PND(n,end)
+
+PND(n,2)
+CPC(n,2)
+
+%mean(PND(n,3:4))
+PND(n,4)
+Ptrak(n,2)
+
+PND(n,2:10)
+[CPC(n,2),Ptrak(n,2),AeroTrak_PN(n,2:7)]
+
+%%
+clc
+n=2000;%10000;%2002;
+disp(['CPC+Ptrak+AeroTrak: ',num2str([CPC(n,2),Ptrak(n,2),AeroTrak_PN(n,2:7)])])
+disp(['PND: ',num2str(PND(n,2:10))])
+
+%Ptrak(n,2) - PND(n,3)
+
+disp(['PNSD: ',num2str(PNSD(n,2:10))])
+PND(n,5:end) == AeroTrak_PN(n,2:7)
+%SidePak(n,2)
+%DustTrak(n,2:6)
