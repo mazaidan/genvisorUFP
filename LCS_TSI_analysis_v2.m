@@ -29,6 +29,240 @@ end
 clear;clc;close all
 load('Data_clean_processed.mat')
 
+
+% First experiment: Smoking
+% Instruments involved: 
+% AeroTrak (PN,T,RH), CO_met (T,RH,P), CPC (PN?)
+% Ptrak (), DustTrak (), SidePak ()
+% PND, PMSD
+% LCS_G1, LCS_G2_01, LCS_G2_02
+
+
+% AeroTrak_Met
+T1 = datetime(AeroTrak_met(:,1:6));
+AT_DoY1 = AeroTrak_met(:,7);
+AT_T = AeroTrak_met(:,8);
+AT_RH = AeroTrak_met(:,9);
+AT_met = timetable(T1,AT_T,AT_RH);
+clear AT_DoY1 AT_T AT_RH
+
+% ClasOhlson_met
+T1 = datetime(ClasOhlson_met(:,1:6));
+CO_DoY = ClasOhlson_met(:,7);
+CO_T   = ClasOhlson_met(:,8);
+CO_RH  = ClasOhlson_met(:,9);
+CO_P   = ClasOhlson_met(:,10);
+CO_met = timetable(T1,CO_T,CO_RH,CO_P);
+clear T1 CO_DoY CO_T CO_RH CO_P
+
+% DustTrak
+T1 = datetime(DustTrak(:,1:6));
+DustTrak_DoY = DustTrak(:,7);
+DustTrak_c   = DustTrak(:,8:12);
+DustTrak1 = timetable(T1,DustTrak_c);
+clear T1 DustTrak_DoY DustTrak_c
+
+% SidePak
+T1 = datetime(SidePak(:,1:6));
+SidePak_DoY = SidePak(:,7);
+SidePak_c   = SidePak(:,8);
+SidePak1 = timetable(T1,SidePak_c);
+clear T1 DustTrak_DoY DustTrak_c
+
+% PND
+T1=datetime(PND(:,1:6));
+PND_DoY = PND(:,7);
+PND_c   = PND(:,8:end);
+PND1 = timetable(T1,PND_c);
+PND2 = sortrows(PND1);
+PND3 = PND2(1:end-1,:);
+%PND2 = unique(PND1);
+clear T1 PND_DoY PND_c
+
+% PMD
+T1=datetime(PMD(:,1:6));
+PMD_DoY = PMD(:,7);
+PMD_c   = PMD(:,8:end);
+PMD1 = timetable(T1,PMD_c);
+PMD2 = sortrows(PMD1);
+PMD3 = PMD2(1:end-1,:);
+clear T1 PMD_DoY PMD_c
+
+% LCS_G1:
+T1 = datetime(ISEE_LCS_G1(:,1:6));
+LCS_G1 = ISEE_LCS_G1(:,8);
+LCS_G1_T = timetable(T1,LCS_G1);
+clear T1 LCS_G1
+
+% LCS_G2_01 (PM2.5 and MET)
+T1 = datetime(ISEE_LCS_G201(:,1:6));
+LCS_G2_01 = ISEE_LCS_G201(:,8); % PM2.5
+LCS_G2_01_met = ISEE_LCS_G201_met(:,8:end); % RH, T and P
+LCS_G2_01_T = timetable(T1,LCS_G2_01,LCS_G2_01_met);
+clear T1 LCS_G2_01 LCS_G2_01_met
+
+% LCS_G2_02 (PM2.5 and MET)
+T1 = datetime(ISEE_LCS_G202(:,1:6));
+LCS_G2_02 = ISEE_LCS_G202(:,8); % PM2.5
+LCS_G2_02_met = ISEE_LCS_G202_met(:,8:end); % RH, T and P
+LCS_G2_02_T = timetable(T1,LCS_G2_02,LCS_G2_02_met);
+clear T1 LCS_G2_02 LCS_G2_02_met
+
+%DATA_ts = synchronize(AT_met,AT_PN,CO_met,CPC1,Ptrak1,PND1,PMSD1, ...
+%    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
+
+% https://www.mathworks.com/help/matlab/matlab_prog/clean-timetable-with-missing-duplicate-or-irregular-times.html
+
+% DATAs = DATAsmoking
+DATAs = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+    PND3, PMD3, ... % PND1, PMSD1,...
+    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
+
+
+clearvars -except DATAs
+load('Data_processed_Heaters/Data_processed_Kerosene_Heaters.mat');
+
+
+% AeroTrak_Met
+
+Date  = datevec(AeroTrak_met(:,1));
+Datey = [repmat(2021,size(Date,1),1) ,Date(:,2:end)];
+T1    = datetime(Datey);
+
+AT_T = AeroTrak_met(:,2);
+AT_RH = AeroTrak_met(:,3);
+AT_met = timetable(T1,AT_T,AT_RH);
+clear AT_T AT_RH
+
+% ClasOhlson_met
+CO_T   = ClasOhlson_met(:,2);
+CO_RH  = ClasOhlson_met(:,3);
+CO_P   = ClasOhlson_met(:,4);
+CO_met = timetable(T1,CO_T,CO_RH,CO_P);
+clear CO_T CO_RH CO_P
+
+% DustTrak
+DustTrak_c   = DustTrak(:,2:end);
+DustTrak1 = timetable(T1,DustTrak_c);
+clear DustTrak_c
+
+% SidePak
+SidePak_c   = SidePak(:,2);
+SidePak1 = timetable(T1,SidePak_c);
+clear DustTrak_c
+
+% PND
+PND_c   = PND(:,2:end);
+PND1 = timetable(T1,PND_c);
+PND2 = sortrows(PND1);
+PND3 = PND2(1:end-1,:);
+clear PND_c
+
+% PMD
+PMD_c   = PMD(:,2:end);
+PMD1 = timetable(T1,PMD_c);
+PMD2 = sortrows(PMD1);
+PMD3 = PMD2(1:end-1,:);
+clear PMD_c
+
+% LCS_G1:
+LCS_G1 = ISEE_LCS_G1(:,2);
+LCS_G1_T = timetable(T1,LCS_G1);
+clear LCS_G1
+
+% LCS_G2_01 (PM2.5 and MET)
+LCS_G2_01 = ISEE_LCS_G201(:,2); % PM2.5
+LCS_G2_01_met = nan(size(ISEE_LCS_G201_met,1),3); %ISEE_LCS_G201_met(:,8:end); % RH, T and P
+LCS_G2_01_T = timetable(T1,LCS_G2_01,LCS_G2_01_met);
+clear LCS_G2_01 LCS_G2_01_met
+
+% LCS_G2_02 (PM2.5 and MET)
+%T1 = datetime(ISEE_LCS_G202(:,1:6));
+LCS_G2_02 = ISEE_LCS_G202(:,1); % PM2.5
+LCS_G2_02_met = nan(size(ISEE_LCS_G201_met,1),3);  % ISEE_LCS_G202_met(:,8:end); % RH, T and P
+LCS_G2_02_T = timetable(T1,LCS_G2_02,LCS_G2_02_met);
+clear LCS_G2_02 LCS_G2_02_met
+
+DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+    PND3, PMD3, ... % PND1, PMSD1,...
+    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
+
+
+clearvars -except DATAs DATAk
+load('Data_processed_Heaters/Data_processed_NaturalGas_Heaters.mat')
+
+% AeroTrak_Met
+
+Date  = datevec(AeroTrak_met(:,1));
+Datey = [repmat(2021,size(Date,1),1) ,Date(:,2:end)];
+T1    = datetime(Datey);
+
+AT_T = AeroTrak_met(:,2);
+AT_RH = AeroTrak_met(:,3);
+AT_met = timetable(T1,AT_T,AT_RH);
+clear AT_T AT_RH
+
+% ClasOhlson_met
+CO_T   = nan(size(T1)); %ClasOhlson_met(:,2);
+CO_RH  = nan(size(T1)); %ClasOhlson_met(:,3);
+CO_P   = nan(size(T1)); %ClasOhlson_met(:,4);
+CO_met = timetable(T1,CO_T,CO_RH,CO_P);
+clear CO_T CO_RH CO_P
+
+% DustTrak
+DustTrak_c   = nan(size(T1,1),5); %DustTrak(:,2:end);
+DustTrak1 = timetable(T1,DustTrak_c);
+clear DustTrak_c
+
+% SidePak
+SidePak_c   = nan(size(T1)); %SidePak(:,2);
+SidePak1 = timetable(T1,SidePak_c);
+clear DustTrak_c
+
+% PND
+PND_c   = PND(:,2:end);
+PND1 = timetable(T1,PND_c);
+PND2 = sortrows(PND1);
+PND3 = PND2(1:end-1,:);
+clear PND_c
+
+% PMD
+PMD_c   = PMD(:,2:end);
+PMD1 = timetable(T1,PMD_c);
+PMD2 = sortrows(PMD1);
+PMD3 = PMD2(1:end-1,:);
+clear PMD_c
+
+% LCS_G1:
+LCS_G1 = ISEE_LCS_G1(:,2);
+LCS_G1_T = timetable(T1,LCS_G1);
+clear LCS_G1
+
+% LCS_G2_01 (PM2.5 and MET)
+LCS_G2_01 = ISEE_LCS_G201(:,2); % PM2.5
+LCS_G2_01_met = ISEE_LCS_G201_met(:,2:end); % RH, T and P
+LCS_G2_01_T = timetable(T1,LCS_G2_01,LCS_G2_01_met);
+clear LCS_G2_01 LCS_G2_01_met
+
+% LCS_G2_02 (PM2.5 and MET)
+%T1 = datetime(ISEE_LCS_G202(:,1:6));
+LCS_G2_02 = ISEE_LCS_G202(:,1); % PM2.5
+LCS_G2_02_met = ISEE_LCS_G202_met(:,2:end); % RH, T and P
+LCS_G2_02_T = timetable(T1,LCS_G2_02,LCS_G2_02_met);
+clear LCS_G2_02 LCS_G2_02_met
+
+%DATAn = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+%    PND3, PMD3, ... % PND1, PMSD1,...
+%    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
+
+DATAn = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+    PND3, PMD3, ... % PND1, PMSD1,...
+    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
+
+%DATA = [DATAs;DATAk;DATAn];
+
+plot(DATA.AT_T)
+plot(DATA.AT_RH)
 %% MAKE A BIG TIME-TABLE DATA
 
 % First experiment: Smoking
