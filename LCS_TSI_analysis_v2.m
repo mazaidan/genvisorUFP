@@ -1,3 +1,31 @@
+
+%% UNDERSTANDING AEROSOL DATA:
+
+clc;clear
+n=2150;%10000;%2002;
+r=-2;
+load('Data_clean_processed.mat'); D=1;
+%load('Data_processed_Heaters/Data_processed_Kerosene_Heaters.mat'); D=2;
+%load('Data_processed_Heaters/Data_processed_NaturalGas_Heaters.mat'); D=3;
+if D == 1
+    disp('Smoking Data')
+    disp(['CPC+Ptrak+AeroTrak: ',num2str(roundn([CPC(n,8),nan,Ptrak(n,8),AeroTrak_PN(n,8:13)],r))])
+    disp(['PND               : ',num2str(roundn(PND(n,8:16),r))])
+    disp(['PNSD              : ',num2str(roundn(PNSD(n,8:16),r))])
+    disp(['PMD               : ',num2str(roundn(PMD(n,8:16),r))])
+    disp(['PMSD              : ',num2str(roundn(PMSD(n,8:16),r))])
+
+else 
+    disp('Kerosene/Natural Gas Data')
+    disp(['CPC+Ptrak+AeroTrak: ',num2str(roundn([CPC(n,2),nan,Ptrak(n,2),AeroTrak_PN(n,2:7)],r))])
+    disp(['PND               : ',num2str(roundn(PND(n,2:10),r))])
+    disp(['PNSD              : ',num2str(roundn(PNSD(n,2:10),r))])
+    disp(['PMD               : ',num2str(roundn(PMD(n,2:10),r))])
+    disp(['PMSD              : ',num2str(roundn(PMSD(n,2:10),r))])
+end
+
+
+%%
 clear;clc;close all
 load('Data_clean_processed.mat')
 
@@ -499,32 +527,4 @@ set(findall(fig,'-property','FontSize'),'FontSize',22);
 % I generate PND and PNSD
 % then calculate PMD PMSD
 
-%% UNDERSTANDING THE DATA:
-clc
-n = 2020
 
-sum(PND(n,2:end-1))
-PND(n,end)
-
-PND(n,2)
-CPC(n,2)
-
-%mean(PND(n,3:4))
-PND(n,4)
-Ptrak(n,2)
-
-PND(n,2:10)
-[CPC(n,2),Ptrak(n,2),AeroTrak_PN(n,2:7)]
-
-%%
-clc
-n=2000;%10000;%2002;
-disp(['CPC+Ptrak+AeroTrak: ',num2str([CPC(n,2),Ptrak(n,2),AeroTrak_PN(n,2:7)])])
-disp(['PND: ',num2str(PND(n,2:10))])
-
-%Ptrak(n,2) - PND(n,3)
-
-disp(['PNSD: ',num2str(PNSD(n,2:10))])
-PND(n,5:end) == AeroTrak_PN(n,2:7)
-%SidePak(n,2)
-%DustTrak(n,2:6)
