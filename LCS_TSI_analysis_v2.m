@@ -114,9 +114,14 @@ clear T1 LCS_G2_02 LCS_G2_02_met
 % https://www.mathworks.com/help/matlab/matlab_prog/clean-timetable-with-missing-duplicate-or-irregular-times.html
 
 % DATAs = DATAsmoking
+%DATAs = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+%    PND3, PMD3, ... % PND1, PMSD1,...
+%    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
+
 DATAs = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
     PND3, PMD3, ... % PND1, PMSD1,...
-    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
+    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
+
 
 
 clearvars -except DATAs
@@ -178,14 +183,28 @@ clear LCS_G2_01 LCS_G2_01_met
 
 % LCS_G2_02 (PM2.5 and MET)
 %T1 = datetime(ISEE_LCS_G202(:,1:6));
-LCS_G2_02 = ISEE_LCS_G202(:,1); % PM2.5
+LCS_G2_02 = ISEE_LCS_G202(:,2); % PM2.5
 LCS_G2_02_met = nan(size(ISEE_LCS_G201_met,1),3);  % ISEE_LCS_G202_met(:,8:end); % RH, T and P
 LCS_G2_02_T = timetable(T1,LCS_G2_02,LCS_G2_02_met);
 clear LCS_G2_02 LCS_G2_02_met
 
+%DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+%    PND3, PMD3, ... % PND1, PMSD1,...
+%    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
+
+%DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+%    PND3, PMD3, ... % PND1, PMSD1,...
+%    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
+
 DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
     PND3, PMD3, ... % PND1, PMSD1,...
-    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
+    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
+
+
+%DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+%    PND3, PMD3, ... % PND1, PMSD1,...
+%    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely');
+
 
 
 clearvars -except DATAs DATAk
@@ -246,7 +265,7 @@ clear LCS_G2_01 LCS_G2_01_met
 
 % LCS_G2_02 (PM2.5 and MET)
 %T1 = datetime(ISEE_LCS_G202(:,1:6));
-LCS_G2_02 = ISEE_LCS_G202(:,1); % PM2.5
+LCS_G2_02 = ISEE_LCS_G202(:,2); % PM2.5
 LCS_G2_02_met = ISEE_LCS_G202_met(:,2:end); % RH, T and P
 LCS_G2_02_T = timetable(T1,LCS_G2_02,LCS_G2_02_met);
 clear LCS_G2_02 LCS_G2_02_met
@@ -261,42 +280,78 @@ DATAn = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
 
  
 DATA = [DATAs;DATAk;DATAn];
-%%
+
 clc
-figure(1); fig =gcf;
-plot(DATA.AT_T,'b.');hold on
-plot(DATA.CO_T,'r.');
-plot(DATA.LCS_G2_01_met(:,2),'g.');
-plot(DATA.LCS_G2_02_met(:,2),'c.');
+figure(1); fig =gcf; ms=10;
+subplot(411)
+plot(DATA.AT_T,'b.','MarkerSize',ms);hold on
+plot(DATA.CO_T,'r.','MarkerSize',ms);
+plot(DATA.LCS_G2_01_met(:,2),'g.','MarkerSize',ms);
+plot(DATA.LCS_G2_02_met(:,2),'c.','MarkerSize',ms);
+xline(0,'-',{'Smoking','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
+xline(11521,'-',{'Kerosene','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
+xline(30243,'-',{'Gas','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
 title('Time-Series: Temperature','interpreter','latex')
 legend('AeroTrak','ClasOhson','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
 ylim([10 40]); grid on
 xlabel('Time Index','interpreter','latex'); ylabel('Temperature ($\circ$C)','interpreter','latex')
 hold off
-set(findall(fig,'-property','FontSize'),'FontSize',22);
+%set(findall(fig,'-property','FontSize'),'FontSize',22);
 
-figure(2); fig =gcf;
-plot(DATA.AT_RH,'b.');hold on
-plot(DATA.CO_RH,'r.');
-plot(DATA.LCS_G2_01_met(:,1),'g.');
-plot(DATA.LCS_G2_02_met(:,1),'c.');
+%figure(2); fig =gcf;
+subplot(412)
+plot(DATA.AT_RH,'b.','MarkerSize',ms);hold on
+plot(DATA.CO_RH,'r.','MarkerSize',ms);
+plot(DATA.LCS_G2_01_met(:,1),'g.','MarkerSize',ms);
+plot(DATA.LCS_G2_02_met(:,1),'c.','MarkerSize',ms);
+xline(0,'-',{'Smoking','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
+xline(11521,'-',{'Kerosene','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
+xline(30243,'-',{'Gas','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
 title('Time-Series: Relative Humidity','interpreter','latex')
 legend('AeroTrak','ClasOhson','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
 ylim([10 70]); grid on
 xlabel('Time Index','interpreter','latex'); ylabel('Relative Humidity (\%)','interpreter','latex')
 hold off
-set(findall(fig,'-property','FontSize'),'FontSize',22);
+%set(findall(fig,'-property','FontSize'),'FontSize',22);
 
-figure(3); fig =gcf;
-plot(DATA.CO_P,'r.');hold on
-plot(DATA.LCS_G2_01_met(:,3),'g.');
-plot(DATA.LCS_G2_02_met(:,3),'c.');
+%figure(3); fig =gcf;
+subplot(413)
+plot(DATA.CO_P,'r.','MarkerSize',ms);hold on
+plot(DATA.LCS_G2_01_met(:,3),'g.','MarkerSize',ms);
+plot(DATA.LCS_G2_02_met(:,3),'c.','MarkerSize',ms);
+xline(0,'-',{'Smoking','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
+xline(11521,'-',{'Kerosene','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
+xline(30243,'-',{'Gas','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
 title('Time-Series: Pressure','interpreter','latex')
 legend('ClasOhson','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
 ylim([850 950]); grid on
 xlabel('Time Index','interpreter','latex'); ylabel('Pressure (mbar)','interpreter','latex')
 hold off
 set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+
+clc
+%figure(4); fig =gcf; ms = 10;
+subplot(414)
+plot(DATA.PMD_c(:,3),'b.','MarkerSize',ms); hold on
+plot(DATA.DustTrak_c(:,2),'r.','MarkerSize',ms);
+plot(DATA.SidePak_c(:,1),'m.','MarkerSize',ms);
+plot(DATA.LCS_G1(:,1),'y.','MarkerSize',ms);
+plot(DATA.LCS_G2_01(:,1),'g.','MarkerSize',ms);
+plot(DATA.LCS_G2_02(:,1),'c.','MarkerSize',ms);
+xline(0,'-',{'Smoking','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
+xline(11521,'-',{'Kerosene','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
+xline(30243,'-',{'Gas','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
+title('Time-Series: PM$_{2.5}$','interpreter','latex')
+set(gca, 'YScale', 'log')
+ylim([1e-2 5e4])
+xlabel('Time Index','interpreter','latex'); ylabel('PM$_{2.5}$ ($\mu$g/m$^3$)','interpreter','latex')
+legend('PMD','DustTrak','SidePak','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
+hold off
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+
+% figure(11);plot(PMD(:,10));hold on;plot(DATA.PMD_c(Exp_smoking,3),'r--');hold off
 
 % The plans
 % Smoking experiment: we perform sensors validation for met variables 
@@ -312,18 +367,147 @@ set(findall(fig,'-property','FontSize'),'FontSize',22);
 % Natural gas experiment: We use only LCSs (after calibrated)
 % 
 % How about PM2.5 vars
+% We will validate all PM2.5 on the smoking experiment
+% Results
+% PM2.5 between PMD(:,3) and LCSs are good, 
+% however PMD(:,3) and (SidePak and DustTrak) are bad 
+% We will calibrate PM2.5 using PMD 
 % 
-% ABout UFP
+% ABout UFP: We estimate small PND for CPC and Ptrak and AeroTrak (1 size)
 % We then develop calibrators for met variables here
 % Kerosine experiment: we use only CO_met data
 % Natural gas experiment: we use only LCS_met data
 % we used the CO met data for the kerosine experiment and 
 % to train UFP models using PM2.5 and met vars
 % 
+% PROBLEMS:
+% 1: the interpolation may not work well
 
 
-MAE_temp_AT_CO = mae(DATA.AT_T,DATA.CO_T)
-MAE_temp_LCS2a_LCS2b = mae(DATA.LCS_G2_01_met(:,1),DATA.LCS_G2_01_met(:,2))
+%% Aerosol size distribution
+
+Exp_smoking = [1:1:11521]';
+Exp_kerosine = [11521:1:30242]';
+Exp_gas = [30243:1:54721]';
+
+inst_res_PND = [0.025,0.3,0.5,1,2.5,5,10,45];
+Time_index   = [1:1:size(DATA.T1,1)]';
+
+
+clc
+figure(6);fig=gcf;
+tiledlayout(2,3);
+nexttile
+%subplot(231)
+plot(Time_index(Exp_smoking,1),DATA.PMD_c(Exp_smoking,3),'b.'); hold on
+plot(Time_index(Exp_smoking,1),DATA.LCS_G1(Exp_smoking,1),'g.');
+plot(Time_index(Exp_smoking,1),DATA.LCS_G2_01(Exp_smoking,1),'r.');
+%plot(Time_index(Exp_smoking,1),DATA.LCS_G2_02(Exp_smoking,1),'m.');
+hold off
+legend('PMD','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','interpreter','latex')
+ylim([1e-1 1e3]); grid on
+xlabel('Time Index','interpreter','latex')
+ylabel('PM$_{2.5}$ ($/mu$g/m$^3$)','interpreter','latex')
+title('PM$_{2.5}$ Smoking','interpreter','latex')
+set(gca, 'YScale', 'log')
+
+nexttile
+%subplot(232)
+plot(Time_index(Exp_kerosine,1),DATA.PMD_c(Exp_kerosine,3),'b.'); hold on
+plot(Time_index(Exp_kerosine,1),DATA.LCS_G1(Exp_kerosine,1),'g.');
+plot(Time_index(Exp_kerosine,1),DATA.LCS_G2_01(Exp_kerosine,1),'r.');
+%plot(Time_index(Exp_smoking,1),DATA.LCS_G2_02(Exp_smoking,1),'m.');
+
+hold off
+legend('PMD','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','interpreter','latex')
+ylim([1e-1 1e3]); grid on
+xlabel('Time Index','interpreter','latex')
+ylabel('PM$_{2.5}$ ($/mu$g/m$^3$)','interpreter','latex')
+title('PM$_{2.5}$ Kerosene','interpreter','latex')
+set(gca, 'YScale', 'log')
+
+nexttile
+%subplot(233)
+plot(Time_index(Exp_gas,1),DATA.PMD_c(Exp_gas,3),'b.'); hold on
+plot(Time_index(Exp_gas,1),DATA.LCS_G1(Exp_gas,1),'g.');
+plot(Time_index(Exp_gas,1),DATA.LCS_G2_01(Exp_gas,1),'r.');
+%plot(Time_index(Exp_gas,1),DATA.LCS_G2_02(Exp_gas,1),'m.');
+hold off
+legend('PMD','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','interpreter','latex')
+ylim([1e-1 1e3]); grid on
+xlabel('Time Index','interpreter','latex')
+ylabel('PM$_{2.5}$ ($/mu$g/m$^3$)','interpreter','latex')
+title('PM$_{2.5}$ Natureal Gas','interpreter','latex')
+set(gca, 'YScale', 'log')
+
+nexttile
+%subplot(234)
+h1 = pcolor(Time_index(Exp_smoking,1)',inst_res_PND',[DATA.PND_c(Exp_smoking,1),DATA.PND_c(Exp_smoking,3:end)]');
+%h = pcolor(Time_index(Exp_smoking,1)',inst_res_PND',[DATA.PND_c(Exp_smoking,1),DATA.PND_c(Exp_smoking,3:end)]');
+set(h1, 'EdgeColor', 'none')
+xlabel('Time Index','interpreter','latex')
+ylabel('PNC (cm$^{-3}$)','interpreter','latex')
+title('PNC Smoking','interpreter','latex')
+%yticks(gca,inst_res_AT)
+%yticks(gca,[1 2 3 4 5 6 7])
+%yticklabels(gca,{'0.3 \mum','0.5 \mum','1 \mum','2.5 \mum','5 \mum','10 \mum','45 \mum','interpreter','latex'})
+%colorbar
+colormap jet
+set(gca, 'YScale', 'log','colorscale','log')
+
+nexttile
+%subplot(235)
+h2 = pcolor(Time_index(Exp_kerosine,1)',inst_res_PND',[DATA.PND_c(Exp_kerosine,1),DATA.PND_c(Exp_kerosine,3:end)]');
+set(h2, 'EdgeColor', 'none')
+xlabel('Time Index','interpreter','latex')
+ylabel('PNC (cm$^{-3}$)','interpreter','latex')
+title('PNC kerosene','interpreter','latex')
+%colorbar
+colormap jet
+set(gca, 'YScale', 'log','colorscale','log')
+
+nexttile
+%subplot(236)
+h3 = pcolor(Time_index(Exp_gas,1)',inst_res_PND',[DATA.PND_c(Exp_gas,1),DATA.PND_c(Exp_gas,3:end)]');
+set(h3, 'EdgeColor', 'none')
+xlabel('Time Index','interpreter','latex')
+ylabel('PNC (cm$^{-3}$)','interpreter','latex')
+title('PNC natural gas','interpreter','latex')
+%colorbar
+colormap jet
+set(gca, 'YScale', 'log','colorscale','log')
+
+cb = colorbar;
+cb.Layout.Tile = 'east';
+%cb.Location = 'southoutside';
+%hp4 = get(subplot(2,3,6),'Position');
+%h=colorbar('Position', [hp4(1)+hp4(3)+0.01  hp4(2)  0.0455  hp4(2)+hp4(3)*2.1]);
+
+%colorbar(h1,jet)
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+
+%%
+
+
+
+
+%%
+subplot(212)
+plot(DATA.LCS_G1(:,1),'b','LineWidth',2); hold on
+plot(DATA.LCS_G2_01(:,1),'y','LineWidth',2); 
+plot(DATA.LCS_G2_02(:,1),'c','LineWidth',2);
+xlabel('Day of the year','interpreter','latex')
+ylabel('PM$_{2.5}$ concentration','interpreter','latex')
+title('Low-Cost Sensors PM$_{2.5}$','interpreter','latex');grid on
+legend('$\mathcal{L}_1$','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
+set(gca, 'YScale', 'log')
+ylim([1e-2 1e4])
+colorbar
+hold off
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+
 
 %%
 figure(2);
