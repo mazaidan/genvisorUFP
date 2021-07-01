@@ -259,10 +259,81 @@ DATAn = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
     PND3, PMD3, ... % PND1, PMSD1,...
     LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
 
-%DATA = [DATAs;DATAk;DATAn];
+ 
+DATA = [DATAs;DATAk;DATAn];
+%%
+clc
+figure(1); fig =gcf;
+plot(DATA.AT_T,'b.');hold on
+plot(DATA.CO_T,'r.');
+plot(DATA.LCS_G2_01_met(:,2),'g.');
+plot(DATA.LCS_G2_02_met(:,2),'c.');
+title('Time-Series: Temperature','interpreter','latex')
+legend('AeroTrak','ClasOhson','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
+ylim([10 40]); grid on
+xlabel('Time Index','interpreter','latex'); ylabel('Temperature ($\circ$C)','interpreter','latex')
+hold off
+set(findall(fig,'-property','FontSize'),'FontSize',22);
 
-plot(DATA.AT_T)
-plot(DATA.AT_RH)
+figure(2); fig =gcf;
+plot(DATA.AT_RH,'b.');hold on
+plot(DATA.CO_RH,'r.');
+plot(DATA.LCS_G2_01_met(:,1),'g.');
+plot(DATA.LCS_G2_02_met(:,1),'c.');
+title('Time-Series: Relative Humidity','interpreter','latex')
+legend('AeroTrak','ClasOhson','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
+ylim([10 70]); grid on
+xlabel('Time Index','interpreter','latex'); ylabel('Relative Humidity (\%)','interpreter','latex')
+hold off
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+figure(3); fig =gcf;
+plot(DATA.CO_P,'r.');hold on
+plot(DATA.LCS_G2_01_met(:,3),'g.');
+plot(DATA.LCS_G2_02_met(:,3),'c.');
+title('Time-Series: Pressure','interpreter','latex')
+legend('ClasOhson','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
+ylim([850 950]); grid on
+xlabel('Time Index','interpreter','latex'); ylabel('Pressure (mbar)','interpreter','latex')
+hold off
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+% The plans
+% Smoking experiment: we perform sensors validation for met variables 
+% First : We compare between ref instruments (AT and CO) for Temp, RH
+%         Conclusion: both results are consistent and become ref instruments
+% Second: We compare between ref instruments and LCSs for Temp and RH
+%         Conclusion: there are offsets, and we calibrate those
+% We compare between CO_P and LCSs_P
+%         Conclusion: there is a small offset and we calibrate it.
+%
+% Kerosene experiment: We use only CO, because LCSs were not measured
+%
+% Natural gas experiment: We use only LCSs (after calibrated)
+% 
+% How about PM2.5 vars
+% 
+% ABout UFP
+% We then develop calibrators for met variables here
+% Kerosine experiment: we use only CO_met data
+% Natural gas experiment: we use only LCS_met data
+% we used the CO met data for the kerosine experiment and 
+% to train UFP models using PM2.5 and met vars
+% 
+
+
+MAE_temp_AT_CO = mae(DATA.AT_T,DATA.CO_T)
+MAE_temp_LCS2a_LCS2b = mae(DATA.LCS_G2_01_met(:,1),DATA.LCS_G2_01_met(:,2))
+
+%%
+figure(2);
+plot(DATA.T1,DATA.AT_T,'b.');hold on
+plot(DATA.T1,DATA.CO_T,'r.');
+plot(DATA.T1,DATA.LCS_G2_01_met(:,2),'g.');
+plot(DATA.T1,DATA.LCS_G2_02_met(:,2),'c.');
+ylim([10 40])
+hold off
+%plot(DATA.AT_RH)
 %% MAKE A BIG TIME-TABLE DATA
 
 % First experiment: Smoking
