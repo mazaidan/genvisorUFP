@@ -488,8 +488,30 @@ set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 
 %%
+clc
+figure(2);
+subplot(221)
+scatter(DATA.AT_T,DATA.CO_T)
+subplot(222)
+scatter(DATA.CO_T,DATA.LCS_G2_01_met(:,2))
+subplot(223)
+scatter(DATA.AT_T,DATA.LCS_G2_01_met(:,2))
+subplot(224)
+scatter(DATA.AT_T,DATA.LCS_G2_02_met(:,2))
 
+figure(3);
+subplot(221)
+scatter(DATA.AT_RH,DATA.CO_RH)
+subplot(222)
+scatter(DATA.CO_RH,DATA.LCS_G2_01_met(:,1))
+subplot(223)
+scatter(DATA.AT_RH,DATA.LCS_G2_01_met(:,1))
+subplot(224)
+scatter(DATA.AT_RH,DATA.LCS_G2_02_met(:,1))
 
+%%
+subplot(222)
+scatter(DATA.AT_RH,DATA.CO_RH)
 
 
 %%
