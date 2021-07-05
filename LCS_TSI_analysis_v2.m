@@ -549,14 +549,54 @@ cb.Layout.Tile = 'east';
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 %%
-%%
+%% Scatter plots between PMD and LCSs
+clc
+PMx=3;
+figure(3)
+subplot(221)
+scatter(DATA.PMD_c(:,PMx),DATA.DustTrak_c(:,2))
+subplot(222)
+scatter(DATA.PMD_c(:,PMx),DATA.SidePak_c(:,1))
+subplot(223)
+scatter(DATA.PMD_c(:,PMx),DATA.LCS_G1(:,1))
+subplot(224)
+scatter(DATA.PMD_c(:,PMx),DATA.LCS_G2_01(:,1))
+
+figure(4)
+subplot(221)
+scatter(DATA.AT_T(:,1),DATA.CO_T(:,1))
+subplot(222)
+scatter(DATA.AT_T(:,1),DATA.LCS_G2_01_met(:,2))
+subplot(223)
+scatter(DATA.CO_T(:,1),DATA.AT_T(:,1))
+subplot(224)
+scatter(DATA.CO_T(:,1),DATA.LCS_G2_01_met(:,2))
+
+figure(5)
+subplot(221)
+scatter(DATA.AT_RH(:,1),DATA.CO_RH(:,1))
+subplot(222)
+scatter(DATA.AT_RH(:,1),DATA.LCS_G2_01_met(:,1))
+subplot(223)
+scatter(DATA.CO_RH(:,1),DATA.AT_RH(:,1))
+subplot(224)
+scatter(DATA.CO_RH(:,1),DATA.LCS_G2_01_met(:,1))
+
+figure(6)
+subplot(121)
+scatter(DATA.CO_P(:,1),DATA.LCS_G2_01_met(:,3))
+subplot(122)
+scatter(DATA.CO_P(:,1),DATA.LCS_G2_01_met(:,3))
+
+
+
 
 
 %% MATRIX PLOT
 close all;clc
 
 DATA1 = [DATA.PMD_c(:,6),DATA.DustTrak_c(:,2),DATA.SidePak_c(:,1), ...
-    DATA.LCS_G1(:,1),DATA.LCS_G2_01(:,1),DATA.LCS_G2_01(:,1) ...
+    DATA.LCS_G1(:,1),DATA.LCS_G2_01(:,1),DATA.LCS_G2_02(:,1) ...
     DATA.AT_T,DATA.CO_T,DATA.LCS_G2_01_met(:,2),DATA.LCS_G2_01_met(:,2) ...
     DATA.AT_RH,DATA.CO_RH,DATA.LCS_G2_01_met(:,1),DATA.LCS_G2_01_met(:,1) ...
     DATA.CO_P,DATA.LCS_G2_01_met(:,3),DATA.LCS_G2_01_met(:,3)
@@ -593,7 +633,7 @@ CT = 'Spearman';
 corrP = corr(DATA1,'Type',CT,'Rows','pairwise');
 
 clc
-figure(3);fig=gcf;
+figure(4);fig=gcf;
 
 if true
     Rms= abs(corrP);
