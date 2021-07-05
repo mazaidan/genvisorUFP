@@ -27,6 +27,11 @@ end
 
 %%
 clear;clc;close all
+syn_s = 1; 
+syn_k = 1;
+syn_n = 1;
+
+
 load('Data_clean_processed.mat')
 
 
@@ -114,17 +119,23 @@ clear T1 LCS_G2_02 LCS_G2_02_met
 % https://www.mathworks.com/help/matlab/matlab_prog/clean-timetable-with-missing-duplicate-or-irregular-times.html
 
 % DATAs = DATAsmoking
-%DATAs = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
-%    PND3, PMD3, ... % PND1, PMSD1,...
-%    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
 
-DATAs = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
-    PND3, PMD3, ... % PND1, PMSD1,...
-    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
+if syn_s == 1
+    DATAs = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+            PND3, PMD3, ... % PND1, PMSD1,...
+            LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
+elseif syn_s ==2
+    DATAs = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+        PND3, PMD3, ... % PND1, PMSD1,...
+        LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
+else
+    DATAs = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+        PND3, PMD3, ... % PND1, PMSD1,...
+        LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely');
+end
 
 
-
-clearvars -except DATAs
+clearvars -except DATAs syn_s syn_k syn_n
 load('Data_processed_Heaters/Data_processed_Kerosene_Heaters.mat');
 
 
@@ -188,26 +199,27 @@ LCS_G2_02_met = nan(size(ISEE_LCS_G201_met,1),3);  % ISEE_LCS_G202_met(:,8:end);
 LCS_G2_02_T = timetable(T1,LCS_G2_02,LCS_G2_02_met);
 clear LCS_G2_02 LCS_G2_02_met
 
-%DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
-%    PND3, PMD3, ... % PND1, PMSD1,...
-%    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
+if syn_k == 1
+    DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+            PND3, PMD3, ... % PND1, PMSD1,...
+            LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
+elseif syn_k ==2 
+    DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+            PND3, PMD3, ... % PND1, PMSD1,...
+            LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
+else
+    DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+            PND3, PMD3, ... % PND1, PMSD1,...
+            LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely');
+end
+
 
 %DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
 %    PND3, PMD3, ... % PND1, PMSD1,...
 %    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
 
-DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
-    PND3, PMD3, ... % PND1, PMSD1,...
-    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
 
-
-%DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
-%    PND3, PMD3, ... % PND1, PMSD1,...
-%    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely');
-
-
-
-clearvars -except DATAs DATAk
+clearvars -except DATAs DATAk syn_s syn_k syn_n
 load('Data_processed_Heaters/Data_processed_NaturalGas_Heaters.mat')
 
 % AeroTrak_Met
@@ -270,16 +282,26 @@ LCS_G2_02_met = ISEE_LCS_G202_met(:,2:end); % RH, T and P
 LCS_G2_02_T = timetable(T1,LCS_G2_02,LCS_G2_02_met);
 clear LCS_G2_02 LCS_G2_02_met
 
-%DATAn = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
-%    PND3, PMD3, ... % PND1, PMSD1,...
-%    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
+if syn_n == 1
+    DATAn = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+            PND3, PMD3, ... % PND1, PMSD1,...
+            LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
+elseif syn_n==2
+    DATAn = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+            PND3, PMD3, ... % PND1, PMSD1,...
+            LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
+else
+    DATAn = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+            PND3, PMD3, ... % PND1, PMSD1,...
+            LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely');
+end
 
-DATAn = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
-    PND3, PMD3, ... % PND1, PMSD1,...
-    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
 
  
 DATA = [DATAs;DATAk;DATAn];
+
+clearvars -except DATA DATAs DATAk DATAn syn_s syn_k syn_n
+
 
 clc
 figure(1); fig =gcf; ms=10;
@@ -384,7 +406,7 @@ set(findall(fig,'-property','FontSize'),'FontSize',22);
 % 1: the interpolation may not work well
 
 
-%% Aerosol size distribution
+% Aerosol size distribution
 
 Exp_smoking = [1:1:11521]';
 Exp_kerosine = [11521:1:30242]';
@@ -395,7 +417,7 @@ Time_index   = [1:1:size(DATA.T1,1)]';
 
 
 clc
-figure(6);fig=gcf;
+figure(2);fig=gcf;
 tiledlayout(2,3);
 nexttile
 %subplot(231)
