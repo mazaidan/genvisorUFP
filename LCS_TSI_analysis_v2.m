@@ -452,157 +452,281 @@ Exp_smoking = [1:1:11521]';
 Exp_kerosine = [11521:1:30242]';
 Exp_gas = [30243:1:54721]';
 
-inst_res_PND = [0.025,0.3,0.5,1,2.5,5,10,45];
+inst_res_PND = [0.025,0.3,0.5,1,2.5,5,10,45].*1e3;
 Time_index   = [1:1:size(DATA.T1,1)]';
 
 
 clc
-figure(2);fig=gcf;
+figure(2);fig=gcf; FS=26; PMx=6;
+lc =1e0; hc=10e5;
 tiledlayout(2,3);
 nexttile
 %subplot(231)
-plot(Time_index(Exp_smoking,1),DATA.PMD_c(Exp_smoking,7),'b.'); hold on
+plot(Time_index(Exp_smoking,1),DATA.PMD_c(Exp_smoking,PMx),'b.'); hold on
 plot(Time_index(Exp_smoking,1),DATA.LCS_G1(Exp_smoking,1),'g.');
 plot(Time_index(Exp_smoking,1),DATA.LCS_G2_01(Exp_smoking,1),'r.');
-%plot(Time_index(Exp_smoking,1),DATA.LCS_G2_02(Exp_smoking,1),'m.');
+plot(Time_index(Exp_smoking,1),DATA.LCS_G2_02(Exp_smoking,1),'m.');
 hold off
-legend('PMD','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','interpreter','latex')
+legend('PMD','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
 ylim([1e-1 1e3]); grid on
 xlabel('Time Index','interpreter','latex')
-ylabel('PM$_{2.5}$ ($/mu$g/m$^3$)','interpreter','latex')
+ylabel('PM$_{2.5}$ ($\mu$g/m$^3$)','interpreter','latex')
 title('PM$_{2.5}$ Smoking','interpreter','latex')
 set(gca, 'YScale', 'log')
 
 nexttile
 %subplot(232)
-plot(Time_index(Exp_kerosine,1),DATA.PMD_c(Exp_kerosine,7),'b.'); hold on
+plot(Time_index(Exp_kerosine,1),DATA.PMD_c(Exp_kerosine,PMx),'b.'); hold on
 plot(Time_index(Exp_kerosine,1),DATA.LCS_G1(Exp_kerosine,1),'g.');
 plot(Time_index(Exp_kerosine,1),DATA.LCS_G2_01(Exp_kerosine,1),'r.');
-%plot(Time_index(Exp_smoking,1),DATA.LCS_G2_02(Exp_smoking,1),'m.');
+plot(Time_index(Exp_kerosine,1),DATA.LCS_G2_02(Exp_kerosine,1),'m.');
 
 hold off
-legend('PMD','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','interpreter','latex')
+legend('PMD','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
 ylim([1e-1 1e3]); grid on
 xlabel('Time Index','interpreter','latex')
-ylabel('PM$_{2.5}$ ($/mu$g/m$^3$)','interpreter','latex')
+ylabel('PM$_{2.5}$ ($\mu$g/m$^3$)','interpreter','latex')
 title('PM$_{2.5}$ Kerosene','interpreter','latex')
 set(gca, 'YScale', 'log')
 
 nexttile
 %subplot(233)
-plot(Time_index(Exp_gas,1),DATA.PMD_c(Exp_gas,7),'b.'); hold on
+plot(Time_index(Exp_gas,1),DATA.PMD_c(Exp_gas,PMx),'b.'); hold on
 plot(Time_index(Exp_gas,1),DATA.LCS_G1(Exp_gas,1),'g.');
 plot(Time_index(Exp_gas,1),DATA.LCS_G2_01(Exp_gas,1),'r.');
-%plot(Time_index(Exp_gas,1),DATA.LCS_G2_02(Exp_gas,1),'m.');
+plot(Time_index(Exp_gas,1),DATA.LCS_G2_02(Exp_gas,1),'m.');
 hold off
-legend('PMD','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','interpreter','latex')
+legend('PMD','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
 ylim([1e-1 1e3]); grid on
 xlabel('Time Index','interpreter','latex')
-ylabel('PM$_{2.5}$ ($/mu$g/m$^3$)','interpreter','latex')
+ylabel('PM$_{2.5}$ ($\mu$g/m$^3$)','interpreter','latex')
 title('PM$_{2.5}$ Natureal Gas','interpreter','latex')
 set(gca, 'YScale', 'log')
 
 nexttile
 %subplot(234)
-h1 = pcolor(Time_index(Exp_smoking,1)',inst_res_PND',[DATA.PND_c(Exp_smoking,1),DATA.PND_c(Exp_smoking,3:end)]');
+h1 = pcolor(Time_index(Exp_smoking,1)',inst_res_PND',[DATA1.PND_c(Exp_smoking,1),DATA1.PND_c(Exp_smoking,3:end)]');
 %h = pcolor(Time_index(Exp_smoking,1)',inst_res_PND',[DATA.PND_c(Exp_smoking,1),DATA.PND_c(Exp_smoking,3:end)]');
 set(h1, 'EdgeColor', 'none')
 xlabel('Time Index','interpreter','latex')
-ylabel('PNC (cm$^{-3}$)','interpreter','latex')
+%ylabel('PNC (cm$^{-3}$)','interpreter','latex')
+ylabel('Particle size (nm)','interpreter','latex')
 title('PNC Smoking','interpreter','latex')
 %yticks(gca,inst_res_AT)
 %yticks(gca,[1 2 3 4 5 6 7])
 %yticklabels(gca,{'0.3 \mum','0.5 \mum','1 \mum','2.5 \mum','5 \mum','10 \mum','45 \mum','interpreter','latex'})
 %colorbar
 colormap jet
+caxis([lc,hc])
 set(gca, 'YScale', 'log','colorscale','log')
 
 nexttile
 %subplot(235)
-h2 = pcolor(Time_index(Exp_kerosine,1)',inst_res_PND',[DATA.PND_c(Exp_kerosine,1),DATA.PND_c(Exp_kerosine,3:end)]');
+h2 = pcolor(Time_index(Exp_kerosine,1)',inst_res_PND',[DATA1.PND_c(Exp_kerosine,1),DATA1.PND_c(Exp_kerosine,3:end)]');
 set(h2, 'EdgeColor', 'none')
 xlabel('Time Index','interpreter','latex')
-ylabel('PNC (cm$^{-3}$)','interpreter','latex')
+%ylabel('PNC (cm$^{-3}$)','interpreter','latex')
+ylabel('Particle size (nm)','interpreter','latex')
 title('PNC kerosene','interpreter','latex')
 %colorbar
 colormap jet
+caxis([lc,hc]) 
 set(gca, 'YScale', 'log','colorscale','log')
 
 nexttile
 %subplot(236)
-h3 = pcolor(Time_index(Exp_gas,1)',inst_res_PND',[DATA.PND_c(Exp_gas,1),DATA.PND_c(Exp_gas,3:end)]');
+h3 = pcolor(Time_index(Exp_gas,1)',inst_res_PND',[DATA1.PND_c(Exp_gas,1),DATA1.PND_c(Exp_gas,3:end)]');
 set(h3, 'EdgeColor', 'none')
 xlabel('Time Index','interpreter','latex')
-ylabel('PNC (cm$^{-3}$)','interpreter','latex')
+%ylabel('PNC (cm$^{-3}$)','interpreter','latex')
+ylabel('Particle size (nm)','interpreter','latex')
 title('PNC natural gas','interpreter','latex')
 %colorbar
 colormap jet
+caxis([lc, hc])
 set(gca, 'YScale', 'log','colorscale','log')
 
 cb = colorbar;
+%cb.Limits= [1e0, 1e5];
 cb.Layout.Tile = 'east';
 %cb.Location = 'southoutside';
 %hp4 = get(subplot(2,3,6),'Position');
 %h=colorbar('Position', [hp4(1)+hp4(3)+0.01  hp4(2)  0.0455  hp4(2)+hp4(3)*2.1]);
 
 %colorbar(h1,jet)
-set(findall(fig,'-property','FontSize'),'FontSize',22);
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 %%
 %% Scatter plots between PMD and LCSs
 clc
-PMx=3;
-figure(3)
+PMx=6;
+figure(3); fig=gcf;
+suptitle('PM_{2.5}')
 subplot(221)
 scatter(DATA.PMD_c(:,PMx),DATA.DustTrak_c(:,2))
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+xlabel('AeroTrak','interpreter','latex')
+ylabel('DustTrak','interpreter','latex')
+xlim([1e-2 1e4]);ylim([1e-2 1e4]);grid on
 subplot(222)
 scatter(DATA.PMD_c(:,PMx),DATA.SidePak_c(:,1))
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+xlabel('AeroTrak','interpreter','latex')
+ylabel('SidePak','interpreter','latex')
+xlim([1e-2 1e4]);ylim([1e-2 1e4]);grid on
 subplot(223)
-scatter(DATA.PMD_c(:,PMx),DATA.LCS_G1(:,1))
+scatter(DATA.PMD_c(Exp_smoking,PMx),DATA.LCS_G1(Exp_smoking,1),'b');hold on
+scatter(DATA.PMD_c(Exp_kerosine,PMx),DATA.LCS_G1(Exp_kerosine,1),'r')
+scatter(DATA.PMD_c(Exp_gas,PMx),DATA.LCS_G1(Exp_gas,1),'g'); hold off
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+xlabel('AeroTrak','interpreter','latex')
+ylabel('$\mathcal{L}_1$','interpreter','latex')
+xlim([1e-2 1e4]);ylim([1e-2 1e4]);grid on
 subplot(224)
-scatter(DATA.PMD_c(:,PMx),DATA.LCS_G2_01(:,1))
+scatter(DATA.PMD_c(Exp_smoking,PMx),DATA.LCS_G2_01(Exp_smoking,1),'b');hold on
+scatter(DATA.PMD_c(Exp_kerosine,PMx),DATA.LCS_G2_01(Exp_kerosine,1),'r')
+scatter(DATA.PMD_c(Exp_gas,PMx),DATA.LCS_G2_01(Exp_gas,1),'g'); hold off
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+xlabel('AeroTrak','interpreter','latex')
+ylabel('$\mathcal{L}_{2a}$','interpreter','latex')
+xlim([1e-2 1e4]);ylim([1e-2 1e4]);grid on
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+
+
 
 figure(4)
-subplot(221)
-scatter(DATA.AT_T(:,1),DATA.CO_T(:,1))
-subplot(222)
-scatter(DATA.AT_T(:,1),DATA.LCS_G2_01_met(:,2))
-subplot(223)
-scatter(DATA.CO_T(:,1),DATA.AT_T(:,1))
-subplot(224)
-scatter(DATA.CO_T(:,1),DATA.LCS_G2_01_met(:,2))
+subplot(241)
+scatter(DATA.PMD_c(:,PMx),DATA.DustTrak_c(:,2))
+subplot(242)
+scatter(DATA.PMD_c(:,PMx),DATA.SidePak_c(:,1))
+subplot(243)
+scatter(DATA.PMD_c(:,PMx),DATA.LCS_G1(:,1))
+subplot(244)
+scatter(DATA.PMD_c(:,PMx),DATA.LCS_G2_01(:,1))
 
-figure(5)
-subplot(221)
-scatter(DATA.AT_RH(:,1),DATA.CO_RH(:,1))
-subplot(222)
-scatter(DATA.AT_RH(:,1),DATA.LCS_G2_01_met(:,1))
-subplot(223)
-scatter(DATA.CO_RH(:,1),DATA.AT_RH(:,1))
-subplot(224)
-scatter(DATA.CO_RH(:,1),DATA.LCS_G2_01_met(:,1))
+subplot(245)
+scatter(DATA.DustTrak_c(:,2),DATA.LCS_G1(:,1))
+subplot(246)
+scatter(DATA.DustTrak_c(:,2),DATA.LCS_G2_01(:,1))
+subplot(247)
+scatter(DATA.SidePak_c(:,1),DATA.LCS_G1(:,1))
+subplot(248)
+scatter(DATA.SidePak_c(:,1),DATA.LCS_G2_01(:,1))
 
-figure(6)
+
+%%
+figure(5);fig=gcf;
+suptitle('Temperature')
+subplot(221)
+scatter(DATA.AT_T(:,1),DATA.CO_T(:,1)); hold on
+xlabel('AeroTrak','interpreter','latex')
+ylabel('Clas Ohlson','interpreter','latex')
+xlim([1e1 4e1]);ylim([1e1 4e1]);grid on
+x = linspace(1e1,4e1);
+y = linspace(1e1,4e1);
+plot(x,y,'r');hold off
+subplot(222)
+scatter(DATA.AT_T(:,1),DATA.LCS_G2_01_met(:,2));hold on
+xlabel('AeroTrak','interpreter','latex')
+ylabel('$\mathcal{L}_{2a}$','interpreter','latex')
+xlim([1e1 4e1]);ylim([1e1 4e1]);grid on
+x = linspace(1e1,4e1);
+y = linspace(1e1,4e1);
+plot(x,y,'r');hold off
+subplot(223)
+scatter(DATA.CO_T(:,1),DATA.AT_T(:,1));hold on
+xlabel('Clas Ohlson','interpreter','latex')
+ylabel('AeroTrak','interpreter','latex')
+xlim([1e1 4e1]);ylim([1e1 4e1]);grid on
+x = linspace(1e1,4e1);
+y = linspace(1e1,4e1);
+plot(x,y,'r');hold off
+subplot(224)
+scatter(DATA.CO_T(:,1),DATA.LCS_G2_01_met(:,2)); hold on
+xlabel('Clas Ohlson','interpreter','latex')
+ylabel('$\mathcal{L}_{2a}$','interpreter','latex')
+xlim([1e1 4e1]);ylim([1e1 4e1]);grid on
+x = linspace(1e1,4e1);
+y = linspace(1e1,4e1);
+plot(x,y,'r');hold off
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+figure(6); fig=gcf;
+suptitle('Relative Humidity')
+subplot(221)
+scatter(DATA.AT_RH(:,1),DATA.CO_RH(:,1));hold on
+xlabel('AeroTrak','interpreter','latex')
+ylabel('Clas Ohlson','interpreter','latex')
+xlim([1e1 5e1]);ylim([1e1 5e1]);grid on
+x = linspace(1e1,5e1);
+y = linspace(1e1,5e1);
+plot(x,y,'r');hold off
+subplot(222)
+scatter(DATA.AT_RH(:,1),DATA.LCS_G2_01_met(:,1));hold on
+xlabel('AeroTrak','interpreter','latex')
+ylabel('$\mathcal{L}_{2a}$','interpreter','latex')
+xlim([1e1 5e1]);ylim([1e1 5e1]);grid on
+x = linspace(1e1,5e1);
+y = linspace(1e1,5e1);
+plot(x,y,'r');hold off
+subplot(223)
+scatter(DATA.CO_RH(:,1),DATA.AT_RH(:,1)); hold on
+xlabel('Clas Ohlson','interpreter','latex')
+ylabel('AeroTrak','interpreter','latex')
+xlim([1e1 5e1]);ylim([1e1 5e1]);grid on
+x = linspace(1e1,5e1);
+y = linspace(1e1,5e1);
+plot(x,y,'r');hold off
+subplot(224)
+scatter(DATA.CO_RH(:,1),DATA.LCS_G2_01_met(:,1)); hold on
+xlabel('Clas Ohlson','interpreter','latex')
+ylabel('$\mathcal{L}_{2a}$','interpreter','latex')
+xlim([1e1 5e1]);ylim([1e1 5e1]);grid on
+x = linspace(1e1,5e1);
+y = linspace(1e1,5e1);
+plot(x,y,'r');hold off
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+
+
+figure(7);fig=gcf;
+suptitle('Pressure')
 subplot(121)
-scatter(DATA.CO_P(:,1),DATA.LCS_G2_01_met(:,3))
+scatter(DATA.CO_P(:,1),DATA.LCS_G2_01_met(:,3)); hold on
+xlabel('Clas Ohlson','interpreter','latex')
+ylabel('$\mathcal{L}_{2a}$','interpreter','latex')
+xlim([8.95e2 9.05e2]);ylim([8.95e2 9.05e2]);grid on
+x = linspace(8.5e2,9.5e2);
+y = linspace(8.5e2,9.5e2);
+plot(x,y,'r');hold off
 subplot(122)
-scatter(DATA.CO_P(:,1),DATA.LCS_G2_01_met(:,3))
-
-
+scatter(DATA.CO_P(:,1),DATA.LCS_G2_02_met(:,3)); hold on
+xlabel('Clas Ohlson','interpreter','latex')
+ylabel('$\mathcal{L}_{2a}$','interpreter','latex')
+xlim([8.95e2 9.05e2]);ylim([8.95e2 9.05e2]);grid on
+x = linspace(8.5e2,9.5e2);
+y = linspace(8.5e2,9.5e2);
+plot(x,y,'r');hold off
+set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 
 
 %% MATRIX PLOT
 close all;clc
 
-DATA1 = [DATA.PMD_c(:,6),DATA.DustTrak_c(:,2),DATA.SidePak_c(:,1), ...
+DATAx = [DATA.PMD_c(:,1),DATA.PMD_c(:,6),DATA.DustTrak_c(:,2),DATA.SidePak_c(:,1), ...
     DATA.LCS_G1(:,1),DATA.LCS_G2_01(:,1),DATA.LCS_G2_02(:,1) ...
     DATA.AT_T,DATA.CO_T,DATA.LCS_G2_01_met(:,2),DATA.LCS_G2_01_met(:,2) ...
     DATA.AT_RH,DATA.CO_RH,DATA.LCS_G2_01_met(:,1),DATA.LCS_G2_01_met(:,1) ...
     DATA.CO_P,DATA.LCS_G2_01_met(:,3),DATA.LCS_G2_01_met(:,3)
     ];
 
-labelX = {'PMD', ...
+labelX = {'CPC','PMD', ...
         'PM$_{2.5}$ (DustTrak)', ...
         'PM$_{2.5}$ (SidePak)', ...
         'PM$_{2.5}$ ($\mathcal{L}_1$)', ...
@@ -630,10 +754,10 @@ labelY = labelX;
 CT = 'Spearman';
 %CT = 'Kendall';
 
-corrP = corr(DATA1,'Type',CT,'Rows','pairwise');
+corrP = corr(DATAx,'Type',CT,'Rows','pairwise');
 
 clc
-figure(4);fig=gcf;
+figure(4);fig=gcf; FS=26;
 
 if true
     Rms= abs(corrP);
