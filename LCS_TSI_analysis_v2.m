@@ -27,9 +27,9 @@ end
 
 %%
 clear;clc;close all
-syn_s = 1; 
-syn_k = 1;
-syn_n = 1;
+syn_s = 2; 
+syn_k = 2;
+syn_n = 2;
 
 
 load('Data_clean_processed.mat')
@@ -49,7 +49,8 @@ AT_DoY1 = AeroTrak_met(:,7);
 AT_T = AeroTrak_met(:,8);
 AT_RH = AeroTrak_met(:,9);
 AT_met = timetable(T1,AT_T,AT_RH);
-clear AT_DoY1 AT_T AT_RH
+%clear AT_DoY1 AT_T AT_RH
+
 
 % ClasOhlson_met
 T1 = datetime(ClasOhlson_met(:,1:6));
@@ -58,60 +59,66 @@ CO_T   = ClasOhlson_met(:,8);
 CO_RH  = ClasOhlson_met(:,9);
 CO_P   = ClasOhlson_met(:,10);
 CO_met = timetable(T1,CO_T,CO_RH,CO_P);
-clear T1 CO_DoY CO_T CO_RH CO_P
+%clear T1 CO_DoY CO_T CO_RH CO_P
+
 
 % DustTrak
 T1 = datetime(DustTrak(:,1:6));
 DustTrak_DoY = DustTrak(:,7);
 DustTrak_c   = DustTrak(:,8:12);
 DustTrak1 = timetable(T1,DustTrak_c);
-clear T1 DustTrak_DoY DustTrak_c
+%clear T1 DustTrak_DoY DustTrak_c
+
 
 % SidePak
 T1 = datetime(SidePak(:,1:6));
 SidePak_DoY = SidePak(:,7);
 SidePak_c   = SidePak(:,8);
 SidePak1 = timetable(T1,SidePak_c);
-clear T1 DustTrak_DoY DustTrak_c
+%clear T1 DustTrak_DoY DustTrak_c
+
 
 % PND
-T1=datetime(PND(:,1:6));
-PND_DoY = PND(:,7);
-PND_c   = PND(:,8:end);
+T1=datetime(PND(2:end,1:6));
+PND_DoY = PND(2:end,7);
+PND_c   = PND(2:end,8:end);
 PND1 = timetable(T1,PND_c);
 PND2 = sortrows(PND1);
 PND3 = PND2(1:end-1,:);
 %PND2 = unique(PND1);
-clear T1 PND_DoY PND_c
+%clear T1 PND_DoY PND_c
+
 
 % PMD
-T1=datetime(PMD(:,1:6));
-PMD_DoY = PMD(:,7);
-PMD_c   = PMD(:,8:end);
+T1=datetime(PMD(2:end,1:6));
+PMD_DoY = PMD(2:end,7);
+PMD_c   = PMD(2:end,8:end);
 PMD1 = timetable(T1,PMD_c);
 PMD2 = sortrows(PMD1);
 PMD3 = PMD2(1:end-1,:);
-clear T1 PMD_DoY PMD_c
+%clear T1 PMD_DoY PMD_c
 
 % LCS_G1:
 T1 = datetime(ISEE_LCS_G1(:,1:6));
 LCS_G1 = ISEE_LCS_G1(:,8);
 LCS_G1_T = timetable(T1,LCS_G1);
-clear T1 LCS_G1
+%clear T1 LCS_G1
+
 
 % LCS_G2_01 (PM2.5 and MET)
 T1 = datetime(ISEE_LCS_G201(:,1:6));
 LCS_G2_01 = ISEE_LCS_G201(:,8); % PM2.5
 LCS_G2_01_met = ISEE_LCS_G201_met(:,8:end); % RH, T and P
 LCS_G2_01_T = timetable(T1,LCS_G2_01,LCS_G2_01_met);
-clear T1 LCS_G2_01 LCS_G2_01_met
+%clear T1 LCS_G2_01 LCS_G2_01_met
+
 
 % LCS_G2_02 (PM2.5 and MET)
 T1 = datetime(ISEE_LCS_G202(:,1:6));
 LCS_G2_02 = ISEE_LCS_G202(:,8); % PM2.5
 LCS_G2_02_met = ISEE_LCS_G202_met(:,8:end); % RH, T and P
 LCS_G2_02_T = timetable(T1,LCS_G2_02,LCS_G2_02_met);
-clear T1 LCS_G2_02 LCS_G2_02_met
+%clear T1 LCS_G2_02 LCS_G2_02_met
 
 %DATA_ts = synchronize(AT_met,AT_PN,CO_met,CPC1,Ptrak1,PND1,PMSD1, ...
 %    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
@@ -120,22 +127,27 @@ clear T1 LCS_G2_02 LCS_G2_02_met
 
 % DATAs = DATAsmoking
 
-if syn_s == 1
-    DATAs = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+%if syn_s == 1
+    DATAs1 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
             PND3, PMD3, ... % PND1, PMSD1,...
             LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
-elseif syn_s ==2
-    DATAs = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+%elseif syn_s ==2
+    DATAs2 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
         PND3, PMD3, ... % PND1, PMSD1,...
         LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
-else
-    DATAs = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+%else
+    DATAs3 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
         PND3, PMD3, ... % PND1, PMSD1,...
         LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely');
-end
+%end
+
+    DATAs4 =[AeroTrak_met(:,1:6),AT_T,AT_RH,CO_T,CO_RH,CO_P, ...
+        DustTrak_c,SidePak_c,PND_c,PMD_c, ...
+        LCS_G1,LCS_G2_01,LCS_G2_01_met, ...
+        LCS_G2_02,LCS_G2_02_met];
 
 
-clearvars -except DATAs syn_s syn_k syn_n
+clearvars -except DATAs1 DATAs2 DATAs3 DATAs4% syn_s syn_k syn_n
 load('Data_processed_Heaters/Data_processed_Kerosene_Heaters.mat');
 
 
@@ -148,70 +160,75 @@ T1    = datetime(Datey);
 AT_T = AeroTrak_met(:,2);
 AT_RH = AeroTrak_met(:,3);
 AT_met = timetable(T1,AT_T,AT_RH);
-clear AT_T AT_RH
+%clear AT_T AT_RH
 
 % ClasOhlson_met
 CO_T   = ClasOhlson_met(:,2);
 CO_RH  = ClasOhlson_met(:,3);
 CO_P   = ClasOhlson_met(:,4);
 CO_met = timetable(T1,CO_T,CO_RH,CO_P);
-clear CO_T CO_RH CO_P
+%clear CO_T CO_RH CO_P
 
 % DustTrak
 DustTrak_c   = DustTrak(:,2:end);
 DustTrak1 = timetable(T1,DustTrak_c);
-clear DustTrak_c
+%clear DustTrak_c
 
 % SidePak
 SidePak_c   = SidePak(:,2);
 SidePak1 = timetable(T1,SidePak_c);
-clear DustTrak_c
+%clear DustTrak_c
 
 % PND
 PND_c   = PND(:,2:end);
 PND1 = timetable(T1,PND_c);
 PND2 = sortrows(PND1);
 PND3 = PND2(1:end-1,:);
-clear PND_c
+%clear PND_c
 
 % PMD
 PMD_c   = PMD(:,2:end);
 PMD1 = timetable(T1,PMD_c);
 PMD2 = sortrows(PMD1);
 PMD3 = PMD2(1:end-1,:);
-clear PMD_c
+%clear PMD_c
 
 % LCS_G1:
 LCS_G1 = ISEE_LCS_G1(:,2);
 LCS_G1_T = timetable(T1,LCS_G1);
-clear LCS_G1
+%clear LCS_G1
 
 % LCS_G2_01 (PM2.5 and MET)
 LCS_G2_01 = ISEE_LCS_G201(:,2); % PM2.5
 LCS_G2_01_met = nan(size(ISEE_LCS_G201_met,1),3); %ISEE_LCS_G201_met(:,8:end); % RH, T and P
 LCS_G2_01_T = timetable(T1,LCS_G2_01,LCS_G2_01_met);
-clear LCS_G2_01 LCS_G2_01_met
+%clear LCS_G2_01 LCS_G2_01_met
 
 % LCS_G2_02 (PM2.5 and MET)
 %T1 = datetime(ISEE_LCS_G202(:,1:6));
 LCS_G2_02 = ISEE_LCS_G202(:,2); % PM2.5
 LCS_G2_02_met = nan(size(ISEE_LCS_G201_met,1),3);  % ISEE_LCS_G202_met(:,8:end); % RH, T and P
 LCS_G2_02_T = timetable(T1,LCS_G2_02,LCS_G2_02_met);
-clear LCS_G2_02 LCS_G2_02_met
+%clear LCS_G2_02 LCS_G2_02_met
 
-if syn_k == 1
-    DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+%if syn_k == 1
+    DATAk1 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
             PND3, PMD3, ... % PND1, PMSD1,...
             LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
-elseif syn_k ==2 
-    DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+%elseif syn_k ==2 
+    DATAk2 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
             PND3, PMD3, ... % PND1, PMSD1,...
             LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
-else
-    DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+%else
+    DATAk3 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
             PND3, PMD3, ... % PND1, PMSD1,...
             LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely');
-end
+%end
+
+    DATAk4 =[Datey,AT_T,AT_RH,CO_T,CO_RH,CO_P, ...
+        DustTrak_c,SidePak_c,PND_c,PMD_c, ...
+        LCS_G1,LCS_G2_01,LCS_G2_01_met, ...
+        LCS_G2_02,LCS_G2_02_met];
 
 
 %DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
@@ -219,7 +236,7 @@ end
 %    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
 
 
-clearvars -except DATAs DATAk syn_s syn_k syn_n
+clearvars -except DATAs1 DATAs2 DATAs3 DATAs4 DATAk1 DATAk2 DATAk3 DATAk4 % syn_s syn_k syn_n
 load('Data_processed_Heaters/Data_processed_NaturalGas_Heaters.mat')
 
 % AeroTrak_Met
@@ -231,77 +248,100 @@ T1    = datetime(Datey);
 AT_T = AeroTrak_met(:,2);
 AT_RH = AeroTrak_met(:,3);
 AT_met = timetable(T1,AT_T,AT_RH);
-clear AT_T AT_RH
+%clear AT_T AT_RH
 
 % ClasOhlson_met
 CO_T   = nan(size(T1)); %ClasOhlson_met(:,2);
 CO_RH  = nan(size(T1)); %ClasOhlson_met(:,3);
 CO_P   = nan(size(T1)); %ClasOhlson_met(:,4);
 CO_met = timetable(T1,CO_T,CO_RH,CO_P);
-clear CO_T CO_RH CO_P
+%clear CO_T CO_RH CO_P
 
 % DustTrak
 DustTrak_c   = nan(size(T1,1),5); %DustTrak(:,2:end);
 DustTrak1 = timetable(T1,DustTrak_c);
-clear DustTrak_c
+%clear DustTrak_c
 
 % SidePak
 SidePak_c   = nan(size(T1)); %SidePak(:,2);
 SidePak1 = timetable(T1,SidePak_c);
-clear DustTrak_c
+%clear DustTrak_c
 
 % PND
 PND_c   = PND(:,2:end);
 PND1 = timetable(T1,PND_c);
 PND2 = sortrows(PND1);
 PND3 = PND2(1:end-1,:);
-clear PND_c
+%clear PND_c
 
 % PMD
 PMD_c   = PMD(:,2:end);
 PMD1 = timetable(T1,PMD_c);
 PMD2 = sortrows(PMD1);
 PMD3 = PMD2(1:end-1,:);
-clear PMD_c
+%clear PMD_c
 
 % LCS_G1:
 LCS_G1 = ISEE_LCS_G1(:,2);
 LCS_G1_T = timetable(T1,LCS_G1);
-clear LCS_G1
+%clear LCS_G1
 
 % LCS_G2_01 (PM2.5 and MET)
 LCS_G2_01 = ISEE_LCS_G201(:,2); % PM2.5
 LCS_G2_01_met = ISEE_LCS_G201_met(:,2:end); % RH, T and P
 LCS_G2_01_T = timetable(T1,LCS_G2_01,LCS_G2_01_met);
-clear LCS_G2_01 LCS_G2_01_met
+%clear LCS_G2_01 LCS_G2_01_met
 
 % LCS_G2_02 (PM2.5 and MET)
 %T1 = datetime(ISEE_LCS_G202(:,1:6));
 LCS_G2_02 = ISEE_LCS_G202(:,2); % PM2.5
 LCS_G2_02_met = ISEE_LCS_G202_met(:,2:end); % RH, T and P
 LCS_G2_02_T = timetable(T1,LCS_G2_02,LCS_G2_02_met);
-clear LCS_G2_02 LCS_G2_02_met
+%clear LCS_G2_02 LCS_G2_02_met
 
-if syn_n == 1
-    DATAn = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+%if syn_n == 1
+    DATAn1 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
             PND3, PMD3, ... % PND1, PMSD1,...
             LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
-elseif syn_n==2
-    DATAn = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+%elseif syn_n==2
+    DATAn2 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
             PND3, PMD3, ... % PND1, PMSD1,...
             LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
-else
-    DATAn = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+%else
+    DATAn3 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
             PND3, PMD3, ... % PND1, PMSD1,...
             LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely');
-end
+%end
+
+ DATAn4 =[Datey,AT_T,AT_RH,CO_T,CO_RH,CO_P, ...
+        DustTrak_c,SidePak_c,PND_c,PMD_c, ...
+        LCS_G1,LCS_G2_01,LCS_G2_01_met, ...
+        LCS_G2_02,LCS_G2_02_met];
+    
+DATA4_label = {'year','month','day','hour','minute','second',...
+    'AT_T','AT_RH','CO_T','CO_RH','CO_P', ...
+        'DustTrak_c1','DustTrak_c2','DustTrak_c3','DustTrak_c4','DustTrak_c5', ...
+        'SidePak_c', ...
+        'PND_c1','PND_c2','PND_c3','PND_c4','PND_c5','PND_c6','PND_c7', ...
+        'PND_c8','PND_c9', ...
+        'PMD_c1','PMD_c2','PMD_c3','PMD_c4','PMD_c5','PMD_c6','PMD_c7', ...
+        'PMD_c8','PMD_c9', ...
+        'LCS_G1', ...
+        'LCS_G2_01','LCS_G2_01_RH', 'LCS_G2_01_T', 'LCS_G2_01_P', ...
+        'LCS_G2_02','LCS_G2_02_RH', 'LCS_G2_02_T', 'LCS_G2_02_P'};
 
 
  
-DATA = [DATAs;DATAk;DATAn];
+DATA1 = [DATAs1;DATAk1;DATAn1];
+DATA2 = [DATAs2;DATAk2;DATAn2];
+DATA3 = [DATAs3;DATAk3;DATAn3];
+DATA4 = [DATAs4;DATAk4;DATAn4];
 
-clearvars -except DATA DATAs DATAk DATAn syn_s syn_k syn_n
+clearvars -except DATA1 DATA2 DATA3 DATA4 DATA4label%DATAs DATAk DATAn syn_s syn_k syn_n
 
+
+%%
+DATA = DATA2;
 
 clc
 figure(1); fig =gcf; ms=10;
@@ -355,7 +395,7 @@ set(findall(fig,'-property','FontSize'),'FontSize',22);
 clc
 %figure(4); fig =gcf; ms = 10;
 subplot(414)
-plot(DATA.PMD_c(:,3),'b.','MarkerSize',ms); hold on
+plot(DATA.PMD_c(:,7),'b.','MarkerSize',ms); hold on
 plot(DATA.DustTrak_c(:,2),'r.','MarkerSize',ms);
 plot(DATA.SidePak_c(:,1),'m.','MarkerSize',ms);
 plot(DATA.LCS_G1(:,1),'y.','MarkerSize',ms);
@@ -421,7 +461,7 @@ figure(2);fig=gcf;
 tiledlayout(2,3);
 nexttile
 %subplot(231)
-plot(Time_index(Exp_smoking,1),DATA.PMD_c(Exp_smoking,3),'b.'); hold on
+plot(Time_index(Exp_smoking,1),DATA.PMD_c(Exp_smoking,7),'b.'); hold on
 plot(Time_index(Exp_smoking,1),DATA.LCS_G1(Exp_smoking,1),'g.');
 plot(Time_index(Exp_smoking,1),DATA.LCS_G2_01(Exp_smoking,1),'r.');
 %plot(Time_index(Exp_smoking,1),DATA.LCS_G2_02(Exp_smoking,1),'m.');
@@ -435,7 +475,7 @@ set(gca, 'YScale', 'log')
 
 nexttile
 %subplot(232)
-plot(Time_index(Exp_kerosine,1),DATA.PMD_c(Exp_kerosine,3),'b.'); hold on
+plot(Time_index(Exp_kerosine,1),DATA.PMD_c(Exp_kerosine,7),'b.'); hold on
 plot(Time_index(Exp_kerosine,1),DATA.LCS_G1(Exp_kerosine,1),'g.');
 plot(Time_index(Exp_kerosine,1),DATA.LCS_G2_01(Exp_kerosine,1),'r.');
 %plot(Time_index(Exp_smoking,1),DATA.LCS_G2_02(Exp_smoking,1),'m.');
@@ -450,7 +490,7 @@ set(gca, 'YScale', 'log')
 
 nexttile
 %subplot(233)
-plot(Time_index(Exp_gas,1),DATA.PMD_c(Exp_gas,3),'b.'); hold on
+plot(Time_index(Exp_gas,1),DATA.PMD_c(Exp_gas,7),'b.'); hold on
 plot(Time_index(Exp_gas,1),DATA.LCS_G1(Exp_gas,1),'g.');
 plot(Time_index(Exp_gas,1),DATA.LCS_G2_01(Exp_gas,1),'r.');
 %plot(Time_index(Exp_gas,1),DATA.LCS_G2_02(Exp_gas,1),'m.');
@@ -507,6 +547,89 @@ cb.Layout.Tile = 'east';
 
 %colorbar(h1,jet)
 set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+%%
+%%
+
+
+%% MATRIX PLOT
+close all;clc
+
+DATA1 = [DATA.PMD_c(:,6),DATA.DustTrak_c(:,2),DATA.SidePak_c(:,1), ...
+    DATA.LCS_G1(:,1),DATA.LCS_G2_01(:,1),DATA.LCS_G2_01(:,1) ...
+    DATA.AT_T,DATA.CO_T,DATA.LCS_G2_01_met(:,2),DATA.LCS_G2_01_met(:,2) ...
+    DATA.AT_RH,DATA.CO_RH,DATA.LCS_G2_01_met(:,1),DATA.LCS_G2_01_met(:,1) ...
+    DATA.CO_P,DATA.LCS_G2_01_met(:,3),DATA.LCS_G2_01_met(:,3)
+    ];
+
+labelX = {'PMD', ...
+        'PM$_{2.5}$ (DustTrak)', ...
+        'PM$_{2.5}$ (SidePak)', ...
+        'PM$_{2.5}$ ($\mathcal{L}_1$)', ...
+        'PM$_{2.5}$ ($\mathcal{L}_{2a}$)', ...
+        'PM$_{2.5}$ ($\mathcal{L}_{2b}$)', ...
+        'Temp (AT)', ... 
+        'Temp (CO)', ...
+        'Temp ($\mathcal{L}_{2a}$)', ...
+        'Temp ($\mathcal{L}_{2b}$)', ...
+        'RH (AT)', ...
+        'RH (CO)', ...
+        'RH ($\mathcal{L}_{2a}$)', ...
+        'RH ($\mathcal{L}_{2b}$)', ...
+        'P (CO)', ...
+        'P ($\mathcal{L}_{2a}$)' ...
+        'P ($\mathcal{L}_{2b}$)'
+    };
+
+FS=26;
+labelY = labelX;
+
+
+%corrP = corrcoef(DataTot,'Rows','complete');
+%CT = 'Pearson';
+CT = 'Spearman';
+%CT = 'Kendall';
+
+corrP = corr(DATA1,'Type',CT,'Rows','pairwise');
+
+clc
+figure(3);fig=gcf;
+
+if true
+    Rms= abs(corrP);
+    [m n]=size(Rms);
+    imagesc(Rms,'CdataMapping','scaled');
+    colorbar    
+    hold on;
+    for i = 1:m
+        for j = 1:n
+            nu = Rms(i,j);
+            val = num2str(round(nu,2));
+        end
+    end
+    hold off;
+end
+ax = gca;
+%title('TSI and Low-Cost Sensors of PM_{2.5}', 'FontSize', FS);
+% Set colorbar limits
+caxis([0 1])
+%colorbar;
+h = colorbar;
+%xlabel(h, 'R')
+%colormap(flipud(copper))
+%colormap(copper)
+set(ax, 'XTick', 1:length(labelX), 'XTickLabel', labelX, 'TickLabelInterpreter', 'latex')
+set(ax, 'YTick', 1:length(labelY), 'YTickLabel', labelY, 'TickLabelInterpreter', 'latex')
+xtickangle(45)
+%xtickangle(-180)
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+%%
 
 
 %%
