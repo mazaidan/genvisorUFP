@@ -792,7 +792,6 @@ y = linspace(8.5e2,9.5e2);
 plot(x,y,'r');hold off
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
-%%
 
 
 %% MATRIX PLOT
@@ -836,7 +835,7 @@ CT = 'Spearman';
 corrP = corr(DATAx,'Type',CT,'Rows','pairwise');
 
 clc
-figure(10);fig=gcf; FS=26;
+figure(8);fig=gcf; FS=26;
 
 if true
     Rms= abs(corrP);
@@ -872,7 +871,237 @@ set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 
 
-%%
+%% %% HISTOGRAMS
+close all; clc
+figure(8); fig = gcf;
+fig.Position = [100 100 540 400].*2.5;
+subplot(5,3,1);
+histogram(DATA.PND_c(:,1),'BinWidth',.05,'FaceColor','b');
+set(gca, 'XScale', 'log')
+title('CPC')
+xlabel('PNC [cm^{-3}]')
+subplot(5,3,2);
+histogram(log10(DATA.PND_c(:,1)),'BinWidth',.05,'FaceColor','b');
+title('CPC (log)')
+xlabel('log PNC [cm^{-3}]')
+xlim([0 6])
+subplot(5,3,3);
+histogram(log10(DATA.PND_c(Exp_smoking,1)),'BinWidth',.05,'FaceColor','b');
+hold on
+histogram(log10(DATA.PND_c(Exp_kerosine,1)),'BinWidth',.05,'FaceColor','r');
+histogram(log10(DATA.PND_c(Exp_gas,1)),'BinWidth',.05,'FaceColor','g');
+hold off
+title('CPC (log)')
+xlabel('log PNC [cm^{-3}]')
+xlim([0 6])
+
+subplot(5,3,4);
+histogram(DATA.PMD_c(:,PMx),'BinWidth',.05,'FaceColor','b');
+set(gca, 'XScale', 'log')
+title('PM_{2.5}')
+xlabel('PM_{2.5} [\mug/m^{3}]')
+subplot(5,3,5);
+histogram(log10(DATA.PMD_c(:,PMx)),'BinWidth',.05,'FaceColor','b');
+title('PM_{2.5} (log)')
+xlabel('log PM_{2.5} [\mug/m^{3}]')
+xlim([-1 2])
+subplot(5,3,6);
+histogram(log10(DATA.PMD_c(Exp_smoking,PMx)),'BinWidth',.05,'FaceColor','b');
+hold on
+histogram(log10(DATA.PMD_c(Exp_kerosine,PMx)),'BinWidth',.05,'FaceColor','r');
+histogram(log10(DATA.PMD_c(Exp_gas,PMx)),'BinWidth',.05,'FaceColor','g');
+hold off
+title('PM_{2.5} (log)')
+xlabel('log PM_{2.5} [\mug/m^{3}]')
+xlim([-1 2])
+
+% https://www.mathworks.com/help/matlab/ref/double.normalize.html
+subplot(5,3,7);
+histogram(DATA.AT_T(:,1),'BinWidth',.05,'FaceColor','b');
+title('Temp')
+xlabel('Temp [\circC]')
+subplot(5,3,8);
+Temp = normalize(DATA.AT_T(:,1));
+histogram(Temp,'BinWidth',.05,'FaceColor','b');
+title('Temp (norm)')
+xlabel('Temp (norm)')
+subplot(5,3,9);
+mu = nanmean(DATA.AT_T(Exp_smoking,1));
+sigma = nanstd(DATA.AT_T(Exp_smoking,1));
+Temp_s = (DATA.AT_T(Exp_smoking,1) - mu)/sigma;
+Temp_k = (DATA.AT_T(Exp_kerosine,1) - mu)/sigma;
+Temp_n = (DATA.AT_T(Exp_gas,1) - mu)/sigma;
+histogram(Temp_s,'BinWidth',.05,'FaceColor','b'); hold on
+histogram(Temp_k,'BinWidth',.05,'FaceColor','r');
+histogram(Temp_n,'BinWidth',.05,'FaceColor','g');
+title('Temp (norm)')
+xlabel('Temp (norm)')
+hold off
+
+subplot(5,3,10);
+histogram(DATA.AT_RH(:,1),'BinWidth',.05,'FaceColor','b');
+title('RH')
+xlabel('RH [%]')
+subplot(5,3,11);
+Temp = normalize(DATA.AT_RH(:,1));
+histogram(Temp,'BinWidth',.05,'FaceColor','b');
+title('RH (norm)')
+xlabel('RH (norm)')
+subplot(5,3,12);
+mu = nanmean(DATA.AT_RH(Exp_smoking,1));
+sigma = nanstd(DATA.AT_RH(Exp_smoking,1));
+RH_s = (DATA.AT_RH(Exp_smoking,1) - mu)/sigma;
+RH_k = (DATA.AT_RH(Exp_kerosine,1) - mu)/sigma;
+RH_n = (DATA.AT_RH(Exp_gas,1) - mu)/sigma;
+histogram(RH_s,'BinWidth',.05,'FaceColor','b'); hold on
+histogram(RH_k,'BinWidth',.05,'FaceColor','r');
+histogram(RH_n,'BinWidth',.05,'FaceColor','g');
+title('RH (norm)')
+xlabel('RH (norm)')
+hold off
+
+subplot(5,3,13);
+histogram(DATA.CO_P(:,1),'BinWidth',.05,'FaceColor','b');
+title('P')
+xlabel('P [mbar]')
+subplot(5,3,14);
+Temp = normalize(DATA.CO_P(:,1));
+histogram(Temp,'BinWidth',.05,'FaceColor','b');
+title('P (norm)')
+xlabel('P (norm)')
+subplot(5,3,15);
+mu = nanmean(DATA.CO_P(Exp_smoking,1));
+sigma = nanstd(DATA.CO_P(Exp_smoking,1));
+P_s = (DATA.CO_P(Exp_smoking,1) - mu)/sigma;
+P_k = (DATA.CO_P(Exp_kerosine,1) - mu)/sigma;
+P_n = (DATA.CO_P(Exp_gas,1) - mu)/sigma;
+histogram(P_s,'BinWidth',.05,'FaceColor','b'); hold on
+histogram(P_k,'BinWidth',.05,'FaceColor','r');
+histogram(P_n,'BinWidth',.05,'FaceColor','g');
+title('P (norm)')
+xlabel('P (norm)')
+hold off
+
+disp('For normalization of temp, RH and P, perhaps the best is to use max and min number')
+
+%% Using min-max algorithm
+% https://www.mathworks.com/help/matlab/ref/rescale.html
+% B = rescale(A,l,u,'InputMin',inmin,'InputMax',inmax) uses the formula
+% B = l + [(A-inmin)./(inmax-inmin)].*(u-l)
+
+
+
+%close all; clc
+figure(9); fig = gcf;
+fig.Position = [100 100 540 400].*2.5;
+subplot(5,3,1);
+histogram(DATA.PND_c(:,1),'BinWidth',.05,'FaceColor','b');
+set(gca, 'XScale', 'log')
+title('CPC')
+xlabel('PNC [cm^{-3}]')
+subplot(5,3,2);
+histogram(log10(DATA.PND_c(:,1)),'BinWidth',.05,'FaceColor','b');
+title('CPC (log)')
+xlabel('log PNC [cm^{-3}]')
+xlim([0 6])
+subplot(5,3,3);
+histogram(log10(DATA.PND_c(Exp_smoking,1)),'BinWidth',.05,'FaceColor','b');
+hold on
+histogram(log10(DATA.PND_c(Exp_kerosine,1)),'BinWidth',.05,'FaceColor','r');
+histogram(log10(DATA.PND_c(Exp_gas,1)),'BinWidth',.05,'FaceColor','g');
+hold off
+title('CPC (log)')
+xlabel('log PNC [cm^{-3}]')
+xlim([0 6])
+
+subplot(5,3,4);
+histogram(DATA.PMD_c(:,PMx),'BinWidth',.05,'FaceColor','b');
+set(gca, 'XScale', 'log')
+title('PM_{2.5}')
+xlabel('PM_{2.5} [\mug/m^{3}]')
+subplot(5,3,5);
+histogram(log10(DATA.PMD_c(:,PMx)),'BinWidth',.05,'FaceColor','b');
+title('PM_{2.5} (log)')
+xlabel('log PM_{2.5} [\mug/m^{3}]')
+xlim([-1 2])
+subplot(5,3,6);
+histogram(log10(DATA.PMD_c(Exp_smoking,PMx)),'BinWidth',.05,'FaceColor','b');
+hold on
+histogram(log10(DATA.PMD_c(Exp_kerosine,PMx)),'BinWidth',.05,'FaceColor','r');
+histogram(log10(DATA.PMD_c(Exp_gas,PMx)),'BinWidth',.05,'FaceColor','g');
+hold off
+title('PM_{2.5} (log)')
+xlabel('log PM_{2.5} [\mug/m^{3}]')
+xlim([-1 2])
+
+% https://www.mathworks.com/help/matlab/ref/double.normalize.html
+subplot(5,3,7);
+histogram(DATA.AT_T(:,1),'BinWidth',.05,'FaceColor','b');
+title('Temp')
+xlabel('Temp [\circC]')
+subplot(5,3,8);
+inmin = 10; inmax = 40; l = 0; u = 1;
+Temp = l + [ (DATA.AT_T(:,1) -inmin)./(inmax-inmin)].*(u-l) ;
+histogram(Temp,'BinWidth',.05,'FaceColor','b');
+title('Temp (norm)')
+xlabel('Temp (norm)')
+subplot(5,3,9);
+Temp_s = l + [ (DATA.AT_T(Exp_smoking,1) -inmin)./(inmax-inmin)].*(u-l) ;
+Temp_k = l + [ (DATA.AT_T(Exp_kerosine,1) -inmin)./(inmax-inmin)].*(u-l) ;
+Temp_n = l + [ (DATA.AT_T(Exp_gas,1) -inmin)./(inmax-inmin)].*(u-l) ;
+histogram(Temp_s,'BinWidth',.05,'FaceColor','b'); hold on
+histogram(Temp_k,'BinWidth',.05,'FaceColor','r');
+histogram(Temp_n,'BinWidth',.05,'FaceColor','g');
+title('Temp (norm)')
+xlabel('Temp (norm)')
+hold off
+
+% https://www.mathworks.com/help/matlab/ref/double.normalize.html
+subplot(5,3,10);
+histogram(DATA.AT_RH(:,1),'BinWidth',.05,'FaceColor','b');
+title('RH')
+xlabel('RH [%]')
+subplot(5,3,11);
+inmin = 10; inmax = 50; l = 0; u = 1;
+Temp = l + [ (DATA.AT_RH(:,1) -inmin)./(inmax-inmin)].*(u-l) ;
+histogram(Temp,'BinWidth',.05,'FaceColor','b');
+title('RH (norm)')
+xlabel('RH (norm)')
+subplot(5,3,12);
+RH_s = l + [ (DATA.AT_RH(Exp_smoking,1) -inmin)./(inmax-inmin)].*(u-l) ;
+RH_k = l + [ (DATA.AT_RH(Exp_kerosine,1) -inmin)./(inmax-inmin)].*(u-l) ;
+RH_n = l + [ (DATA.AT_RH(Exp_gas,1) -inmin)./(inmax-inmin)].*(u-l) ;
+histogram(RH_s,'BinWidth',.05,'FaceColor','b'); hold on
+histogram(RH_k,'BinWidth',.05,'FaceColor','r');
+histogram(RH_n,'BinWidth',.05,'FaceColor','g');
+title('RH (norm)')
+xlabel('RH (norm)')
+hold off
+
+
+% https://www.mathworks.com/help/matlab/ref/double.normalize.html
+subplot(5,3,13);
+histogram(DATA.CO_P(:,1),'BinWidth',.05,'FaceColor','b');
+title('P')
+xlabel('P [mbar]')
+subplot(5,3,14);
+inmin = 890; inmax = 910; l = 0; u = 1;
+Temp = l + [ (DATA.CO_P(:,1) -inmin)./(inmax-inmin)].*(u-l) ;
+histogram(Temp,'BinWidth',.05,'FaceColor','b');
+title('P (norm)')
+xlabel('P (norm)')
+subplot(5,3,15);
+P_s = l + [ (DATA.CO_P(Exp_smoking,1) -inmin)./(inmax-inmin)].*(u-l) ;
+P_k = l + [ (DATA.CO_P(Exp_kerosine,1) -inmin)./(inmax-inmin)].*(u-l) ;
+P_n = l + [ (DATA.CO_P(Exp_gas,1) -inmin)./(inmax-inmin)].*(u-l) ;
+histogram(P_s,'BinWidth',.05,'FaceColor','b'); hold on
+histogram(P_k,'BinWidth',.05,'FaceColor','r');
+histogram(P_n,'BinWidth',.05,'FaceColor','g');
+title('P (norm)')
+xlabel('P (norm)')
+hold off
+
+
 
 
 %%
