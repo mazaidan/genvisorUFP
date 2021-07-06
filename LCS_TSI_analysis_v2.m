@@ -337,7 +337,7 @@ DATA2 = [DATAs2;DATAk2;DATAn2];
 DATA3 = [DATAs3;DATAk3;DATAn3];
 DATA4 = [DATAs4;DATAk4;DATAn4];
 
-clearvars -except DATA1 DATA2 DATA3 DATA4 DATA4label%DATAs DATAk DATAn syn_s syn_k syn_n
+clearvars -except DATA1 DATA2 DATA3 DATA4 DATA4_label %DATAs DATAk DATAn syn_s syn_k syn_n
 
 
 %%
@@ -556,6 +556,84 @@ cb.Layout.Tile = 'east';
 %colorbar(h1,jet)
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
+figure(21);fig=gcf; FS=26; PMx4=33;
+lc =1e0; hc=10e5;
+tiledlayout(2,3);
+nexttile % subplot(231)
+plot(Time_index(Exp_smoking,1),DATA4(Exp_smoking,PMx4),'b.'); hold on
+plot(Time_index(Exp_smoking,1),DATA4(Exp_smoking,36),'g.');
+plot(Time_index(Exp_smoking,1),DATA4(Exp_smoking,37),'r.');
+plot(Time_index(Exp_smoking,1),DATA4(Exp_smoking,41),'m.');
+hold off
+legend('PMD','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
+ylim([1e-1 1e3]); grid on
+xlabel('Time Index','interpreter','latex')
+ylabel('PM$_{2.5}$ ($\mu$g/m$^3$)','interpreter','latex')
+title('PM$_{2.5}$ Smoking','interpreter','latex')
+set(gca, 'YScale', 'log')
+
+nexttile % subplot(232)
+plot(Time_index(Exp_kerosine,1),DATA4(Exp_kerosine,PMx4),'b.'); hold on
+plot(Time_index(Exp_kerosine,1),DATA4(Exp_kerosine,36),'g.');
+plot(Time_index(Exp_kerosine,1),DATA4(Exp_kerosine,37),'r.');
+plot(Time_index(Exp_kerosine,1),DATA4(Exp_kerosine,41),'m.');
+
+hold off
+legend('PMD','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
+ylim([1e-1 1e3]); grid on
+xlabel('Time Index','interpreter','latex')
+ylabel('PM$_{2.5}$ ($\mu$g/m$^3$)','interpreter','latex')
+title('PM$_{2.5}$ Kerosene','interpreter','latex')
+set(gca, 'YScale', 'log')
+
+nexttile % subplot(233)
+plot(Time_index(Exp_gas,1),DATA4(Exp_gas,PMx4),'b.'); hold on
+plot(Time_index(Exp_gas,1),DATA4(Exp_gas,36),'g.');
+plot(Time_index(Exp_gas,1),DATA4(Exp_gas,37),'r.');
+plot(Time_index(Exp_gas,1),DATA4(Exp_gas,41),'m.');
+hold off
+legend('PMD','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
+ylim([1e-1 1e3]); grid on
+xlabel('Time Index','interpreter','latex')
+ylabel('PM$_{2.5}$ ($\mu$g/m$^3$)','interpreter','latex')
+title('PM$_{2.5}$ Natureal Gas','interpreter','latex')
+set(gca, 'YScale', 'log')
+
+nexttile % subplot(234)
+h1 = pcolor(Time_index(Exp_smoking,1)',inst_res_PND',[DATA4(Exp_smoking,18),DATA4(Exp_smoking,20:26)]');
+set(h1, 'EdgeColor', 'none')
+xlabel('Time Index','interpreter','latex')
+ylabel('Particle size (nm)','interpreter','latex')
+title('PNC Smoking','interpreter','latex')
+colormap jet
+caxis([lc,hc])
+set(gca, 'YScale', 'log','colorscale','log')
+
+nexttile % subplot(235)
+h2 = pcolor(Time_index(Exp_kerosine,1)',inst_res_PND',[DATA4(Exp_kerosine,18),DATA4(Exp_kerosine,20:26)]');
+set(h2, 'EdgeColor', 'none')
+xlabel('Time Index','interpreter','latex')
+ylabel('Particle size (nm)','interpreter','latex')
+title('PNC kerosene','interpreter','latex')
+colormap jet
+caxis([lc,hc]) 
+set(gca, 'YScale', 'log','colorscale','log')
+
+nexttile % subplot(236)
+h3 = pcolor(Time_index(Exp_gas,1)',inst_res_PND',[DATA4(Exp_gas,18),DATA4(Exp_gas,20:26)]');
+set(h3, 'EdgeColor', 'none')
+xlabel('Time Index','interpreter','latex')
+ylabel('Particle size (nm)','interpreter','latex')
+title('PNC natural gas','interpreter','latex')
+colormap jet
+caxis([lc, hc])
+set(gca, 'YScale', 'log','colorscale','log')
+
+cb = colorbar;
+cb.Layout.Tile = 'east';
+
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
 %%
 %% Scatter plots between PMD and LCSs
 clc
@@ -714,6 +792,7 @@ y = linspace(8.5e2,9.5e2);
 plot(x,y,'r');hold off
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
+%%
 
 
 %% MATRIX PLOT
@@ -757,7 +836,7 @@ CT = 'Spearman';
 corrP = corr(DATAx,'Type',CT,'Rows','pairwise');
 
 clc
-figure(4);fig=gcf; FS=26;
+figure(10);fig=gcf; FS=26;
 
 if true
     Rms= abs(corrP);
