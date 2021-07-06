@@ -1103,6 +1103,11 @@ hold off
 
 
 
+%% MODELLING: Linear regression and ANN
+% 1) use all data, randominze, and predict CPC
+% 2) use Exp_smoking, estimate Exp_kerosine and Exp_gas
+
+
 
 %%
 clc
