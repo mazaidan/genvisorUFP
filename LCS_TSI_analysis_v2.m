@@ -851,7 +851,8 @@ set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 
 %% MATRIX PLOT
-close all;clc
+%close all;
+clc
 
 DATAx = [DATA.PMD_c(:,1),DATA.PMD_c(:,6),DATA.DustTrak_c(:,2),DATA.SidePak_c(:,1), ...
     DATA.LCS_G1(:,1),DATA.LCS_G2_01(:,1),DATA.LCS_G2_02(:,1) ...
@@ -928,7 +929,8 @@ set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 
 %% %% HISTOGRAMS
-close all; clc
+%close all; 
+clc
 figure(10); fig = gcf;
 fig.Position = [100 100 540 400].*2.5;
 subplot(5,3,1);
@@ -1173,7 +1175,9 @@ Dt = Exp_kerosine;
 % B = l + [(A-inmin)./(inmax-inmin)].*(u-l)
 % For aerosol, simply take log10
 
-DATAm1 = [DATA.AT_T(D,1),DATA.AT_RH(D,1),DATA.CO_P(D,1),DATA.LCS_G1(D,1),DATA.PND_c(D,1)];
+DATAm1 = [DATA.AT_T(D,1),DATA.LCS_G2_01_met(D,1),DATA.LCS_G2_01_met(D,3),DATA.PMD_c(D,6),DATA.PND_c(D,1)];
+%DATAm1 = [DATA.AT_T(D,1),DATA.LCS_G2_01_met(D,1),DATA.CO_P(D,1),DATA.LCS_G1(D,1),DATA.PND_c(D,1)];
+%DATAm1 = [DATA.AT_T(D,1),DATA.AT_RH(D,1),DATA.CO_P(D,1),DATA.LCS_G2_02(D,1),DATA.PND_c(D,1)];
 DATAm2 = zeros(size(DATAm1));
 
 DATAt1 = [DATA.AT_T(Dt,1),DATA.AT_RH(Dt,1),DATA.CO_P(Dt,1),DATA.LCS_G1(Dt,1),DATA.PND_c(Dt,1)];
@@ -1204,7 +1208,7 @@ for n=1:size(DATAm1,2)
     end
 end
 
-%% Linear model
+% Linear model
 X = DATAm2(:,1:4);
 Y = DATAm2(:,5);
 
@@ -1215,13 +1219,31 @@ Xt = X;
 Yt = Y;
 
 
-
+% LINEAR MODEL:
 mdl = fitlm(X,Y);
-Ypred = predict(mdl,Xt);
+Ypred_lm = predict(mdl,Xt);
+
+% ANN model
+inputs = X';
+targets = Y';
+inputs_t = Xt';
+% Create a Fitting Network
+hiddenLayerSize = 15;
+net = fitnet(hiddenLayerSize);
+% Set up Division of Data for Training, Validation, Testing
+net.divideParam.trainRatio = 70/100;
+net.divideParam.valRatio = 15/100;
+net.divideParam.testRatio = 15/100;
+ % Train the Network
+[net,tr] = train(net,inputs,targets);
+ % Test the Network
+outputs = net(inputs_t);
+Ypred = outputs;
+
 
 figure(12);
-subplot(121);
-scatter(Yt,Ypred);hold on
+subplot(221);
+scatter(Yt,Ypred_lm);hold on
 Xlim1 = 3;
 Ylim1 = 6;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
@@ -1230,8 +1252,8 @@ y = linspace(Xlim1,Ylim1);
 plot(x,y,'r');hold off
 xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
 
-subplot(122);
-scatter(10.^Yt,10.^Ypred);hold on
+subplot(222);
+scatter(10.^Yt,10.^Ypred_lm);hold on
 Xlim1 = 1e1;
 Ylim1 = 5e5;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
@@ -1240,45 +1262,7 @@ y = linspace(Xlim1,Ylim1);
 plot(x,y,'r');hold off
 xlabel('Real PNC (CPC)');ylabel('Est PNC (CPC)')
 
- 
-%% ANN model
-clc
-
-inputs = X';
-targets = Y';
-
-% sementara:
-Xt = X;
-Yt = Y;
-
-inputs_t = Xt';
- 
-
-% Create a Fitting Network
-hiddenLayerSize = 15;
-net = fitnet(hiddenLayerSize);
-
-% Set up Division of Data for Training, Validation, Testing
-net.divideParam.trainRatio = 70/100;
-net.divideParam.valRatio = 15/100;
-net.divideParam.testRatio = 15/100;
- 
-% Train the Network
-[net,tr] = train(net,inputs,targets);
- 
-% Test the Network
-%outputs = net(inputs);
-outputs = net(inputs_t);
-%errors = gsubtract(outputs,targets);
-%performance = perform(net,targets,outputs)
- 
-% View the Network
-%view(net)
-
-Ypred = outputs;
-
-figure(13);
-subplot(121);
+subplot(223);
 scatter(Yt,Ypred);hold on
 Xlim1 = 3;
 Ylim1 = 6;
@@ -1288,7 +1272,7 @@ y = linspace(Xlim1,Ylim1);
 plot(x,y,'r');hold off
 xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
 
-subplot(122);
+subplot(224);
 scatter(10.^Yt,10.^Ypred);hold on
 Xlim1 = 1e1;
 Ylim1 = 5e5;
