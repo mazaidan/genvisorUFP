@@ -805,6 +805,50 @@ plot(x,y,'r');hold off
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 
+%%
+D = Exp_smoking;
+%D = Exp_kerosine;
+%D = Exp_gas;
+
+
+figure(8); fig=gcf;
+suptitle('CPC to other vars')
+subplot(221)
+scatter(DATA.PND_c(D,1),DATA.AT_T(D,1));
+xlabel('PNC (CPC)','interpreter','latex')
+ylabel('Temp (AT)','interpreter','latex')
+xlim([1e3 7e5]);ylim([20 35]);grid on
+set(gca, 'XScale', 'log')
+subplot(222)
+scatter(DATA.PND_c(D,1),DATA.AT_RH(D,1));
+xlabel('PNC (CPC)','interpreter','latex')
+ylabel('RH (AT)','interpreter','latex')
+xlim([1e3 7e5]);ylim([10 50]);grid on
+set(gca, 'XScale', 'log')
+
+subplot(223)
+scatter(DATA.PND_c(D,1),DATA.CO_P(D,1));
+xlabel('PNC (CPC)','interpreter','latex')
+ylabel('P (CO)','interpreter','latex')
+xlim([1e3 7e5]);ylim([895 901]);grid on
+set(gca, 'XScale', 'log')
+
+subplot(224)
+scatter(DATA.PND_c(D,1),DATA.PMD_c(D,PMx));
+%scatter(DATA.PND_c(D,1),DATA.LCS_G1(D,1));
+xlabel('PNC (CPC)','interpreter','latex')
+ylabel('PM$_{2.5}$ (AT)','interpreter','latex')
+xlim([1e3 7e5]); 
+ylim([1e0 1e3]);
+grid on
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+
+
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+
+
 
 %% MATRIX PLOT
 close all;clc
@@ -847,7 +891,7 @@ CT = 'Spearman';
 corrP = corr(DATAx,'Type',CT,'Rows','pairwise');
 
 clc
-figure(8);fig=gcf; FS=26;
+figure(9);fig=gcf; FS=26;
 
 if true
     Rms= abs(corrP);
@@ -885,7 +929,7 @@ set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 %% %% HISTOGRAMS
 close all; clc
-figure(8); fig = gcf;
+figure(10); fig = gcf;
 fig.Position = [100 100 540 400].*2.5;
 subplot(5,3,1);
 histogram(DATA.PND_c(:,1),'BinWidth',.05,'FaceColor','b');
@@ -1004,7 +1048,7 @@ disp('For normalization of temp, RH and P, perhaps the best is to use max and mi
 
 
 %close all; clc
-figure(9); fig = gcf;
+figure(11); fig = gcf;
 fig.Position = [100 100 540 400].*2.5;
 subplot(5,3,1);
 histogram(DATA.PND_c(:,1),'BinWidth',.05,'FaceColor','b');
@@ -1119,7 +1163,120 @@ hold off
 % 1) use all data, randominze, and predict CPC
 % 2) use Exp_smoking, estimate Exp_kerosine and Exp_gas
 
+D = Exp_smoking; 
+%D = Exp_kerosine;
+%D = Exp_gas;
+%D =[Exp_smokimg;Exp_kerosine;Exp_gas];
 
+% For met vars
+% B = rescale(A,l,u,'InputMin',inmin,'InputMax',inmax) uses the formula
+% B = l + [(A-inmin)./(inmax-inmin)].*(u-l)
+% For aerosol, simply take log10
+
+DATAm1 = [DATA.AT_T(D,1),DATA.AT_RH(D,1),DATA.CO_P(D,1),DATA.LCS_G1(D,1),DATA.PND_c(D,1)];
+DATAm2 = zeros(size(DATAm1));
+for n=1:size(DATAm1,2)
+    if n == 1
+        disp('Temp')
+        inmin = 10; inmax = 40; l = 0; u = 1;
+    elseif n==2
+        disp('RH')
+        inmin = 10; inmax = 50; l = 0; u = 1;
+    elseif n==3 
+        disp('P')
+        inmin = 890; inmax = 910; l = 0; u = 1;
+    else
+        disp('PM2.5')
+    end
+    
+    if n==1 || n==2 || n==3
+        disp('met var')
+        DATAm2(:,n) = l + [(DATAm1(:,n)-inmin)./(inmax-inmin)].*(u-l);
+    else
+        disp('Aerosol')
+        DATAm2(:,n) = log10(DATAm1(:,n));
+    end
+end
+
+%% Linear model
+X = DATAm2(:,1:4);
+Y = DATAm2(:,5);
+
+
+mdl = fitlm(X,Y);
+Ypred = predict(mdl,X);
+
+figure(12);
+subplot(121);
+scatter(Y,Ypred);hold on
+Xlim1 = 3;
+Ylim1 = 6;
+xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+x = linspace(Xlim1,Ylim1);
+y = linspace(Xlim1,Ylim1);
+plot(x,y,'r');hold off
+xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
+
+subplot(122);
+scatter(10.^Y,10.^Ypred);hold on
+Xlim1 = 1e1;
+Ylim1 = 5e5;
+xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+x = linspace(Xlim1,Ylim1);
+y = linspace(Xlim1,Ylim1);
+plot(x,y,'r');hold off
+xlabel('Real PNC (CPC)');ylabel('Est PNC (CPC)')
+
+
+%% ANN model
+clc
+
+inputs = X';
+targets = Y';
+ 
+
+% Create a Fitting Network
+hiddenLayerSize = 10;
+net = fitnet(hiddenLayerSize);
+
+% Set up Division of Data for Training, Validation, Testing
+net.divideParam.trainRatio = 70/100;
+net.divideParam.valRatio = 15/100;
+net.divideParam.testRatio = 15/100;
+ 
+% Train the Network
+[net,tr] = train(net,inputs,targets);
+ 
+% Test the Network
+outputs = net(inputs);
+errors = gsubtract(outputs,targets);
+performance = perform(net,targets,outputs)
+ 
+% View the Network
+%view(net)
+
+Ypred = outputs;
+
+figure(13);
+subplot(121);
+scatter(Y,Ypred);hold on
+Xlim1 = 3;
+Ylim1 = 6;
+xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+x = linspace(Xlim1,Ylim1);
+y = linspace(Xlim1,Ylim1);
+plot(x,y,'r');hold off
+xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
+
+subplot(122);
+scatter(10.^Y,10.^Ypred);hold on
+Xlim1 = 1e1;
+Ylim1 = 5e5;
+xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+x = linspace(Xlim1,Ylim1);
+y = linspace(Xlim1,Ylim1);
+plot(x,y,'r');hold off
+xlabel('Real PNC (CPC)');ylabel('Est PNC (CPC)')
 
 %%
 clc
