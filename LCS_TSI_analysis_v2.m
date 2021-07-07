@@ -1164,8 +1164,8 @@ hold off
 % 2) use Exp_smoking, estimate Exp_kerosine and Exp_gas
 
 D = Exp_smoking; 
-%D = Exp_kerosine;
-%D = Exp_gas;
+Dt = Exp_kerosine;
+%Dt = Exp_gas;
 %D =[Exp_smokimg;Exp_kerosine;Exp_gas];
 
 % For met vars
@@ -1175,6 +1175,10 @@ D = Exp_smoking;
 
 DATAm1 = [DATA.AT_T(D,1),DATA.AT_RH(D,1),DATA.CO_P(D,1),DATA.LCS_G1(D,1),DATA.PND_c(D,1)];
 DATAm2 = zeros(size(DATAm1));
+
+DATAt1 = [DATA.AT_T(Dt,1),DATA.AT_RH(Dt,1),DATA.CO_P(Dt,1),DATA.LCS_G1(Dt,1),DATA.PND_c(Dt,1)];
+DATAt2 = zeros(size(DATAt1));
+
 for n=1:size(DATAm1,2)
     if n == 1
         disp('Temp')
@@ -1192,9 +1196,11 @@ for n=1:size(DATAm1,2)
     if n==1 || n==2 || n==3
         disp('met var')
         DATAm2(:,n) = l + [(DATAm1(:,n)-inmin)./(inmax-inmin)].*(u-l);
+        DATAt2(:,n) = l + [(DATAt1(:,n)-inmin)./(inmax-inmin)].*(u-l);
     else
         disp('Aerosol')
         DATAm2(:,n) = log10(DATAm1(:,n));
+        DATAt2(:,n) = log10(DATAt1(:,n));
     end
 end
 
@@ -1202,13 +1208,20 @@ end
 X = DATAm2(:,1:4);
 Y = DATAm2(:,5);
 
+Xt = DATAt2(:,1:4);
+Yt = DATAt2(:,5);
+
+Xt = X;
+Yt = Y;
+
+
 
 mdl = fitlm(X,Y);
-Ypred = predict(mdl,X);
+Ypred = predict(mdl,Xt);
 
 figure(12);
 subplot(121);
-scatter(Y,Ypred);hold on
+scatter(Yt,Ypred);hold on
 Xlim1 = 3;
 Ylim1 = 6;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
@@ -1218,7 +1231,7 @@ plot(x,y,'r');hold off
 xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
 
 subplot(122);
-scatter(10.^Y,10.^Ypred);hold on
+scatter(10.^Yt,10.^Ypred);hold on
 Xlim1 = 1e1;
 Ylim1 = 5e5;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
@@ -1227,16 +1240,22 @@ y = linspace(Xlim1,Ylim1);
 plot(x,y,'r');hold off
 xlabel('Real PNC (CPC)');ylabel('Est PNC (CPC)')
 
-
+ 
 %% ANN model
 clc
 
 inputs = X';
 targets = Y';
+
+% sementara:
+Xt = X;
+Yt = Y;
+
+inputs_t = Xt';
  
 
 % Create a Fitting Network
-hiddenLayerSize = 10;
+hiddenLayerSize = 15;
 net = fitnet(hiddenLayerSize);
 
 % Set up Division of Data for Training, Validation, Testing
@@ -1248,9 +1267,10 @@ net.divideParam.testRatio = 15/100;
 [net,tr] = train(net,inputs,targets);
  
 % Test the Network
-outputs = net(inputs);
-errors = gsubtract(outputs,targets);
-performance = perform(net,targets,outputs)
+%outputs = net(inputs);
+outputs = net(inputs_t);
+%errors = gsubtract(outputs,targets);
+%performance = perform(net,targets,outputs)
  
 % View the Network
 %view(net)
@@ -1259,7 +1279,7 @@ Ypred = outputs;
 
 figure(13);
 subplot(121);
-scatter(Y,Ypred);hold on
+scatter(Yt,Ypred);hold on
 Xlim1 = 3;
 Ylim1 = 6;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
@@ -1269,7 +1289,7 @@ plot(x,y,'r');hold off
 xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
 
 subplot(122);
-scatter(10.^Y,10.^Ypred);hold on
+scatter(10.^Yt,10.^Ypred);hold on
 Xlim1 = 1e1;
 Ylim1 = 5e5;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
