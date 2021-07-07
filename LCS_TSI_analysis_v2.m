@@ -27,10 +27,6 @@ end
 
 %%
 clear;clc;close all
-syn_s = 2; 
-syn_k = 2;
-syn_n = 2;
-
 
 load('Data_clean_processed.mat')
 
@@ -554,6 +550,16 @@ cb.Layout.Tile = 'east';
 %h=colorbar('Position', [hp4(1)+hp4(3)+0.01  hp4(2)  0.0455  hp4(2)+hp4(3)*2.1]);
 
 %colorbar(h1,jet)
+%suptitle('After syncronize the data')
+
+
+% - Build title axes and title.
+ axes( 'Position', [0, 0.95, 1, 0.05] ) ;
+ set( gca, 'Color', 'None', 'XColor', 'White', 'YColor', 'White' ) ;
+ text( 0.5, 0, 'After syncronize', 'FontSize', 14', 'FontWeight', 'Bold', ...
+      'HorizontalAlignment', 'Center', 'VerticalAlignment', 'Bottom' ) ;
+
+
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 figure(21);fig=gcf; FS=26; PMx4=33;
@@ -631,6 +637,12 @@ set(gca, 'YScale', 'log','colorscale','log')
 
 cb = colorbar;
 cb.Layout.Tile = 'east';
+
+% - Build title axes and title.
+ axes( 'Position', [0, 0.95, 1, 0.05] ) ;
+ set( gca, 'Color', 'None', 'XColor', 'White', 'YColor', 'White' ) ;
+ text( 0.5, 0, 'Before syncronize', 'FontSize', 14', 'FontWeight', 'Bold', ...
+      'HorizontalAlignment', 'Center', 'VerticalAlignment', 'Bottom' ) ;
 
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
