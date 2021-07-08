@@ -1329,30 +1329,58 @@ for n = 1: Di
         disp('PM2.5')
         DATAi1(:,n) = log10(DATAi(:,n));
     else
-        DATAi1(:,n) = l + [(DATAi(:,n)-inmin)./(inmax-inmin)].*(u-l);
+        %DATAi1(:,n) = l + [(DATAi(:,n)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,n) = DATAi(:,n);
     end
 end
 
-DATAo  = [DATA.PND_c(Da,1)];
+%
+if Di == 4
+    figure(13)
+    for n=1:4
+        subplot(2,5,n);plot(DATAi(:,n),'.');hold on
+        subplot(2,5,n+5);plot(DATAi1(:,n),'.');
+    end
+    subplot(2,5,5);plot(DATAo(:,1),'.');
+    subplot(2,5,10);plot(DATAo1(:,1),'.');
+    hold off
+    
+    %
+    %%CPC = DATA.PND_c([Ds;Dk;Dg],1);
+    CPC = DATA.PND_c([Ds;Dk;Dg],1);
+    CPClog = log10(CPC);
+    CPCgradient = gradient(CPC);
+    CPCdiff = diff(CPC);
+    CPCloggradient = gradient(CPClog);
+    idx = find(CPCgradient <= nanmedian(CPCgradient)+10);
+    CPCclean =CPC;
+    CPCclean(idx,:)=nan;
+    %CPCclean = CPC(idx,:);
+    
+    figure(14); 
+    subplot(511);plot(CPC,'b.');
+    hold on; plot(CPCgradient,'r.'); hold off
+    subplot(512);plot(CPClog,'b.');
+    hold on; plot(CPCloggradient,'r.'); hold off
+    subplot(513);plot(CPCgradient,'b.');hold on
+    subplot(513);plot(CPCloggradient,'r.');hold off
+    subplot(514);plot(CPC,'b.');hold on;plot(CPCclean,'r.');hold off
+    subplot(515);plot(log10(CPC),'b.');hold on;plot(log10(CPCclean),'r.');hold off
+    %
+end
+
+DATAo  = CPCclean;
+%DATAo  = [DATA.PND_c(Da,1)];
 DATAo1 = log10(DATAo);
 
-%%
-figure(13)
-for n=1:4
-    subplot(2,5,n);plot(DATAi(:,n),'.');hold on
-    subplot(2,5,n+5);plot(DATAi1(:,n),'.');
-end
-subplot(2,5,5);plot(DATAo(:,1),'.');
-subplot(2,5,10);plot(DATAo1(:,1),'.');
-hold off
+% SELECT TRAINING AND TESTING DATA
 
-%% SELECT TRAINING AND TESTING DATA
-
-method = 1;
+clc
+method = 4;
 if method == 1
     disp('Training and Testing data is the same')
     DATAt  = [DATAi1,DATAo1];
-    DATAt1 =  rmmissing(DATAt);
+    DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
     Xtr = DATAt1(:,1:end-1);
     Ytr = DATAt1(:,end);
     Xte = DATAt1(:,1:end-1);
@@ -1363,17 +1391,37 @@ elseif method == 2
     Ytr = DATAo1(Ds,:);
     Xte = DATAi1(Ds,:);
     Yte = DATAo1(Ds,:); 
+    
 elseif method == 3
+    disp('Training and Testing data only for smoking and kerosene experiments')
+    Xtr = DATAi1([Ds:Dk],:);
+    Ytr = DATAo1([Ds:Dk],:);
+    Xte = DATAi1([Ds:Dk],:);
+    Yte = DATAo1([Ds:Dk],:); 
+
+elseif method == 4
+    disp('Training and Testing data only for smoking, kerosene and gas experiments')  
+    Xtr = DATAi1([Ds:Dk:Dg],:);
+    Ytr = DATAo1([Ds:Dk:Dg],:);
+    Xte = DATAi1([Ds:Dk:Dg],:);
+    Yte = DATAo1([Ds:Dk:Dg],:); 
+    
+elseif method == 5
     disp('Training and Testing data are randomized')
-    p = size(DATAi1,1);
+    
+    DATAt  = [DATAi1,DATAo1];
+    DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
+    
+    percent = 70/100;
+    p = size(DATAt1,1);
     c = randperm(p)';
-    tr = c( 1 : roundn(0.7 * p,0)     , 1);
-    te = c( roundn(0.7 * p,0)+1 : end , 1);
-        
-    Xtr = DATAi1(tr,:);
-    Ytr = DATAo1(tr,:);
-    Xte = DATAi1(te,1);
-    Yte = DATAo1(te,1); 
+    tr = c( 1 : roundn(percent * p,0)     , 1);
+    te = c( roundn(percent * p,0)+1 : end , 1);
+    
+    Xtr = DATAt1(tr,1:end-1);
+    Ytr = DATAt1(tr,end);
+    Xte = DATAt1(te,1:end-1);
+    Yte = DATAt1(te,end); 
 end
 
 
@@ -1394,7 +1442,7 @@ inputs = X';
 targets = Y';
 inputs_t = Xt';
 % Create a Fitting Network
-hiddenLayerSize = 15;
+hiddenLayerSize = 20;%15;
 net = fitnet(hiddenLayerSize);
 % Set up Division of Data for Training, Validation, Testing
 net.divideParam.trainRatio = 70/100;
@@ -1404,7 +1452,7 @@ net.divideParam.testRatio = 15/100;
 [net,tr] = train(net,inputs,targets);
  % Test the Network
 outputs = net(inputs_t);
-Ypred = outputs;
+Ypred_snn = outputs;
 
 figure(12);
 subplot(221);
@@ -1419,8 +1467,8 @@ xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
 
 subplot(222);
 scatter(10.^Yt,10.^Ypred_lm);hold on
-Xlim1 = 1e1;
-Ylim1 = 5e5;
+Xlim1 = 1e0;
+Ylim1 = 7.5e5;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
 x = linspace(Xlim1,Ylim1);
 y = linspace(Xlim1,Ylim1);
@@ -1428,7 +1476,7 @@ plot(x,y,'r');hold off
 xlabel('Real PNC (CPC)');ylabel('Est PNC (CPC)')
 
 subplot(223);
-scatter(Yt,Ypred);hold on
+scatter(Yt,Ypred_snn);hold on
 Xlim1 = 3;
 Ylim1 = 6;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
@@ -1438,14 +1486,28 @@ plot(x,y,'r');hold off
 xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
 
 subplot(224);
-scatter(10.^Yt,10.^Ypred);hold on
-Xlim1 = 1e1;
-Ylim1 = 5e5;
+scatter(10.^Yt,10.^Ypred_snn);hold on
+Xlim1 = 1e0;
+Ylim1 = 7.5e5;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
 x = linspace(Xlim1,Ylim1);
 y = linspace(Xlim1,Ylim1);
 plot(x,y,'r');hold off
 xlabel('Real PNC (CPC)');ylabel('Est PNC (CPC)')
+
+
+
+%% THE BEST SOLUTIONS SO FAR ARE:
+% BY USING Smoking experiment only
+% (i) it seems that the upper regime is difficult to predict,
+% (ii) there may be a problem with gas experiments, check inputs and
+% outputs again for gas experiment because it give warning:
+% "Warning: Regression design matrix is rank deficient to within machine
+% precision."
+% solution: https://www.mathworks.com/matlabcentral/answers/637610-regression-design-matrix-is-rank-deficient-what-to-do-next
+% ANOTHER SOLUTION:
+% We may need to establish a model, such as MoE, where aerosol models are 
+% divided into different regimes
 
 
 %%
