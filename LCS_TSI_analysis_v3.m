@@ -1382,10 +1382,10 @@ end
 
 
 
-% SELECT TRAINING AND TESTING DATA
+%% SELECT TRAINING AND TESTING DATA
 
 clc
-method = 1;
+method = 5;
 if method == 1
     disp('Training and Testing data is the same')
     DATAt  = [DATAi1,DATAo1];
@@ -1460,7 +1460,46 @@ elseif method == 5
     Xte = DATAt1(te,1:end-1);
     Yte = DATAt1(te,end); 
 elseif method ==6
-    disp('FFT feature')
+    disp('Wavelet feature')
+    
+    
+    DATAt  = [DATAi1,DATAo1];
+    DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
+    
+    for n =4
+        if n==4
+            d = 10.^(DATAt1(:,n))';
+        else
+            d = DATAt1(:,n)';
+        end
+        wv = 'db2';
+        [c,l] = wavedec(d,3,wv);
+        %xs = waverec(c,l,wv);
+        xs = wrcoef('a',c,l,'sym4',2);
+        err = norm(d-xs)
+        % figure(100);plot(d);hold on;plot(xs,'r--');hold off
+        
+        [cd1,cd2,cd3] = detcoef(c,l,[1 2 3]);
+        
+        DATAt1(:,n) = xs' ;
+        %DATAt1(:,n) = d ;
+        
+        %xden = wdenoise(d);
+        %figure(100);plot(d);hold on;plot(xden,'r--');hold off
+        %DATAt1(:,n) = xden ;
+    end
+    
+    percent = 70/100;
+    p = size(DATAt1,1);
+    c = randperm(p)';
+    tr = c( 1 : roundn(percent * p,0)     , 1);
+    te = c( roundn(percent * p,0)+1 : end , 1);
+    
+    Xtr = DATAt1(tr,1:end-1);
+    Ytr = DATAt1(tr,end);
+    Xte = DATAt1(te,1:end-1);
+    Yte = DATAt1(te,end);
+    
     
 end
 
@@ -1485,9 +1524,9 @@ inputs_t = Xt';
 hiddenLayerSize = 100;25;20;%15;
 net = fitnet(hiddenLayerSize);
 % Set up Division of Data for Training, Validation, Testing
-net.divideParam.trainRatio = 70/100;
+net.divideParam.trainRatio = 85/100;%70/100;
 net.divideParam.valRatio = 15/100;
-net.divideParam.testRatio = 15/100;
+net.divideParam.testRatio = 0/100;
  % Train the Network
 [net,tr] = train(net,inputs,targets);
  % Test the Network
@@ -1508,7 +1547,7 @@ xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
 subplot(222);
 scatter(10.^Yt,10.^Ypred_lm);hold on
 Xlim1 = 1e0;
-Ylim1 = 7.5e5;
+Ylim1 = 1e6;7.5e5;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
 x = linspace(Xlim1,Ylim1);
 y = linspace(Xlim1,Ylim1);
@@ -1528,7 +1567,7 @@ xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
 subplot(224);
 scatter(10.^Yt,10.^Ypred_snn);hold on
 Xlim1 = 1e0;
-Ylim1 = 7.5e5;
+Ylim1 = 1e6; 7.5e5;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
 x = linspace(Xlim1,Ylim1);
 y = linspace(Xlim1,Ylim1);
@@ -1546,7 +1585,8 @@ xlabel('Real PNC (CPC)');ylabel('Est PNC (CPC)')
 % precision."
 % solution: https://www.mathworks.com/matlabcentral/answers/637610-regression-design-matrix-is-rank-deficient-what-to-do-next
 % SOLUTION (i)
-% Time-frequency domains features 
+% Time-frequency domains features, study wavelet, find correlation within
+% wavelet transform
 %
 % SOLUTION (ii)
 % We may need to establish a model, such as MoE, where aerosol models are 
