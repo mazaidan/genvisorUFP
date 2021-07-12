@@ -1334,16 +1334,10 @@ for n = 1: Di
     end
 end
 
+
 %
 if Di == 4
-    figure(13)
-    for n=1:4
-        subplot(2,5,n);plot(DATAi(:,n),'.');hold on
-        subplot(2,5,n+5);plot(DATAi1(:,n),'.');
-    end
-    subplot(2,5,5);plot(DATAo(:,1),'.');
-    subplot(2,5,10);plot(DATAo1(:,1),'.');
-    hold off
+    
     
     %
     %%CPC = DATA.PND_c([Ds;Dk;Dg],1);
@@ -1357,6 +1351,23 @@ if Di == 4
     CPCclean(idx,:)=nan;
     %CPCclean = CPC(idx,:);
     
+    DATAo  = CPCclean;
+    %DATAo  = [DATA.PND_c(Da,1)];
+    DATAo1 = log10(DATAo);
+
+    
+    
+    figure(13)
+    for n=1:4
+        subplot(2,5,n);plot(DATAi(:,n),'.');hold on
+        subplot(2,5,n+5);plot(DATAi1(:,n),'.');
+    end
+    subplot(2,5,5);plot(DATAo(:,1),'.');
+    subplot(2,5,10);plot(DATAo1(:,1),'.');
+    hold off
+    
+    
+    
     figure(14); 
     subplot(511);plot(CPC,'b.');
     hold on; plot(CPCgradient,'r.'); hold off
@@ -1369,14 +1380,12 @@ if Di == 4
     %
 end
 
-DATAo  = CPCclean;
-%DATAo  = [DATA.PND_c(Da,1)];
-DATAo1 = log10(DATAo);
+
 
 % SELECT TRAINING AND TESTING DATA
 
 clc
-method = 4;
+method = 1;
 if method == 1
     disp('Training and Testing data is the same')
     DATAt  = [DATAi1,DATAo1];
@@ -1387,24 +1396,52 @@ if method == 1
     Yte = DATAt1(:,end); 
 elseif method == 2
     disp('Training and Testing data only for smoking experiment')
-    Xtr = DATAi1(Ds,:);
-    Ytr = DATAo1(Ds,:);
-    Xte = DATAi1(Ds,:);
-    Yte = DATAo1(Ds,:); 
+    
+    DATAt  = [DATAi1(Ds,:),DATAo1(Ds,:)];
+    DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
+    
+    Xtr = DATAt1(:,1:end-1);
+    Ytr = DATAt1(:,end);
+    Xte = DATAt1(:,1:end-1);
+    Yte = DATAt1(:,end);
+    
+    %Xtr = DATAi1(Ds,:);
+    %Ytr = DATAo1(Ds,:);
+    %Xte = DATAi1(Ds,:);
+    %Yte = DATAo1(Ds,:); 
     
 elseif method == 3
     disp('Training and Testing data only for smoking and kerosene experiments')
-    Xtr = DATAi1([Ds:Dk],:);
-    Ytr = DATAo1([Ds:Dk],:);
-    Xte = DATAi1([Ds:Dk],:);
-    Yte = DATAo1([Ds:Dk],:); 
+    
+    DATAt  = [DATAi1([Ds;Dk],:),DATAo1([Ds;Dk],:)];
+    DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
+    
+    Xtr = DATAt1(:,1:end-1);
+    Ytr = DATAt1(:,end);
+    Xte = DATAt1(:,1:end-1);
+    Yte = DATAt1(:,end);
+    
+    %Xtr = DATAi1([Ds:Dk],:);
+    %Ytr = DATAo1([Ds:Dk],:);
+    %Xte = DATAi1([Ds:Dk],:);
+    %Yte = DATAo1([Ds:Dk],:); 
 
 elseif method == 4
+    
     disp('Training and Testing data only for smoking, kerosene and gas experiments')  
-    Xtr = DATAi1([Ds:Dk:Dg],:);
-    Ytr = DATAo1([Ds:Dk:Dg],:);
-    Xte = DATAi1([Ds:Dk:Dg],:);
-    Yte = DATAo1([Ds:Dk:Dg],:); 
+    
+    DATAt  = [DATAi1([Ds;Dk;Dg],:), DATAo1([Ds;Dk;Dg],:)];
+    DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
+    
+    Xtr = DATAt1(:,1:end-1);
+    Ytr = DATAt1(:,end);
+    Xte = DATAt1(:,1:end-1);
+    Yte = DATAt1(:,end);
+    
+    %Xtr = DATAi1([Ds:Dk:Dg],:);
+    %Ytr = DATAo1([Ds:Dk:Dg],:);
+    %Xte = DATAi1([Ds:Dk:Dg],:);
+    %Yte = DATAo1([Ds:Dk:Dg],:); 
     
 elseif method == 5
     disp('Training and Testing data are randomized')
@@ -1422,6 +1459,9 @@ elseif method == 5
     Ytr = DATAt1(tr,end);
     Xte = DATAt1(te,1:end-1);
     Yte = DATAt1(te,end); 
+elseif method ==6
+    disp('FFT feature')
+    
 end
 
 
@@ -1442,7 +1482,7 @@ inputs = X';
 targets = Y';
 inputs_t = Xt';
 % Create a Fitting Network
-hiddenLayerSize = 20;%15;
+hiddenLayerSize = 100;25;20;%15;
 net = fitnet(hiddenLayerSize);
 % Set up Division of Data for Training, Validation, Testing
 net.divideParam.trainRatio = 70/100;
@@ -1505,9 +1545,13 @@ xlabel('Real PNC (CPC)');ylabel('Est PNC (CPC)')
 % "Warning: Regression design matrix is rank deficient to within machine
 % precision."
 % solution: https://www.mathworks.com/matlabcentral/answers/637610-regression-design-matrix-is-rank-deficient-what-to-do-next
-% ANOTHER SOLUTION:
+% SOLUTION (i)
+% Time-frequency domains features 
+%
+% SOLUTION (ii)
 % We may need to establish a model, such as MoE, where aerosol models are 
 % divided into different regimes
+%
 
 
 %%
