@@ -1451,6 +1451,7 @@ elseif method == 5
     
     percent = 70/100;
     p = size(DATAt1,1);
+    rng(1986);s = rng;
     c = randperm(p)';
     tr = c( 1 : roundn(percent * p,0)     , 1);
     te = c( roundn(percent * p,0)+1 : end , 1);
@@ -1469,28 +1470,42 @@ elseif method ==6
     for n =4
         if n==4
             d = 10.^(DATAt1(:,n))';
+        elseif n == 5
+            d = 10.^(DATAt1(:,n))';
         else
             d = DATAt1(:,n)';
         end
         wv = 'db2';
         [c,l] = wavedec(d,3,wv);
-        %xs = waverec(c,l,wv);
-        xs = wrcoef('a',c,l,'sym4',2);
+        approx = appcoef(c,l,'db2');
+        xs = waverec(c,l,wv);
+        %xs = wrcoef('a',c,l,'sym4',2);
         err = norm(d-xs)
-        % figure(100);plot(d);hold on;plot(xs,'r--');hold off
+        % figure(100);plot(d,'b.');hold on;plot(xs,'r--');hold off
         
         [cd1,cd2,cd3] = detcoef(c,l,[1 2 3]);
         
-        DATAt1(:,n) = xs' ;
+        cfs = cwt(d,'amor');
+        %cfs = waveletScattering(d');
+        
+        d1 = abs(cfs(1,:)) ;
+        
+        
+        DATAt1(:,n) = abs(cfs(1,:))' ;
+        %DATAt1(:,n) = xs' ;
+        %DATAt1(:,n) = c' ;
         %DATAt1(:,n) = d ;
         
         %xden = wdenoise(d);
         %figure(100);plot(d);hold on;plot(xden,'r--');hold off
         %DATAt1(:,n) = xden ;
+        
+      
     end
     
     percent = 70/100;
     p = size(DATAt1,1);
+    rng(1986);s = rng;
     c = randperm(p)';
     tr = c( 1 : roundn(percent * p,0)     , 1);
     te = c( roundn(percent * p,0)+1 : end , 1);
@@ -1499,6 +1514,8 @@ elseif method ==6
     Ytr = DATAt1(tr,end);
     Xte = DATAt1(te,1:end-1);
     Yte = DATAt1(te,end);
+    
+
     
     
 end
@@ -1573,6 +1590,15 @@ x = linspace(Xlim1,Ylim1);
 y = linspace(Xlim1,Ylim1);
 plot(x,y,'r');hold off
 xlabel('Real PNC (CPC)');ylabel('Est PNC (CPC)')
+
+
+%% WAVELET ANALYSIS
+wavelet = 1;
+if wavelet == 1
+    figure(9)
+    DATA44 = DATA4( ~any( isnan( DATA4 ) | isinf( DATA4 ), 2 ),: );
+    wcoherence(DATA44(:,18),DATA44(:,8),size(DATA44,1)/60,'PhaseDisplayThreshold',0.7)
+end
 
 
 
