@@ -1,12 +1,25 @@
+%% This code is written in MATLAB
+% The purpose aims to develop the estimator for ultra-fine particles based
+% on low-cost sensors
+% Written by:
+% Martha Arbayani Bin Zaidan, Ph.D., Docent, CEng.
+% Research Associate Professor, Nanjing University, China
+% Senior Scientist, Helsinki University, Finland
+
 
 %% UNDERSTANDING AEROSOL DATA:
+% To understand how PND was formed. 
+% In practice, PND was formed using data from CPC, Ptrak and AeroTrak.
+% We also need to understand how PMD was calculated.
 
-clc;clear
+clc;clear;close all
+% select any index in the data
 n=2150;%10000;%2002;
 r=-2;
 load('Data_clean_processed.mat'); D=1;
 %load('Data_processed_Heaters/Data_processed_Kerosene_Heaters.mat'); D=2;
 %load('Data_processed_Heaters/Data_processed_NaturalGas_Heaters.mat'); D=3;
+
 if D == 1
     disp('Smoking Data')
     disp(['CPC+Ptrak+AeroTrak: ',num2str(roundn([CPC(n,8),nan,Ptrak(n,8),AeroTrak_PN(n,8:13)],r))])
@@ -14,7 +27,6 @@ if D == 1
     disp(['PNSD              : ',num2str(roundn(PNSD(n,8:16),r))])
     disp(['PMD               : ',num2str(roundn(PMD(n,8:16),r))])
     disp(['PMSD              : ',num2str(roundn(PMSD(n,8:16),r))])
-
 else 
     disp('Kerosene/Natural Gas Data')
     disp(['CPC+Ptrak+AeroTrak: ',num2str(roundn([CPC(n,2),nan,Ptrak(n,2),AeroTrak_PN(n,2:7)],r))])
@@ -25,8 +37,10 @@ else
 end
 
 
-%%
+%% In this part, we pre-process the data
 clear;clc;close all
+
+% SMOKING ACTIVITIES
 
 load('Data_clean_processed.mat')
 
@@ -114,34 +128,29 @@ T1 = datetime(ISEE_LCS_G202(:,1:6));
 LCS_G2_02 = ISEE_LCS_G202(:,8); % PM2.5
 LCS_G2_02_met = ISEE_LCS_G202_met(:,8:end); % RH, T and P
 LCS_G2_02_T = timetable(T1,LCS_G2_02,LCS_G2_02_met);
-%clear T1 LCS_G2_02 LCS_G2_02_met
-
-%DATA_ts = synchronize(AT_met,AT_PN,CO_met,CPC1,Ptrak1,PND1,PMSD1, ...
-%    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
 
 % https://www.mathworks.com/help/matlab/matlab_prog/clean-timetable-with-missing-duplicate-or-irregular-times.html
 
 % DATAs = DATAsmoking
 
-%if syn_s == 1
     DATAs1 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
             PND3, PMD3, ... % PND1, PMSD1,...
             LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
-%elseif syn_s ==2
+
     DATAs2 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
         PND3, PMD3, ... % PND1, PMSD1,...
         LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
-%else
+
     DATAs3 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
         PND3, PMD3, ... % PND1, PMSD1,...
         LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely');
-%end
 
     DATAs4 =[AeroTrak_met(:,1:6),AT_T,AT_RH,CO_T,CO_RH,CO_P, ...
         DustTrak_c,SidePak_c,PND_c,PMD_c, ...
         LCS_G1,LCS_G2_01,LCS_G2_01_met, ...
         LCS_G2_02,LCS_G2_02_met];
 
+% KEROSENE HEATER
 
 clearvars -except DATAs1 DATAs2 DATAs3 DATAs4% syn_s syn_k syn_n
 load('Data_processed_Heaters/Data_processed_Kerosene_Heaters.mat');
@@ -156,82 +165,66 @@ T1    = datetime(Datey);
 AT_T = AeroTrak_met(:,2);
 AT_RH = AeroTrak_met(:,3);
 AT_met = timetable(T1,AT_T,AT_RH);
-%clear AT_T AT_RH
 
 % ClasOhlson_met
 CO_T   = ClasOhlson_met(:,2);
 CO_RH  = ClasOhlson_met(:,3);
 CO_P   = ClasOhlson_met(:,4);
 CO_met = timetable(T1,CO_T,CO_RH,CO_P);
-%clear CO_T CO_RH CO_P
 
 % DustTrak
 DustTrak_c   = DustTrak(:,2:end);
 DustTrak1 = timetable(T1,DustTrak_c);
-%clear DustTrak_c
 
 % SidePak
 SidePak_c   = SidePak(:,2);
 SidePak1 = timetable(T1,SidePak_c);
-%clear DustTrak_c
 
 % PND
 PND_c   = PND(:,2:end);
 PND1 = timetable(T1,PND_c);
 PND2 = sortrows(PND1);
 PND3 = PND2(1:end-1,:);
-%clear PND_c
 
 % PMD
 PMD_c   = PMD(:,2:end);
 PMD1 = timetable(T1,PMD_c);
 PMD2 = sortrows(PMD1);
 PMD3 = PMD2(1:end-1,:);
-%clear PMD_c
 
 % LCS_G1:
 LCS_G1 = ISEE_LCS_G1(:,2);
 LCS_G1_T = timetable(T1,LCS_G1);
-%clear LCS_G1
 
 % LCS_G2_01 (PM2.5 and MET)
 LCS_G2_01 = ISEE_LCS_G201(:,2); % PM2.5
 LCS_G2_01_met = nan(size(ISEE_LCS_G201_met,1),3); %ISEE_LCS_G201_met(:,8:end); % RH, T and P
 LCS_G2_01_T = timetable(T1,LCS_G2_01,LCS_G2_01_met);
-%clear LCS_G2_01 LCS_G2_01_met
 
 % LCS_G2_02 (PM2.5 and MET)
-%T1 = datetime(ISEE_LCS_G202(:,1:6));
 LCS_G2_02 = ISEE_LCS_G202(:,2); % PM2.5
 LCS_G2_02_met = nan(size(ISEE_LCS_G201_met,1),3);  % ISEE_LCS_G202_met(:,8:end); % RH, T and P
 LCS_G2_02_T = timetable(T1,LCS_G2_02,LCS_G2_02_met);
-%clear LCS_G2_02 LCS_G2_02_met
 
-%if syn_k == 1
     DATAk1 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
             PND3, PMD3, ... % PND1, PMSD1,...
             LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
-%elseif syn_k ==2 
+
     DATAk2 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
             PND3, PMD3, ... % PND1, PMSD1,...
             LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
-%else
+
     DATAk3 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
             PND3, PMD3, ... % PND1, PMSD1,...
             LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely');
-%end
 
     DATAk4 =[Datey,AT_T,AT_RH,CO_T,CO_RH,CO_P, ...
         DustTrak_c,SidePak_c,PND_c,PMD_c, ...
         LCS_G1,LCS_G2_01,LCS_G2_01_met, ...
         LCS_G2_02,LCS_G2_02_met];
 
-
-%DATAk = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
-%    PND3, PMD3, ... % PND1, PMSD1,...
-%    LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
-
-
+% NATURAL GAS HEATER
+    
 clearvars -except DATAs1 DATAs2 DATAs3 DATAs4 DATAk1 DATAk2 DATAk3 DATAk4 % syn_s syn_k syn_n
 load('Data_processed_Heaters/Data_processed_NaturalGas_Heaters.mat')
 
@@ -244,72 +237,60 @@ T1    = datetime(Datey);
 AT_T = AeroTrak_met(:,2);
 AT_RH = AeroTrak_met(:,3);
 AT_met = timetable(T1,AT_T,AT_RH);
-%clear AT_T AT_RH
 
 % ClasOhlson_met
 CO_T   = nan(size(T1)); %ClasOhlson_met(:,2);
 CO_RH  = nan(size(T1)); %ClasOhlson_met(:,3);
 CO_P   = nan(size(T1)); %ClasOhlson_met(:,4);
 CO_met = timetable(T1,CO_T,CO_RH,CO_P);
-%clear CO_T CO_RH CO_P
 
 % DustTrak
 DustTrak_c   = nan(size(T1,1),5); %DustTrak(:,2:end);
 DustTrak1 = timetable(T1,DustTrak_c);
-%clear DustTrak_c
 
 % SidePak
 SidePak_c   = nan(size(T1)); %SidePak(:,2);
 SidePak1 = timetable(T1,SidePak_c);
-%clear DustTrak_c
 
 % PND
 PND_c   = PND(:,2:end);
 PND1 = timetable(T1,PND_c);
 PND2 = sortrows(PND1);
 PND3 = PND2(1:end-1,:);
-%clear PND_c
 
 % PMD
 PMD_c   = PMD(:,2:end);
 PMD1 = timetable(T1,PMD_c);
 PMD2 = sortrows(PMD1);
 PMD3 = PMD2(1:end-1,:);
-%clear PMD_c
 
 % LCS_G1:
 LCS_G1 = ISEE_LCS_G1(:,2);
 LCS_G1_T = timetable(T1,LCS_G1);
-%clear LCS_G1
 
 % LCS_G2_01 (PM2.5 and MET)
 LCS_G2_01 = ISEE_LCS_G201(:,2); % PM2.5
 LCS_G2_01_met = ISEE_LCS_G201_met(:,2:end); % RH, T and P
 LCS_G2_01_T = timetable(T1,LCS_G2_01,LCS_G2_01_met);
-%clear LCS_G2_01 LCS_G2_01_met
 
 % LCS_G2_02 (PM2.5 and MET)
-%T1 = datetime(ISEE_LCS_G202(:,1:6));
 LCS_G2_02 = ISEE_LCS_G202(:,2); % PM2.5
 LCS_G2_02_met = ISEE_LCS_G202_met(:,2:end); % RH, T and P
 LCS_G2_02_T = timetable(T1,LCS_G2_02,LCS_G2_02_met);
-%clear LCS_G2_02 LCS_G2_02_met
 
-%if syn_n == 1
-    DATAn1 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+DATAn1 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
             PND3, PMD3, ... % PND1, PMSD1,...
             LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'regular','linear','TimeStep',minutes(1));
-%elseif syn_n==2
-    DATAn2 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+
+DATAn2 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
             PND3, PMD3, ... % PND1, PMSD1,...
             LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely','mean');
-%else
-    DATAn3 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
+
+DATAn3 = synchronize(AT_met, CO_met, DustTrak1, SidePak1, ...
             PND3, PMD3, ... % PND1, PMSD1,...
             LCS_G1_T,LCS_G2_01_T,LCS_G2_02_T,'minutely');
-%end
 
- DATAn4 =[Datey,AT_T,AT_RH,CO_T,CO_RH,CO_P, ...
+DATAn4 =[Datey,AT_T,AT_RH,CO_T,CO_RH,CO_P, ...
         DustTrak_c,SidePak_c,PND_c,PMD_c, ...
         LCS_G1,LCS_G2_01,LCS_G2_01_met, ...
         LCS_G2_02,LCS_G2_02_met];
@@ -326,21 +307,30 @@ DATA4_label = {'year','month','day','hour','minute','second',...
         'LCS_G2_01','LCS_G2_01_RH', 'LCS_G2_01_T', 'LCS_G2_01_P', ...
         'LCS_G2_02','LCS_G2_02_RH', 'LCS_G2_02_T', 'LCS_G2_02_P'};
 
+% There are 4 different types of DATA for smoking, kerosine and natural gas
+% The most reliable one is DATA2, because it syncronizes well
+% DATA4 is the original data from Tareq
 
- 
 DATA1 = [DATAs1;DATAk1;DATAn1];
 DATA2 = [DATAs2;DATAk2;DATAn2];
 DATA3 = [DATAs3;DATAk3;DATAn3];
 DATA4 = [DATAs4;DATAk4;DATAn4];
 
 clearvars -except DATA1 DATA2 DATA3 DATA4 DATA4_label %DATAs DATAk DATAn syn_s syn_k syn_n
+ 
+
+%% 
+% PLOTTING LCS measurements 
+% PLOTTING PM2.5 and UFP (PND) using DATA2 (after syncronization)
+% PLOTTING PM2.5 and UFP (PND) using DATA4 (before syncronization)
 
 
-%%
 DATA = DATA2;
 
 clc
-figure(1); fig =gcf; ms=10;
+figure(1); fig =gcf; 
+fig.Position = [100 100 540 400].*2.5;
+ms=10;
 subplot(411)
 plot(DATA.AT_T,'b.','MarkerSize',ms);hold on
 plot(DATA.CO_T,'r.','MarkerSize',ms);
@@ -354,9 +344,7 @@ legend('AeroTrak','ClasOhson','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpr
 ylim([10 40]); grid on
 xlabel('Time Index','interpreter','latex'); ylabel('Temperature ($\circ$C)','interpreter','latex')
 hold off
-%set(findall(fig,'-property','FontSize'),'FontSize',22);
 
-%figure(2); fig =gcf;
 subplot(412)
 plot(DATA.AT_RH,'b.','MarkerSize',ms);hold on
 plot(DATA.CO_RH,'r.','MarkerSize',ms);
@@ -370,9 +358,7 @@ legend('AeroTrak','ClasOhson','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpr
 ylim([10 70]); grid on
 xlabel('Time Index','interpreter','latex'); ylabel('Relative Humidity (\%)','interpreter','latex')
 hold off
-%set(findall(fig,'-property','FontSize'),'FontSize',22);
 
-%figure(3); fig =gcf;
 subplot(413)
 plot(DATA.CO_P,'r.','MarkerSize',ms);hold on
 plot(DATA.LCS_G2_01_met(:,3),'g.','MarkerSize',ms);
@@ -387,9 +373,6 @@ xlabel('Time Index','interpreter','latex'); ylabel('Pressure (mbar)','interprete
 hold off
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
-
-clc
-%figure(4); fig =gcf; ms = 10;
 subplot(414)
 plot(DATA.PMD_c(:,7),'b.','MarkerSize',ms); hold on
 plot(DATA.DustTrak_c(:,2),'r.','MarkerSize',ms);
@@ -408,8 +391,6 @@ legend('PMD','DustTrak','SidePak','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','$\ma
 hold off
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
-
-% figure(11);plot(PMD(:,10));hold on;plot(DATA.PMD_c(Exp_smoking,3),'r--');hold off
 
 % The plans
 % Smoking experiment: we perform sensors validation for met variables 
@@ -441,7 +422,6 @@ set(findall(fig,'-property','FontSize'),'FontSize',22);
 % PROBLEMS:
 % 1: the interpolation may not work well
 
-
 % Aerosol size distribution
 
 Exp_smoking = [1:1:11521]';
@@ -451,13 +431,13 @@ Exp_gas = [30243:1:54721]';
 inst_res_PND = [0.025,0.3,0.5,1,2.5,5,10,45].*1e3;
 Time_index   = [1:1:size(DATA.T1,1)]';
 
-
-clc
-figure(2);fig=gcf; FS=26; PMx=6;
+% AFTER SYNCRONIZATION (DATA2)
+figure(2);fig=gcf; 
+fig.Position = [100 100 540 400].*2.5;
+FS=26; PMx=6;
 lc =1e0; hc=10e5;
 tiledlayout(2,3);
-nexttile
-%subplot(231)
+nexttile % subplot(231)
 plot(Time_index(Exp_smoking,1),DATA.PMD_c(Exp_smoking,PMx),'b.'); hold on
 plot(Time_index(Exp_smoking,1),DATA.LCS_G1(Exp_smoking,1),'g.');
 plot(Time_index(Exp_smoking,1),DATA.LCS_G2_01(Exp_smoking,1),'r.');
@@ -470,13 +450,11 @@ ylabel('PM$_{2.5}$ ($\mu$g/m$^3$)','interpreter','latex')
 title('PM$_{2.5}$ Smoking','interpreter','latex')
 set(gca, 'YScale', 'log')
 
-nexttile
-%subplot(232)
+nexttile % subplot(232)
 plot(Time_index(Exp_kerosine,1),DATA.PMD_c(Exp_kerosine,PMx),'b.'); hold on
 plot(Time_index(Exp_kerosine,1),DATA.LCS_G1(Exp_kerosine,1),'g.');
 plot(Time_index(Exp_kerosine,1),DATA.LCS_G2_01(Exp_kerosine,1),'r.');
 plot(Time_index(Exp_kerosine,1),DATA.LCS_G2_02(Exp_kerosine,1),'m.');
-
 hold off
 legend('PMD','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
 ylim([1e-1 1e3]); grid on
@@ -485,8 +463,7 @@ ylabel('PM$_{2.5}$ ($\mu$g/m$^3$)','interpreter','latex')
 title('PM$_{2.5}$ Kerosene','interpreter','latex')
 set(gca, 'YScale', 'log')
 
-nexttile
-%subplot(233)
+nexttile % subplot(233)
 plot(Time_index(Exp_gas,1),DATA.PMD_c(Exp_gas,PMx),'b.'); hold on
 plot(Time_index(Exp_gas,1),DATA.LCS_G1(Exp_gas,1),'g.');
 plot(Time_index(Exp_gas,1),DATA.LCS_G2_01(Exp_gas,1),'r.');
@@ -499,45 +476,32 @@ ylabel('PM$_{2.5}$ ($\mu$g/m$^3$)','interpreter','latex')
 title('PM$_{2.5}$ Natureal Gas','interpreter','latex')
 set(gca, 'YScale', 'log')
 
-nexttile
-%subplot(234)
+nexttile % subplot(234)
 h1 = pcolor(Time_index(Exp_smoking,1)',inst_res_PND',[DATA1.PND_c(Exp_smoking,1),DATA1.PND_c(Exp_smoking,3:end)]');
-%h = pcolor(Time_index(Exp_smoking,1)',inst_res_PND',[DATA.PND_c(Exp_smoking,1),DATA.PND_c(Exp_smoking,3:end)]');
 set(h1, 'EdgeColor', 'none')
 xlabel('Time Index','interpreter','latex')
-%ylabel('PNC (cm$^{-3}$)','interpreter','latex')
 ylabel('Particle size (nm)','interpreter','latex')
 title('PNC Smoking','interpreter','latex')
-%yticks(gca,inst_res_AT)
-%yticks(gca,[1 2 3 4 5 6 7])
-%yticklabels(gca,{'0.3 \mum','0.5 \mum','1 \mum','2.5 \mum','5 \mum','10 \mum','45 \mum','interpreter','latex'})
-%colorbar
 colormap jet
 caxis([lc,hc])
 set(gca, 'YScale', 'log','colorscale','log')
 
-nexttile
-%subplot(235)
+nexttile % subplot(235)
 h2 = pcolor(Time_index(Exp_kerosine,1)',inst_res_PND',[DATA1.PND_c(Exp_kerosine,1),DATA1.PND_c(Exp_kerosine,3:end)]');
 set(h2, 'EdgeColor', 'none')
 xlabel('Time Index','interpreter','latex')
-%ylabel('PNC (cm$^{-3}$)','interpreter','latex')
 ylabel('Particle size (nm)','interpreter','latex')
 title('PNC kerosene','interpreter','latex')
-%colorbar
 colormap jet
 caxis([lc,hc]) 
 set(gca, 'YScale', 'log','colorscale','log')
 
-nexttile
-%subplot(236)
+nexttile % subplot(236)
 h3 = pcolor(Time_index(Exp_gas,1)',inst_res_PND',[DATA1.PND_c(Exp_gas,1),DATA1.PND_c(Exp_gas,3:end)]');
 set(h3, 'EdgeColor', 'none')
 xlabel('Time Index','interpreter','latex')
-%ylabel('PNC (cm$^{-3}$)','interpreter','latex')
 ylabel('Particle size (nm)','interpreter','latex')
 title('PNC natural gas','interpreter','latex')
-%colorbar
 colormap jet
 caxis([lc, hc])
 set(gca, 'YScale', 'log','colorscale','log')
@@ -546,23 +510,19 @@ cb = colorbar;
 %cb.Limits= [1e0, 1e5];
 cb.Layout.Tile = 'east';
 %cb.Location = 'southoutside';
-%hp4 = get(subplot(2,3,6),'Position');
-%h=colorbar('Position', [hp4(1)+hp4(3)+0.01  hp4(2)  0.0455  hp4(2)+hp4(3)*2.1]);
-
-%colorbar(h1,jet)
-%suptitle('After syncronize the data')
-
 
 % - Build title axes and title.
- axes( 'Position', [0, 0.95, 1, 0.05] ) ;
- set( gca, 'Color', 'None', 'XColor', 'White', 'YColor', 'White' ) ;
- text( 0.5, 0, 'After syncronize', 'FontSize', 14', 'FontWeight', 'Bold', ...
+axes( 'Position', [0, 0.95, 1, 0.05] ) ;
+set( gca, 'Color', 'None', 'XColor', 'White', 'YColor', 'White' ) ;
+text( 0.5, 0, 'After syncronize', 'FontSize', 14', 'FontWeight', 'Bold', ...
       'HorizontalAlignment', 'Center', 'VerticalAlignment', 'Bottom' ) ;
-
 
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
-figure(21);fig=gcf; FS=26; PMx4=33;
+% BEFORE SYNCRONIZATION (DATA4)
+figure(3);fig=gcf; 
+fig.Position = [100 100 540 400].*2.5;
+FS=26; PMx4=33;
 lc =1e0; hc=10e5;
 tiledlayout(2,3);
 nexttile % subplot(231)
@@ -646,11 +606,12 @@ cb.Layout.Tile = 'east';
 
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
-%%
+
 %% Scatter plots between PMD and LCSs
 clc
 PMx=6;
-figure(3); fig=gcf;
+figure(4); fig=gcf;
+fig.Position = [100 100 540 400].*2.5;
 suptitle('PM_{2.5}')
 subplot(221)
 scatter(DATA.PMD_c(:,PMx),DATA.DustTrak_c(:,2))
@@ -686,31 +647,56 @@ ylabel('$\mathcal{L}_{2a}$','interpreter','latex')
 xlim([1e-2 1e4]);ylim([1e-2 1e4]);grid on
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
-
-
-
-figure(4)
+figure(5); fig = gcf;
+fig.Position = [100 100 540 400].*2.5;
 subplot(241)
 scatter(DATA.PMD_c(:,PMx),DATA.DustTrak_c(:,2))
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+xlabel('AeroTrak','interpreter','latex')
+ylabel('DustTrak','interpreter','latex')
 subplot(242)
 scatter(DATA.PMD_c(:,PMx),DATA.SidePak_c(:,1))
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+xlabel('AeroTrak','interpreter','latex')
+ylabel('SidePak','interpreter','latex')
 subplot(243)
 scatter(DATA.PMD_c(:,PMx),DATA.LCS_G1(:,1))
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+xlabel('AeroTrak','interpreter','latex')
+ylabel('$\mathcal{L}_{1}$','interpreter','latex')
 subplot(244)
 scatter(DATA.PMD_c(:,PMx),DATA.LCS_G2_01(:,1))
-
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+xlabel('AeroTrak','interpreter','latex')
+ylabel('$\mathcal{L}_{2a}$','interpreter','latex')
 subplot(245)
 scatter(DATA.DustTrak_c(:,2),DATA.LCS_G1(:,1))
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+xlabel('DustTrak','interpreter','latex')
+ylabel('$\mathcal{L}_{1}$','interpreter','latex')
 subplot(246)
 scatter(DATA.DustTrak_c(:,2),DATA.LCS_G2_01(:,1))
+xlabel('DustTrak','interpreter','latex')
+ylabel('$\mathcal{L}_{2a}$','interpreter','latex')
 subplot(247)
 scatter(DATA.SidePak_c(:,1),DATA.LCS_G1(:,1))
+xlabel('SidePak','interpreter','latex')
+ylabel('$\mathcal{L}_{1}$','interpreter','latex')
 subplot(248)
 scatter(DATA.SidePak_c(:,1),DATA.LCS_G2_01(:,1))
+xlabel('SidePak','interpreter','latex')
+ylabel('$\mathcal{L}_{2a}$','interpreter','latex')
+set(findall(fig,'-property','FontSize'),'FontSize',22);
 
+%% SCATTER PLOTS BETWEEN MET VARS
 
-%%
-figure(5);fig=gcf;
+figure(6);fig=gcf;
+fig.Position = [100 100 540 400].*2.5;
 suptitle('Temperature')
 subplot(221)
 scatter(DATA.AT_T(:,1),DATA.CO_T(:,1)); hold on
@@ -746,7 +732,8 @@ y = linspace(1e1,4e1);
 plot(x,y,'r');hold off
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
-figure(6); fig=gcf;
+figure(7); fig=gcf;
+fig.Position = [100 100 540 400].*2.5;
 suptitle('Relative Humidity')
 subplot(221)
 scatter(DATA.AT_RH(:,1),DATA.CO_RH(:,1));hold on
@@ -782,9 +769,8 @@ y = linspace(1e1,5e1);
 plot(x,y,'r');hold off
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
-
-
-figure(7);fig=gcf;
+figure(8);fig=gcf;
+fig.Position = [100 100 540 400].*2.5;
 suptitle('Pressure')
 subplot(121)
 scatter(DATA.CO_P(:,1),DATA.LCS_G2_01_met(:,3)); hold on
@@ -805,13 +791,20 @@ plot(x,y,'r');hold off
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 
-%%
+%% SCATTER PLOTS between CPC and other vars
+% WE SHOULD NOT USE DATA FROM Exp_kerosine and Exp_gas, because
+% the reference devices do not work all in those experiments
+
 D = Exp_smoking;
 %D = Exp_kerosine;
 %D = Exp_gas;
+%D=[Exp_smoking;Exp_kerosine];
+%D=[Exp_smoking;Exp_gas];
+%D=[Exp_kerosine;Exp_gas];
+%D=[Exp_smoking;Exp_kerosine;Exp_gas];
 
-
-figure(8); fig=gcf;
+figure(9); fig=gcf;
+fig.Position = [100 100 540 400].*2.5;
 suptitle('CPC to other vars')
 subplot(221)
 scatter(DATA.PND_c(D,1),DATA.AT_T(D,1));
@@ -821,16 +814,18 @@ xlim([1e3 7e5]);ylim([20 35]);grid on
 set(gca, 'XScale', 'log')
 subplot(222)
 scatter(DATA.PND_c(D,1),DATA.AT_RH(D,1));
+%scatter(DATA.PND_c(D,1),DATA.CO_RH(D,1));
 xlabel('PNC (CPC)','interpreter','latex')
 ylabel('RH (AT)','interpreter','latex')
 xlim([1e3 7e5]);ylim([10 50]);grid on
 set(gca, 'XScale', 'log')
 
 subplot(223)
-scatter(DATA.PND_c(D,1),DATA.CO_P(D,1));
+%scatter(DATA.PND_c(D,1),DATA.CO_P(D,1));
+scatter(DATA.PND_c(D,1),DATA.LCS_G2_01_met(D,3));
 xlabel('PNC (CPC)','interpreter','latex')
 ylabel('P (CO)','interpreter','latex')
-xlim([1e3 7e5]);ylim([895 901]);grid on
+xlim([1e3 7e5]);ylim([895 911]);grid on
 set(gca, 'XScale', 'log')
 
 subplot(224)
@@ -843,16 +838,12 @@ ylim([1e0 1e3]);
 grid on
 set(gca, 'XScale', 'log')
 set(gca, 'YScale', 'log')
-
-
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 
 
 
-%% MATRIX PLOT
-%close all;
-clc
+%% MATRIX PLOT between all variables
 
 DATAx = [DATA.PMD_c(:,1),DATA.PMD_c(:,6),DATA.DustTrak_c(:,2),DATA.SidePak_c(:,1), ...
     DATA.LCS_G1(:,1),DATA.LCS_G2_01(:,1),DATA.LCS_G2_02(:,1) ...
@@ -891,8 +882,9 @@ CT = 'Spearman';
 
 corrP = corr(DATAx,'Type',CT,'Rows','pairwise');
 
-clc
-figure(9);fig=gcf; FS=26;
+figure(10);fig=gcf; 
+fig.Position = [100 100 540 400].*2.5;
+FS=26;
 
 if true
     Rms= abs(corrP);
@@ -923,16 +915,11 @@ xtickangle(45)
 %xtickangle(-180)
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-
-%% %% HISTOGRAMS
-%close all; 
-clc
-figure(10); fig = gcf;
+%% HISTOGRAMS of the measurements
+FS = 16;
+figure(11); fig = gcf;
 fig.Position = [100 100 540 400].*2.5;
+suptitle('Standarization Algorithm col.3')
 subplot(5,3,1);
 histogram(DATA.PND_c(:,1),'BinWidth',.05,'FaceColor','b');
 set(gca, 'XScale', 'log')
@@ -1039,19 +1026,18 @@ histogram(P_n,'BinWidth',.05,'FaceColor','g');
 title('P (norm)')
 xlabel('P (norm)')
 hold off
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 disp('For normalization of temp, RH and P, perhaps the best is to use max and min number')
 
-%% Using min-max algorithm
+% Using min-max algorithm
 % https://www.mathworks.com/help/matlab/ref/rescale.html
 % B = rescale(A,l,u,'InputMin',inmin,'InputMax',inmax) uses the formula
 % B = l + [(A-inmin)./(inmax-inmin)].*(u-l)
 
-
-
-%close all; clc
-figure(11); fig = gcf;
+figure(12); fig = gcf;
 fig.Position = [100 100 540 400].*2.5;
+suptitle('Min-Max Algorithm col.3')
 subplot(5,3,1);
 histogram(DATA.PND_c(:,1),'BinWidth',.05,'FaceColor','b');
 set(gca, 'XScale', 'log')
@@ -1136,7 +1122,6 @@ title('RH (norm)')
 xlabel('RH (norm)')
 hold off
 
-
 % https://www.mathworks.com/help/matlab/ref/double.normalize.html
 subplot(5,3,13);
 histogram(DATA.CO_P(:,1),'BinWidth',.05,'FaceColor','b');
@@ -1158,7 +1143,7 @@ histogram(P_n,'BinWidth',.05,'FaceColor','g');
 title('P (norm)')
 xlabel('P (norm)')
 hold off
-
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 
 %% MODELLING: Linear regression and ANN
@@ -1241,7 +1226,8 @@ outputs = net(inputs_t);
 Ypred = outputs;
 
 
-figure(12);
+figure(13); fig = gcf;
+fig.Position = [100 100 540 400].*2.5;
 subplot(221);
 scatter(Yt,Ypred_lm);hold on
 Xlim1 = 3;
