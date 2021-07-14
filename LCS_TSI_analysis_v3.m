@@ -1385,7 +1385,7 @@ end
 %% SELECT TRAINING AND TESTING DATA
 
 clc
-method = 5;
+method = 6;
 if method == 1
     disp('Training and Testing data is the same')
     DATAt  = [DATAi1,DATAo1];
@@ -1467,17 +1467,19 @@ elseif method ==6
     DATAt  = [DATAi1,DATAo1];
     DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
     
-    for n =4
+    for n =1:5
         if n==4
-            d = 10.^(DATAt1(:,n))';
+            %d = 10.^(DATAt1(:,n))';
+            d = DATAt1(:,n)';
         elseif n == 5
-            d = 10.^(DATAt1(:,n))';
+            %d = 10.^(DATAt1(:,n))';
+            d = DATAt1(:,n)';
         else
             d = DATAt1(:,n)';
         end
         wv = 'db2';
         [c,l] = wavedec(d,3,wv);
-        approx = appcoef(c,l,'db2');
+        % approx = appcoef(c,l,'db2');
         xs = waverec(c,l,wv);
         %xs = wrcoef('a',c,l,'sym4',2);
         err = norm(d-xs)
@@ -1491,14 +1493,18 @@ elseif method ==6
         d1 = abs(cfs(1,:)) ;
         
         
-        DATAt1(:,n) = abs(cfs(1,:))' ;
+        xden = wdenoise(d,4);
+        % xden = wdenoise(d);
+        %figure(100);plot(d);hold on;plot(xden,'r--');hold off
+        
+        DATAt1(:,n) = xden ;
+        %DATAt1(:,n) = abs(cfs(1,:))' ;
         %DATAt1(:,n) = xs' ;
         %DATAt1(:,n) = c' ;
         %DATAt1(:,n) = d ;
         
-        %xden = wdenoise(d);
-        %figure(100);plot(d);hold on;plot(xden,'r--');hold off
-        %DATAt1(:,n) = xden ;
+       
+        
         
       
     end
@@ -1538,11 +1544,12 @@ inputs = X';
 targets = Y';
 inputs_t = Xt';
 % Create a Fitting Network
-hiddenLayerSize = 100;25;20;%15;
+hiddenLayerSize = 50;100;25;20;%15;
 net = fitnet(hiddenLayerSize);
+net.trainfcn = 'trainbr'%'trainlm'
 % Set up Division of Data for Training, Validation, Testing
-net.divideParam.trainRatio = 85/100;%70/100;
-net.divideParam.valRatio = 15/100;
+net.divideParam.trainRatio = 100/100;%70/100;
+net.divideParam.valRatio = 0/100;
 net.divideParam.testRatio = 0/100;
  % Train the Network
 [net,tr] = train(net,inputs,targets);
@@ -1550,10 +1557,11 @@ net.divideParam.testRatio = 0/100;
 outputs = net(inputs_t);
 Ypred_snn = outputs;
 
+
 figure(12);
 subplot(221);
 scatter(Yt,Ypred_lm);hold on
-Xlim1 = 3;
+Xlim1 = 0;3;
 Ylim1 = 6;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
 x = linspace(Xlim1,Ylim1);
@@ -1563,17 +1571,19 @@ xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
 
 subplot(222);
 scatter(10.^Yt,10.^Ypred_lm);hold on
-Xlim1 = 1e0;
+Xlim1 = 1e3;
 Ylim1 = 1e6;7.5e5;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
 x = linspace(Xlim1,Ylim1);
 y = linspace(Xlim1,Ylim1);
 plot(x,y,'r');hold off
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
 xlabel('Real PNC (CPC)');ylabel('Est PNC (CPC)')
 
 subplot(223);
 scatter(Yt,Ypred_snn);hold on
-Xlim1 = 3;
+Xlim1 = 0;3;
 Ylim1 = 6;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
 x = linspace(Xlim1,Ylim1);
@@ -1583,14 +1593,22 @@ xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
 
 subplot(224);
 scatter(10.^Yt,10.^Ypred_snn);hold on
-Xlim1 = 1e0;
-Ylim1 = 1e6; 7.5e5;
-xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+Xlim1 = 1e3;
+Ylim1 = 1e6;7.5e5;
 x = linspace(Xlim1,Ylim1);
 y = linspace(Xlim1,Ylim1);
+xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
 plot(x,y,'r');hold off
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
 xlabel('Real PNC (CPC)');ylabel('Est PNC (CPC)')
 
+%%
+figure(100)
+plot(10.^Yt);hold on;
+plot(10.^Ypred_snn,'r');
+ylim([0 1e6])
+hold off
 
 %% WAVELET ANALYSIS
 wavelet = 1;
