@@ -1291,7 +1291,7 @@ Dg = Exp_gas;
 Da =[Exp_smoking;Exp_kerosine;Exp_gas];
 
 % CHOOSE THE DATA with the number of inputs and output
-Di = 4 ;
+Di = 3 ;
 if Di == 2
     disp('Temp and PM2.5')
     DATAi = [ [DATA.AT_T(Ds,1);DATA.CO_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
@@ -1332,7 +1332,7 @@ for n = 1: Di
 end
 
 
-if Di == 4
+%if Di == 4
        
     CPC = DATA.PND_c([Ds;Dk;Dg],1);
     CPClog = log10(CPC);
@@ -1351,7 +1351,7 @@ if Di == 4
     
     
     figure(13)
-    for n=1:4
+    for n=1:size(DATAi,2)
         subplot(2,5,n);plot(DATAi(:,n),'.');hold on
         subplot(2,5,n+5);plot(DATAi1(:,n),'.');
     end
@@ -1371,7 +1371,7 @@ if Di == 4
     subplot(514);plot(CPC,'b.');hold on;plot(CPCclean,'r.');hold off
     subplot(515);plot(log10(CPC),'b.');hold on;plot(log10(CPCclean),'r.');hold off
     %
-end
+%end
 
 % SELECT TRAINING AND TESTING DATA
 
@@ -1517,7 +1517,7 @@ elseif method ==6
     DATAt  = [DATAi1,DATAo1,no];
     DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
     
-    for n =4:5
+    for n =1:size(DATAt1 ,2)-1
         if n==4
             %d = 10.^(DATAt1(:,n))';
             d = DATAt1(:,n)';
@@ -1542,8 +1542,8 @@ elseif method ==6
     %%%te = ismember(DATAt1(:,end),Dk);
     %%%tr = ismember(DATAt1(:,end),[Ds]);
     %%%te = ismember(DATAt1(:,end),Dg);
-    tr = ismember(DATAt1(:,end),[Dg]);
-    te = ismember(DATAt1(:,end),[Ds]);
+    tr = ismember(DATAt1(:,end),[Ds]);
+    te = ismember(DATAt1(:,end),[Dg]);
     
     Xtr = DATAt1(tr,1:end-2);
     Ytr = DATAt1(tr,end-1);
