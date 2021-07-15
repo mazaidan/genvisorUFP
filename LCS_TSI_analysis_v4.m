@@ -1146,26 +1146,35 @@ hold off
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 
-%% MODELLING: Linear regression and ANN
-% 1) use all data, randominze, and predict CPC
-% 2) use Exp_smoking, estimate Exp_kerosine and Exp_gas
+%% MODELLING Linear Models and Shallow Neural Networks (version 1)
+
+% In this case, we use the same training and testing data,
+% The idea is to ensure if the modelling concept works in general
+
+% If we train in smoking and test in kerosine, 
+% the below fail completely because there may be a lot of NaN data scatter
+% around the data.
+
+
 
 D = Exp_smoking; 
 Dt = Exp_kerosine;
 %Dt = Exp_gas;
-%D =[Exp_smokimg;Exp_kerosine;Exp_gas];
+%D =[Exp_smoking;Exp_kerosine;Exp_gas];
 
 % For met vars
 % B = rescale(A,l,u,'InputMin',inmin,'InputMax',inmax) uses the formula
 % B = l + [(A-inmin)./(inmax-inmin)].*(u-l)
 % For aerosol, simply take log10
 
-DATAm1 = [DATA.AT_T(D,1),DATA.LCS_G2_01_met(D,1),DATA.LCS_G2_01_met(D,3),DATA.PMD_c(D,6),DATA.PND_c(D,1)];
+DATAm1 = [DATA.AT_T(D,1),DATA.AT_RH(D,1),DATA.LCS_G2_01_met(D,3),DATA.LCS_G1(D,1),DATA.PND_c(D,1)];
+%DATAm1 = [DATA.AT_T(D,1),DATA.LCS_G2_01_met(D,1),DATA.LCS_G2_01_met(D,3),DATA.PMD_c(D,6),DATA.PND_c(D,1)];
 %DATAm1 = [DATA.AT_T(D,1),DATA.LCS_G2_01_met(D,1),DATA.CO_P(D,1),DATA.LCS_G1(D,1),DATA.PND_c(D,1)];
 %DATAm1 = [DATA.AT_T(D,1),DATA.AT_RH(D,1),DATA.CO_P(D,1),DATA.LCS_G2_02(D,1),DATA.PND_c(D,1)];
 DATAm2 = zeros(size(DATAm1));
 
-DATAt1 = [DATA.AT_T(Dt,1),DATA.AT_RH(Dt,1),DATA.CO_P(Dt,1),DATA.LCS_G1(Dt,1),DATA.PND_c(Dt,1)];
+%DATAt1 = [DATA.AT_T(Dt,1),DATA.AT_RH(Dt,1),DATA.CO_P(Dt,1),DATA.LCS_G1(Dt,1),DATA.PND_c(Dt,1)];
+DATAt1 = [DATA.CO_T(Dt,1),DATA.CO_RH(Dt,1),DATA.CO_P(Dt,1),DATA.LCS_G1(Dt,1),DATA.PND_c(Dt,1)];
 DATAt2 = zeros(size(DATAt1));
 
 for n=1:size(DATAm1,2)
@@ -1200,8 +1209,8 @@ Y = DATAm2(:,5);
 Xt = DATAt2(:,1:4);
 Yt = DATAt2(:,5);
 
-Xt = X;
-Yt = Y;
+%Xt = X;
+%Yt = Y;
 
 
 % LINEAR MODEL:
@@ -1213,18 +1222,17 @@ inputs = X';
 targets = Y';
 inputs_t = Xt';
 % Create a Fitting Network
-hiddenLayerSize = 15;
+hiddenLayerSize = 25;%15;
 net = fitnet(hiddenLayerSize);
 % Set up Division of Data for Training, Validation, Testing
-net.divideParam.trainRatio = 70/100;
-net.divideParam.valRatio = 15/100;
-net.divideParam.testRatio = 15/100;
+net.divideParam.trainRatio = 90;%70/100;
+net.divideParam.valRatio = 10/100;%15/100;
+net.divideParam.testRatio = 0;%15/100;
  % Train the Network
 [net,tr] = train(net,inputs,targets);
  % Test the Network
 outputs = net(inputs_t);
 Ypred = outputs;
-
 
 figure(13); fig = gcf;
 fig.Position = [100 100 540 400].*2.5;
@@ -1236,17 +1244,17 @@ xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
 x = linspace(Xlim1,Ylim1);
 y = linspace(Xlim1,Ylim1);
 plot(x,y,'r');hold off
-xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
+xlabel('log PND (CPC)'); ylabel('log Est. PND (CPC)')
 
 subplot(222);
-scatter(10.^Yt,10.^Ypred_lm);hold on
+scatter(10.^Yt,10.^Ypred_lm); hold on
 Xlim1 = 1e1;
 Ylim1 = 5e5;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
 x = linspace(Xlim1,Ylim1);
 y = linspace(Xlim1,Ylim1);
-plot(x,y,'r');hold off
-xlabel('Real PNC (CPC)');ylabel('Est PNC (CPC)')
+plot(x,y,'r'); hold off
+xlabel('PND (CPC)');ylabel('Est. PND (CPC)')
 
 subplot(223);
 scatter(Yt,Ypred);hold on
@@ -1256,20 +1264,23 @@ xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
 x = linspace(Xlim1,Ylim1);
 y = linspace(Xlim1,Ylim1);
 plot(x,y,'r');hold off
-xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
+xlabel('log PND (CPC)');ylabel('log Est. PND (CPC)')
 
 subplot(224);
-scatter(10.^Yt,10.^Ypred);hold on
+scatter(10.^Yt,10.^Ypred); hold on
 Xlim1 = 1e1;
 Ylim1 = 5e5;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
 x = linspace(Xlim1,Ylim1);
 y = linspace(Xlim1,Ylim1);
-plot(x,y,'r');hold off
-xlabel('Real PNC (CPC)');ylabel('Est PNC (CPC)')
+plot(x,y,'r'); hold off
+xlabel('PND (CPC)');ylabel('Est. PND (CPC)')
+
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 
-%% MODELLING Linear Models and Shallow Neural Networks
+
+%% MODELLING Linear Models and Shallow Neural Networks (version 2)
 
 % 1) use all data, randominze, and predict CPC
 % 2) use Exp_smoking, estimate Exp_kerosine and Exp_gas
@@ -1321,12 +1332,8 @@ for n = 1: Di
 end
 
 
-%
 if Di == 4
-    
-    
-    %
-    %%CPC = DATA.PND_c([Ds;Dk;Dg],1);
+       
     CPC = DATA.PND_c([Ds;Dk;Dg],1);
     CPClog = log10(CPC);
     CPCgradient = gradient(CPC);
@@ -1366,12 +1373,10 @@ if Di == 4
     %
 end
 
-
-
-%% SELECT TRAINING AND TESTING DATA
+% SELECT TRAINING AND TESTING DATA
 
 clc
-method = 6;
+method = 7;
 if method == 1
     disp('Training and Testing data is the same')
     DATAt  = [DATAi1,DATAo1];
@@ -1445,10 +1450,10 @@ elseif method == 5
     Xtr = DATAt1(tr,1:end-1);
     Ytr = DATAt1(tr,end);
     Xte = DATAt1(te,1:end-1);
-    Yte = DATAt1(te,end); 
+    Yte = DATAt1(te,end);
+    
 elseif method ==6
     disp('Wavelet feature')
-    
     
     DATAt  = [DATAi1,DATAo1];
     DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
@@ -1487,12 +1492,7 @@ elseif method ==6
         %DATAt1(:,n) = abs(cfs(1,:))' ;
         %DATAt1(:,n) = xs' ;
         %DATAt1(:,n) = c' ;
-        %DATAt1(:,n) = d ;
-        
-       
-        
-        
-      
+        %DATAt1(:,n) = d ;      
     end
     
     percent = 70/100;
@@ -1507,8 +1507,48 @@ elseif method ==6
     Xte = DATAt1(te,1:end-1);
     Yte = DATAt1(te,end);
     
-
     
+    elseif method == 7
+    disp('Wavelet feature 2')
+    
+    %[Ds;Dk;Dg]
+    %DATAt  = [DATAi1,DATAo1];
+    no = linspace(1, size(DATAt,1), size(DATAt,1))' ;
+    DATAt  = [DATAi1,DATAo1,no];
+    DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
+    
+    for n =4:5
+        if n==4
+            %d = 10.^(DATAt1(:,n))';
+            d = DATAt1(:,n)';
+        elseif n == 5
+            %d = 10.^(DATAt1(:,n))';
+            d = DATAt1(:,n)';
+        else
+            d = DATAt1(:,n)';
+        end 
+        xden = wdenoise(d,4);
+        %figure(100);plot(d);hold on;plot(xden,'r--');hold off        
+        DATAt1(:,n) = xden ;
+    end
+    
+    %percent = 70/100;
+    %p = size(DATAt1,1);
+    %rng(1986);s = rng;
+    %c = randperm(p)';
+    %tr = c( 1 : roundn(percent * p,0)     , 1);
+    %te = c( roundn(percent * p,0)+1 : end , 1);
+    %%%tr = ismember(DATAt1(:,end),[Ds;Dg]);
+    %%%te = ismember(DATAt1(:,end),Dk);
+    %%%tr = ismember(DATAt1(:,end),[Ds]);
+    %%%te = ismember(DATAt1(:,end),Dg);
+    tr = ismember(DATAt1(:,end),[Dg]);
+    te = ismember(DATAt1(:,end),[Ds]);
+    
+    Xtr = DATAt1(tr,1:end-2);
+    Ytr = DATAt1(tr,end-1);
+    Xte = DATAt1(te,1:end-2);
+    Yte = DATAt1(te,end-1);
     
 end
 
@@ -1520,31 +1560,126 @@ Y = Ytr;
 Xt = Xte;
 Yt = Yte;
 
-
+LM = 1;
 % LINEAR MODEL:
-mdl = fitlm(X,Y);
-Ypred_lm = predict(mdl,Xt);
+if LM == 1
+    disp('Standard Linear model')
+    mdl = fitlm(X,Y);
+    Ypred_lm = predict(mdl,Xt);
+elseif LM == 2
+end
 
-% ANN model
+
 inputs = X';
 targets = Y';
 inputs_t = Xt';
+ANN = 4;
+if ANN ==1
+    disp('standard ANN')
+% ANN model
 % Create a Fitting Network
 hiddenLayerSize = 50;100;25;20;%15;
 net = fitnet(hiddenLayerSize);
-net.trainfcn = 'trainbr'%'trainlm'
+net.trainfcn = 'trainlm';%'trainbr'
 % Set up Division of Data for Training, Validation, Testing
-net.divideParam.trainRatio = 100/100;%70/100;
-net.divideParam.valRatio = 0/100;
+net.divideParam.trainRatio = 95/100;%70/100;
+net.divideParam.valRatio = 5/100;
 net.divideParam.testRatio = 0/100;
  % Train the Network
 [net,tr] = train(net,inputs,targets);
  % Test the Network
 outputs = net(inputs_t);
 Ypred_snn = outputs;
+elseif ANN ==2
+    disp('TDNN')
+     % https://se.mathworks.com/help/deeplearning/ref/timedelaynet.html
+    X = con2seq(inputs); % u =  con2seq(u0);
+    T = num2cell(targets);
+    Xnew = con2seq(inputs_t);
+    %net = timedelaynet(1:2,20);
+    net = timedelaynet(1:3,50);
+    [Xs,Xi,Ai,Ts] = preparets(net,X,T);
+    net = train(net,Xs,Ts,Xi,Ai);
+    [Y,Xf,Af] = net(Xs,Xi,Ai);
+    perf = perform(net,Ts,Y);
+    [netc,Xic,Aic] = closeloop(net,Xf,Af);
+    %view(netc)
+    y2 = netc(Xnew,Xic,Aic);
+    est_pm25 = cell2mat(y2');
+    Ypred_snn = est_pm25;
+elseif ANN == 3
+    disp('LSTM')
+   % Some very useful links for LSTM:
+    % https://se.mathworks.com/matlabcentral/answers/393034-i-am-unable-to-resolve-this-error-invalid-training-data-predictors-must-be-a-n-by-1-cell-array-of
+    % https://stats.stackexchange.com/questions/352036/what-should-i-do-when-my-neural-network-doesnt-learn/352037#352037
+    % https://se.mathworks.com/help/deeplearning/ref/trainingoptions.html
+    
+    inputs = inputs';
+    inputs_t = inputs_t';
+    outputs = targets';
+    
+    XTrain=cell(size(inputs,1),1);
+    XTest=cell(size(inputs_t,1),1);
+    
+    for n=1:size(inputs,1)
+        XTrain{n,1}=inputs(n,:)';%num2cell(inputs(n,:));
+    end
+    for n=1:size(inputs_t,1)
+        XTest{n,1}=inputs_t(n,:)';%num2cell(inputs_test1(n,:));
+    end
+    
+    YTrain =  num2cell(outputs);
+    
+    % Normalise training predictors
+    mu = mean([XTrain{:}],2);
+    sig = std([XTrain{:}],0,2);
+    
+    for i = 1:numel(XTrain)
+        XTrain{i} = (XTrain{i} - mu) ./ sig;
+    end
+    
+    % Define Network Architecture
+    numResponses = size(YTrain{1},1);
+    featureDimension = size(XTrain{1},1);
+    numHiddenUnits = 25;%200;%100;%200;
+    
+    layers = [ ...
+        sequenceInputLayer(featureDimension)
+        lstmLayer(numHiddenUnits,'OutputMode','sequence')
+        fullyConnectedLayer(30)%fullyConnectedLayer(30)%fullyConnectedLayer(50)
+        dropoutLayer(0.5)
+        fullyConnectedLayer(numResponses)
+        regressionLayer];
+    
+    maxEpochs = 100;%500; % 60;
+    %miniBatchSize = 20;
+    miniBatchSize = 300; %500;%1000;
+    
+    options = trainingOptions('sgdm', ...%'rmsprop', ...%'adam', ...
+        'MaxEpochs',maxEpochs, ...
+        'MiniBatchSize',miniBatchSize, ...
+        'InitialLearnRate',0.01, ...%0.01, ...
+        'GradientThreshold',1, ...
+        'Shuffle','never', ...
+        'Plots','training-progress',...
+        'Verbose',0);
+    
+    % Train the network
+    net = trainNetwork(XTrain,YTrain,layers,options);
+        
+    for i = 1:numel(XTest)
+        XTest{i} = (XTest{i} - mu) ./ sig;
+    end
+    
+    YPred = predict(net,XTest,'MiniBatchSize',1);
+    est_pm25 = cell2mat(YPred);
+    Ypred_snn = est_pm25 ; 
+elseif ANN == 4
+    Ypred_snn = Ypred_lm;
+    disp('We do not work on ANN')
+end
 
-
-figure(12);
+figure(15);
 subplot(221);
 scatter(Yt,Ypred_lm);hold on
 Xlim1 = 0;3;
@@ -1589,12 +1724,23 @@ set(gca, 'XScale', 'log')
 set(gca, 'YScale', 'log')
 xlabel('Real PNC (CPC)');ylabel('Est PNC (CPC)')
 
-%%
-figure(100)
-plot(10.^Yt);hold on;
-plot(10.^Ypred_snn,'r');
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+
+figure(16); fig = gcf;
+plot(10.^Yt,'b.','MarkerSize',12);hold on;grid on
+plot(10.^Ypred_lm,'g.','MarkerSize',12);
+plot(10.^Ypred_snn,'r.','MarkerSize',12);
+ylabel('PND [/cm$^{-3}$]','interpreter','latex')
+xlabel('Time Index')
 ylim([0 1e6])
+set(gca, 'YScale', 'log')
+legend('Real','LM','ANN','interpreter','latex')
 hold off
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+%%
+
 
 %% WAVELET ANALYSIS
 wavelet = 1;
