@@ -1291,22 +1291,35 @@ Dg = Exp_gas;
 Da =[Exp_smoking;Exp_kerosine;Exp_gas];
 
 % CHOOSE THE DATA with the number of inputs and output
-Di = 3 ;
+Di = 4 ;
 if Di == 2
     disp('Temp and PM2.5')
     DATAi = [ [DATA.AT_T(Ds,1);DATA.CO_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
               [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
+    %disp('RH and PM2.5')
+    %DATAi = [[DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
+    %         [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
 elseif Di == 3
     disp('Temp, RH and PM2.5')
     DATAi = [[DATA.AT_T(Ds,1);DATA.CO_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
              [DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
              [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
+         
+    %disp('RH, P and PM2.5')
+    %DATAi = [[DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
+    %         [DATA.LCS_G2_01_met(Ds,3);DATA.CO_P(Dk,1);DATA.LCS_G2_01_met(Dg,3)], ...
+    %         [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]]; 
+     
 elseif Di == 4
     disp('Temp, RH, P and PM2.5')
-    DATAi = [[DATA.AT_T(Ds,1);DATA.CO_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
+    %DATAi = [[DATA.AT_T(Ds,1);DATA.CO_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
+    %         [DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
+    %         [DATA.LCS_G2_01_met(Ds,3);DATA.CO_P(Dk,1);DATA.LCS_G2_01_met(Dg,3)], ...
+    %         [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
+    DATAi = [[DATA.AT_T(Ds,1);DATA.AT_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
              [DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
              [DATA.LCS_G2_01_met(Ds,3);DATA.CO_P(Dk,1);DATA.LCS_G2_01_met(Dg,3)], ...
-             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]]; 
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
 end
 
 % NORMALIZATION
@@ -1335,6 +1348,7 @@ end
 %if Di == 4
        
     CPC = DATA.PND_c([Ds;Dk;Dg],1);
+    %figure(100);plot(DATA.PND_c(Ds,1));hold on;plot(DATA.PND_c(Dk,1),'r');plot(DATA.PND_c(Dg,1),'g'); hold off
     CPClog = log10(CPC);
     CPCgradient = gradient(CPC);
     CPCdiff = diff(CPC);
@@ -1344,10 +1358,11 @@ end
     CPCclean(idx,:)=nan;
     %CPCclean = CPC(idx,:);
     
+    %%%DATAo  = CPC; 
     DATAo  = CPCclean;
     %DATAo  = [DATA.PND_c(Da,1)];
     DATAo1 = log10(DATAo);
-
+    % figure(100);plot(DATAo1(Ds,1));hold on;plot(DATAo1(Dk,1),'r');plot(DATAo1(Dg,1),'g'); hold off
     
     
     figure(13)
@@ -1374,6 +1389,22 @@ end
 %end
 
 % SELECT TRAINING AND TESTING DATA
+R     = zeros(1,12);
+MAPE  = zeros(1,12);
+
+for test_no=1:12
+    if test_no == 1; TRAIN = Ds; TEST = Dk; end
+    if test_no == 2; TRAIN = Ds; TEST = Dg; end
+    if test_no == 3; TRAIN = Ds; TEST = [Dk;Dg]; end
+    if test_no == 4; TRAIN = Dk; TEST = Ds; end
+    if test_no == 5; TRAIN = Dk; TEST = Dg; end
+    if test_no == 6; TRAIN = Dk; TEST = [Ds;Dg]; end
+    if test_no == 7; TRAIN = Dg; TEST = Ds; end
+    if test_no == 8; TRAIN = Dg; TEST = Dk; end
+    if test_no == 9; TRAIN = Dg; TEST = [Ds;Dk]; end
+    if test_no == 10; TRAIN = [Ds;Dk]; TEST = Dg; end
+    if test_no == 11; TRAIN = [Ds;Dg]; TEST = Dk; end
+    if test_no == 12; TRAIN = [Dk;Dg]; TEST = Ds; end
 
 clc
 method = 7;
@@ -1542,8 +1573,11 @@ elseif method ==6
     %%%te = ismember(DATAt1(:,end),Dk);
     %%%tr = ismember(DATAt1(:,end),[Ds]);
     %%%te = ismember(DATAt1(:,end),Dg);
-    tr = ismember(DATAt1(:,end),[Ds]);
-    te = ismember(DATAt1(:,end),[Dg]);
+    %%%tr = ismember(DATAt1(:,end),[Ds]);
+    %%%te = ismember(DATAt1(:,end),[Dg]);
+    
+    tr = ismember(DATAt1(:,end),TRAIN);
+    te = ismember(DATAt1(:,end),TEST);
     
     Xtr = DATAt1(tr,1:end-2);
     Ytr = DATAt1(tr,end-1);
@@ -1573,7 +1607,7 @@ end
 inputs = X';
 targets = Y';
 inputs_t = Xt';
-ANN = 4;
+ANN = 5;
 if ANN ==1
     disp('standard ANN')
 % ANN model
@@ -1675,9 +1709,68 @@ elseif ANN == 3
     est_pm25 = cell2mat(YPred);
     Ypred_snn = est_pm25 ; 
 elseif ANN == 4
+    disp('Bayesian LASSO regression')
+    
+    % Run standard LASSO first
+    [LassoBetaEstimates,FitInfo] = lasso(Xtr,Ytr','Standardize',false);
+    
+    
+    
+    PriorMdl = bayeslm(p,'ModelType','lasso');
+    table(PriorMdl.Lambda,'RowNames',PriorMdl.VarNames);
+    
+    ismissing = any(isnan(Xtr'),2);
+    n = sum(~ismissing); % Effective sample size
+    lambda = FitInfo.Lambda*n./sqrt(FitInfo.MSE);
+    
+    numlambda = numel(lambda);
+
+% Preallocate
+BayesLassoCoefficients = zeros(p+1,numlambda);
+BayesLassoCI95 = zeros(p+1,2,numlambda);
+fmseBayesLasso = zeros(numlambda,1);
+BLCPlot = zeros(p+1,numlambda);
+
+% Estimate and forecast
+rng(10); % For reproducibility
+for j = 1:numlambda
+    PriorMdl.Lambda = lambda(j);
+    [EstMdl,Summary] = estimate(PriorMdl,Xtr,Ytr','Display',false);
+    BayesLassoCoefficients(:,j) = Summary.Mean(1:(end - 1));
+    BLCPlot(:,j) = Summary.Mean(1:(end - 1));
+    BayesLassoCI95(:,:,j) = Summary.CI95(1:(end - 1),:);
+    idx = BayesLassoCI95(:,2,j) > 0 & BayesLassoCI95(:,1,j) <= 0;
+    BLCPlot(idx,j) = 0;
+    yFBayesLasso = forecast(EstMdl,XF);
+    fmseBayesLasso(j) = sqrt(mean((yF - yFBayesLasso).^2));
+end
+    
+L1Vals = sum(abs(BLCPlot(2:end,:)),1)/max(sum(abs(BLCPlot(2:end,:)),1));
+
+figure;
+plot(L1Vals,BLCPlot(2:end,:))
+xlabel('L1');
+ylabel('Coefficient Estimates');
+yyaxis right
+h = plot(L1Vals,fmseBayesLasso,'LineWidth',2,'LineStyle','--');
+legend(h,'FMSE','Location','SW');
+ylabel('FMSE');
+title('Bayesian Lasso')
+    
+    
+elseif ANN == 5
     Ypred_snn = Ypred_lm;
     disp('We do not work on ANN')
 end
+
+
+    R0 =  corrcoef(Yt,Ypred_lm);
+    R(1,test_no) = R0(2,1);
+
+    %MAPE(1,test_no) = nanmean(abs((Yt-Ypred_lm)./Yt));
+    MAPE(1,test_no)=errperf(Yt,Ypred_lm,'mape');
+end
+
 
 figure(15);
 subplot(221);
