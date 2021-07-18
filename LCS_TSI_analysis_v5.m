@@ -612,7 +612,7 @@ clc
 PMx=6;
 figure(4); fig=gcf;
 fig.Position = [100 100 540 400].*2.5;
-suptitle('PM_{2.5}')
+sgtitle('PM_{2.5}')
 subplot(221)
 scatter(DATA.PMD_c(:,PMx),DATA.DustTrak_c(:,2))
 set(gca, 'XScale', 'log')
@@ -697,7 +697,7 @@ set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 figure(6);fig=gcf;
 fig.Position = [100 100 540 400].*2.5;
-suptitle('Temperature')
+sgtitle('Temperature')
 subplot(221)
 scatter(DATA.AT_T(:,1),DATA.CO_T(:,1)); hold on
 xlabel('AeroTrak','interpreter','latex')
@@ -734,7 +734,7 @@ set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 figure(7); fig=gcf;
 fig.Position = [100 100 540 400].*2.5;
-suptitle('Relative Humidity')
+sgtitle('Relative Humidity')
 subplot(221)
 scatter(DATA.AT_RH(:,1),DATA.CO_RH(:,1));hold on
 xlabel('AeroTrak','interpreter','latex')
@@ -771,7 +771,7 @@ set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 figure(8);fig=gcf;
 fig.Position = [100 100 540 400].*2.5;
-suptitle('Pressure')
+sgtitle('Pressure')
 subplot(121)
 scatter(DATA.CO_P(:,1),DATA.LCS_G2_01_met(:,3)); hold on
 xlabel('Clas Ohlson','interpreter','latex')
@@ -795,6 +795,11 @@ set(findall(fig,'-property','FontSize'),'FontSize',22);
 % WE SHOULD NOT USE DATA FROM Exp_kerosine and Exp_gas, because
 % the reference devices do not work all in those experiments
 
+Ds = Exp_smoking;
+Dk = Exp_kerosine;
+Dg = Exp_gas;
+
+
 D = Exp_smoking;
 %D = Exp_kerosine;
 %D = Exp_gas;
@@ -805,14 +810,14 @@ D = Exp_smoking;
 
 figure(9); fig=gcf;
 fig.Position = [100 100 540 400].*2.5;
-suptitle('CPC to other vars')
-subplot(221)
+sgtitle('CPC to other vars')
+subplot(241)
 scatter(DATA.PND_c(D,1),DATA.AT_T(D,1));
 xlabel('PNC (CPC)','interpreter','latex')
 ylabel('Temp (AT)','interpreter','latex')
 xlim([1e3 7e5]);ylim([20 35]);grid on
 set(gca, 'XScale', 'log')
-subplot(222)
+subplot(242)
 scatter(DATA.PND_c(D,1),DATA.AT_RH(D,1));
 %scatter(DATA.PND_c(D,1),DATA.CO_RH(D,1));
 xlabel('PNC (CPC)','interpreter','latex')
@@ -820,7 +825,7 @@ ylabel('RH (AT)','interpreter','latex')
 xlim([1e3 7e5]);ylim([10 50]);grid on
 set(gca, 'XScale', 'log')
 
-subplot(223)
+subplot(243)
 %scatter(DATA.PND_c(D,1),DATA.CO_P(D,1));
 scatter(DATA.PND_c(D,1),DATA.LCS_G2_01_met(D,3));
 xlabel('PNC (CPC)','interpreter','latex')
@@ -828,7 +833,7 @@ ylabel('P (CO)','interpreter','latex')
 xlim([1e3 7e5]);ylim([895 911]);grid on
 set(gca, 'XScale', 'log')
 
-subplot(224)
+subplot(244)
 scatter(DATA.PND_c(D,1),DATA.PMD_c(D,PMx));
 %scatter(DATA.PND_c(D,1),DATA.LCS_G1(D,1));
 xlabel('PNC (CPC)','interpreter','latex')
@@ -840,7 +845,64 @@ set(gca, 'XScale', 'log')
 set(gca, 'YScale', 'log')
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
+subplot(245)
+scatter(DATA.PND_c(D,1),DATA.LCS_G1(D,1));
+xlabel('PNC (CPC)','interpreter','latex')
+ylabel('PM$_{2.5}$ (LCS)','interpreter','latex')
+xlim([1e3 7e5]); 
+ylim([1e0 1e3]);
+grid on
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+set(findall(fig,'-property','FontSize'),'FontSize',22);
 
+subplot(246)
+scatter(DATA.PND_c(Ds,1),DATA.LCS_G1(Ds,1),'b.'); hold on
+scatter(DATA.PND_c(Dk,1),DATA.LCS_G1(Dk,1),'r.');
+scatter(DATA.PND_c(Dg,1),DATA.LCS_G1(Dg,1),'g.');
+xlabel('PNC (CPC)','interpreter','latex')
+ylabel('PM$_{2.5}$ (LCS)','interpreter','latex')
+xlim([1e3 7e5]); 
+ylim([1e0 1e3]);
+grid on
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+
+subplot(247)
+scatter(DATA.PND_c(D,1),DATA.LCS_G1(D,1));
+xlabel('PNC (CPC)','interpreter','latex')
+ylabel('PM$_{2.5}$ (LCS)','interpreter','latex')
+xlim([1e3 1e6]); 
+ylim([1e0 1e3]);
+grid on
+set(gca, 'XScale', 'log')
+%set(gca, 'YScale', 'log')
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+subplot(248)
+Dat_temp = [DATA.PND_c(D,1),DATA.LCS_G1(D,1)];
+Dat_temp(isnan(Dat_temp)) = 0;
+%scatter(abs(cwt(Dat_temp(:,1))),abs(cwt(Dat_temp(:,2))));
+%scatter(abs(cwt(Dat_temp(:,1))),abs(cwt(Dat_temp(:,2))));
+xlabel('PNC (CPC)','interpreter','latex')
+ylabel('PM$_{2.5}$ (LCS)','interpreter','latex')
+%xlim([1e3 7e5]); 
+%ylim([1e0 1e3]);
+grid on
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+
+
+%%
+figure(10)
+subplot(211)
+plot(DATA.PND_c(D,1));
+subplot(212)
+plot(DATA.LCS_G1(D,1));
 
 
 %% MATRIX PLOT between all variables
@@ -1291,7 +1353,8 @@ Dg = Exp_gas;
 Da =[Exp_smoking;Exp_kerosine;Exp_gas];
 
 % CHOOSE THE DATA with the number of inputs and output
-Di = 4 ;
+Di = 4;
+
 if Di == 2
     disp('Temp and PM2.5')
     DATAi = [ [DATA.AT_T(Ds,1);DATA.CO_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
@@ -1544,7 +1607,7 @@ elseif method ==6
     
     %[Ds;Dk;Dg]
     %DATAt  = [DATAi1,DATAo1];
-    no = linspace(1, size(DATAt,1), size(DATAt,1))' ;
+    no = linspace(1, size(DATAi1,1), size(DATAi1,1))' ;
     DATAt  = [DATAi1,DATAo1,no];
     DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
     
@@ -1557,7 +1620,8 @@ elseif method ==6
             d = DATAt1(:,n)';
         else
             d = DATAt1(:,n)';
-        end 
+        end
+        xden = d;
         xden = wdenoise(d,4);
         %figure(100);plot(d);hold on;plot(xden,'r--');hold off        
         DATAt1(:,n) = xden ;
