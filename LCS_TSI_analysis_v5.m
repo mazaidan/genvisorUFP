@@ -38,7 +38,7 @@ end
 
 
 %% In this part, we pre-process the data
-clear;clc;close all
+clear;clc;close all;
 
 % SMOKING ACTIVITIES
 
