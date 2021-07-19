@@ -902,12 +902,38 @@ set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 
 %%
+
+D=[Exp_smoking;Exp_kerosine;Exp_gas];
+
 figure(10)
 subplot(211)
 plot(DATA.PND_c(D,1));
 subplot(212)
 plot(DATA.LCS_G1(D,1));
 
+
+figure(11)
+Dat_temp = [DATA.PND_c(D,1),DATA.LCS_G1(D,1)];
+%Dat_temp(isnan(Dat_temp)) = 0;
+Dat_temp = Dat_temp( ~any( isnan( Dat_temp ) | isinf( Dat_temp ), 2 ),: );
+feature1 = abs(wdenoise(Dat_temp(:,1)));
+feature2 = abs(wdenoise(Dat_temp(:,2))); 
+%feature1 = abs(cwt(Dat_temp(:,1)))';
+%feature2 = abs(cwt(Dat_temp(:,2)))'; 
+scatter(feature1(:,1),feature2(:,1));
+%scatter(abs(cwt(Dat_temp(:,1))),abs(cwt(Dat_temp(:,2))));
+xlabel('PNC (CPC)','interpreter','latex')
+ylabel('PM$_{2.5}$ (LCS)','interpreter','latex')
+%xlim([1e3 7e5]); 
+%ylim([1e0 1e3]);
+grid on
+scatter(feature1(:,2),feature2(:,2));
+set(gca, 'YScale', 'log')
+set(gca, 'XScale', 'log')
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+
+%C = xcorr(DATA.PND_c(D,1),DATA.LCS_G1(D,1));
 
 %% MATRIX PLOT between all variables
 
@@ -1224,23 +1250,24 @@ set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 
 D = Exp_smoking; 
-Dt = Exp_kerosine;
-%Dt = Exp_gas;
-%D =[Exp_smoking;Exp_kerosine;Exp_gas];
+%D = Exp_kerosine;
+Dt = Exp_gas;
+%Dt =[Exp_smoking;Exp_kerosine;Exp_gas];
 
 % For met vars
 % B = rescale(A,l,u,'InputMin',inmin,'InputMax',inmax) uses the formula
 % B = l + [(A-inmin)./(inmax-inmin)].*(u-l)
 % For aerosol, simply take log10
 
-DATAm1 = [DATA.AT_T(D,1),DATA.AT_RH(D,1),DATA.LCS_G2_01_met(D,3),DATA.LCS_G1(D,1),DATA.PND_c(D,1)];
+DATAm1 = [DATA.AT_T(D,1),DATA.AT_RH(D,1),DATA.CO_P(D,1),DATA.LCS_G1(D,1),DATA.PND_c(D,1)];
 %DATAm1 = [DATA.AT_T(D,1),DATA.LCS_G2_01_met(D,1),DATA.LCS_G2_01_met(D,3),DATA.PMD_c(D,6),DATA.PND_c(D,1)];
 %DATAm1 = [DATA.AT_T(D,1),DATA.LCS_G2_01_met(D,1),DATA.CO_P(D,1),DATA.LCS_G1(D,1),DATA.PND_c(D,1)];
 %DATAm1 = [DATA.AT_T(D,1),DATA.AT_RH(D,1),DATA.CO_P(D,1),DATA.LCS_G2_02(D,1),DATA.PND_c(D,1)];
 DATAm2 = zeros(size(DATAm1));
 
+DATAt1 = [DATA.AT_T(Dt,1),DATA.AT_RH(Dt,1),DATA.CO_P(Dt,1),DATA.LCS_G1(Dt,1),DATA.PND_c(Dt,1)];
 %DATAt1 = [DATA.AT_T(Dt,1),DATA.AT_RH(Dt,1),DATA.CO_P(Dt,1),DATA.LCS_G1(Dt,1),DATA.PND_c(Dt,1)];
-DATAt1 = [DATA.CO_T(Dt,1),DATA.CO_RH(Dt,1),DATA.CO_P(Dt,1),DATA.LCS_G1(Dt,1),DATA.PND_c(Dt,1)];
+%DATAt1 = [DATA.CO_T(Dt,1),DATA.CO_RH(Dt,1),DATA.CO_P(Dt,1),DATA.LCS_G1(Dt,1),DATA.PND_c(Dt,1)];
 DATAt2 = zeros(size(DATAt1));
 
 for n=1:size(DATAm1,2)
@@ -1319,6 +1346,7 @@ elseif model == 2
     %mdl = fitglm(Xt,[Y X],'gamma')
     %mdl = fitglm(X,y,'y ~ x1 + x2','Distribution','poisson');
     mdl = fitglm(X,Y,'Distribution','gamma');
+    %mdl = fitrobust(X,Y);
     Ypred = predict(mdl,Xt);
 end
 figure(13); fig = gcf;
@@ -1382,7 +1410,7 @@ Dg = Exp_gas;
 Da =[Exp_smoking;Exp_kerosine;Exp_gas];
 
 % CHOOSE THE DATA with the number of inputs and output
-Di = 4;
+Di = 2;
 
 if Di == 2
     disp('Temp and PM2.5')
