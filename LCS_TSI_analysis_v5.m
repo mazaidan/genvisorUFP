@@ -985,7 +985,7 @@ set(findall(fig,'-property','FontSize'),'FontSize',FS);
 FS = 16;
 figure(11); fig = gcf;
 fig.Position = [100 100 540 400].*2.5;
-suptitle('Standarization Algorithm col.3')
+sgtitle('Standarization Algorithm col.3')
 subplot(5,3,1);
 histogram(DATA.PND_c(:,1),'BinWidth',.05,'FaceColor','b');
 set(gca, 'XScale', 'log')
@@ -1103,7 +1103,7 @@ disp('For normalization of temp, RH and P, perhaps the best is to use max and mi
 
 figure(12); fig = gcf;
 fig.Position = [100 100 540 400].*2.5;
-suptitle('Min-Max Algorithm col.3')
+sgtitle('Min-Max Algorithm col.3')
 subplot(5,3,1);
 histogram(DATA.PND_c(:,1),'BinWidth',.05,'FaceColor','b');
 set(gca, 'XScale', 'log')
@@ -1275,14 +1275,17 @@ Y = DATAm2(:,5);
 Xt = DATAt2(:,1:4);
 Yt = DATAt2(:,5);
 
-%Xt = X;
-%Yt = Y;
+Xt = X;
+Yt = Y;
 
 
 % LINEAR MODEL:
 mdl = fitlm(X,Y);
 Ypred_lm = predict(mdl,Xt);
 
+model = 2
+if model == 1
+    disp('ANN')
 % ANN model
 inputs = X';
 targets = Y';
@@ -1300,6 +1303,14 @@ net.divideParam.testRatio = 0;%15/100;
 outputs = net(inputs_t);
 Ypred = outputs;
 
+elseif model == 2
+    disp('GLM')
+    %b = glmfit(X,Y,'gamma')
+    %mdl = fitglm(Xt,[Y X],'gamma')
+    %mdl = fitglm(X,y,'y ~ x1 + x2','Distribution','poisson');
+    mdl = fitglm(X,Y,'Distribution','gamma');
+    Ypred = predict(mdl,Xt);
+end
 figure(13); fig = gcf;
 fig.Position = [100 100 540 400].*2.5;
 subplot(221);
