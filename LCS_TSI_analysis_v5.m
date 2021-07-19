@@ -1259,9 +1259,19 @@ for n=1:size(DATAm1,2)
     
     if n==1 || n==2 || n==3
         disp('met var')
+        %DATAm2(:,n) = (DATAm1(:,n) - nanmean(DATAm1(:,n))) ./ nanstd(DATAm1(:,n));
+        %DATAt2(:,n) = (DATAt1(:,n) - nanmean(DATAt1(:,n))) ./ nanstd(DATAt1(:,n));
         DATAm2(:,n) = l + [(DATAm1(:,n)-inmin)./(inmax-inmin)].*(u-l);
         DATAt2(:,n) = l + [(DATAt1(:,n)-inmin)./(inmax-inmin)].*(u-l);
-    else
+    elseif n == 4
+        disp('Aerosol')
+        %DATAm2(:,n) = (DATAm1(:,n) - nanmean(DATAm1(:,n))) ./ nanstd(DATAm1(:,n));
+        %DATAt2(:,n) = (DATAt1(:,n) - nanmean(DATAt1(:,n))) ./ nanstd(DATAt1(:,n));
+        DATAm2(:,n) = log10(DATAm1(:,n));
+        DATAt2(:,n) = log10(DATAt1(:,n));
+        %DATAm2(:,n) = DATAm1(:,n);
+        %DATAt2(:,n) = DATAt1(:,n);
+    elseif n == 5
         disp('Aerosol')
         DATAm2(:,n) = log10(DATAm1(:,n));
         DATAt2(:,n) = log10(DATAt1(:,n));
@@ -1325,12 +1335,14 @@ xlabel('log PND (CPC)'); ylabel('log Est. PND (CPC)')
 
 subplot(222);
 scatter(10.^Yt,10.^Ypred_lm); hold on
-Xlim1 = 1e1;
+Xlim1 = 1e3;
 Ylim1 = 5e5;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
 x = linspace(Xlim1,Ylim1);
 y = linspace(Xlim1,Ylim1);
 plot(x,y,'r'); hold off
+set(gca, 'YScale', 'log')
+set(gca, 'XScale', 'log')
 xlabel('PND (CPC)');ylabel('Est. PND (CPC)')
 
 subplot(223);
@@ -1345,12 +1357,14 @@ xlabel('log PND (CPC)');ylabel('log Est. PND (CPC)')
 
 subplot(224);
 scatter(10.^Yt,10.^Ypred); hold on
-Xlim1 = 1e1;
+Xlim1 = 1e3;
 Ylim1 = 5e5;
 xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
 x = linspace(Xlim1,Ylim1);
 y = linspace(Xlim1,Ylim1);
 plot(x,y,'r'); hold off
+set(gca, 'YScale', 'log')
+set(gca, 'XScale', 'log')
 xlabel('PND (CPC)');ylabel('Est. PND (CPC)')
 
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
