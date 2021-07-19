@@ -883,16 +883,20 @@ set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 subplot(248)
 Dat_temp = [DATA.PND_c(D,1),DATA.LCS_G1(D,1)];
-Dat_temp(isnan(Dat_temp)) = 0;
-%scatter(abs(cwt(Dat_temp(:,1))),abs(cwt(Dat_temp(:,2))));
+%Dat_temp(isnan(Dat_temp)) = 0;
+Dat_temp = Dat_temp( ~any( isnan( Dat_temp ) | isinf( Dat_temp ), 2 ),: );
+feature1 = abs(cwt(Dat_temp(:,1)))';
+feature2 = abs(cwt(Dat_temp(:,2)))'; 
+scatter(feature1(:,2),feature2(:,2));
 %scatter(abs(cwt(Dat_temp(:,1))),abs(cwt(Dat_temp(:,2))));
 xlabel('PNC (CPC)','interpreter','latex')
 ylabel('PM$_{2.5}$ (LCS)','interpreter','latex')
 %xlim([1e3 7e5]); 
 %ylim([1e0 1e3]);
 grid on
-set(gca, 'XScale', 'log')
+scatter(feature1(:,2),feature2(:,2));
 set(gca, 'YScale', 'log')
+set(gca, 'XScale', 'log')
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 
