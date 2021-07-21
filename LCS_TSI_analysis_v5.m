@@ -331,7 +331,7 @@ clc
 figure(1); fig =gcf; 
 fig.Position = [100 100 540 400].*2.5;
 ms=10;
-subplot(411)
+subplot(511)
 plot(DATA.AT_T,'b.','MarkerSize',ms);hold on
 plot(DATA.CO_T,'r.','MarkerSize',ms);
 plot(DATA.LCS_G2_01_met(:,2),'g.','MarkerSize',ms);
@@ -339,13 +339,13 @@ plot(DATA.LCS_G2_02_met(:,2),'c.','MarkerSize',ms);
 xline(0,'-',{'Smoking','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
 xline(11521,'-',{'Kerosene','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
 xline(30243,'-',{'Gas','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
-title('Time-Series: Temperature','interpreter','latex')
+%title('Time-Series: Temperature','interpreter','latex')
 legend('AeroTrak','ClasOhson','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
 ylim([10 40]); grid on
 xlabel('Time Index','interpreter','latex'); ylabel('Temperature ($\circ$C)','interpreter','latex')
 hold off
 
-subplot(412)
+subplot(512)
 plot(DATA.AT_RH,'b.','MarkerSize',ms);hold on
 plot(DATA.CO_RH,'r.','MarkerSize',ms);
 plot(DATA.LCS_G2_01_met(:,1),'g.','MarkerSize',ms);
@@ -353,27 +353,27 @@ plot(DATA.LCS_G2_02_met(:,1),'c.','MarkerSize',ms);
 xline(0,'-',{'Smoking','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
 xline(11521,'-',{'Kerosene','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
 xline(30243,'-',{'Gas','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
-title('Time-Series: Relative Humidity','interpreter','latex')
+%title('Time-Series: Relative Humidity','interpreter','latex')
 legend('AeroTrak','ClasOhson','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
 ylim([10 70]); grid on
 xlabel('Time Index','interpreter','latex'); ylabel('Relative Humidity (\%)','interpreter','latex')
 hold off
 
-subplot(413)
+subplot(513)
 plot(DATA.CO_P,'r.','MarkerSize',ms);hold on
 plot(DATA.LCS_G2_01_met(:,3),'g.','MarkerSize',ms);
 plot(DATA.LCS_G2_02_met(:,3),'c.','MarkerSize',ms);
 xline(0,'-',{'Smoking','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
 xline(11521,'-',{'Kerosene','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
 xline(30243,'-',{'Gas','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
-title('Time-Series: Pressure','interpreter','latex')
+%title('Time-Series: Pressure','interpreter','latex')
 legend('ClasOhson','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
 ylim([850 950]); grid on
 xlabel('Time Index','interpreter','latex'); ylabel('Pressure (mbar)','interpreter','latex')
 hold off
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
-subplot(414)
+subplot(514)
 plot(DATA.PMD_c(:,7),'b.','MarkerSize',ms); hold on
 plot(DATA.DustTrak_c(:,2),'r.','MarkerSize',ms);
 plot(DATA.SidePak_c(:,1),'m.','MarkerSize',ms);
@@ -383,11 +383,22 @@ plot(DATA.LCS_G2_02(:,1),'c.','MarkerSize',ms);
 xline(0,'-',{'Smoking','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
 xline(11521,'-',{'Kerosene','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
 xline(30243,'-',{'Gas','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
-title('Time-Series: PM$_{2.5}$','interpreter','latex')
+%title('Time-Series: PM$_{2.5}$','interpreter','latex')
 set(gca, 'YScale', 'log')
 ylim([1e-2 5e4])
 xlabel('Time Index','interpreter','latex'); ylabel('PM$_{2.5}$ ($\mu$g/m$^3$)','interpreter','latex')
 legend('PMD','DustTrak','SidePak','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
+hold off
+
+
+subplot(515)
+plot(DATA.PND_c(:,1),'b.','MarkerSize',ms); hold on
+xline(0,'-',{'Smoking','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
+xline(11521,'-',{'Kerosene','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
+xline(30243,'-',{'Gas','Experiment'},'interpreter','latex','LabelOrientation','horizontal');
+set(gca, 'YScale', 'log')
+ylim([0 7e5])
+xlabel('Time Index','interpreter','latex'); ylabel('PM$_{2.5}$ ($\mu$g/m$^3$)','interpreter','latex')
 hold off
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
