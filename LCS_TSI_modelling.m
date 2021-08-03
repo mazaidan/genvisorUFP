@@ -23,8 +23,8 @@ Exp_gas = [30243:1:54721]';
 % 2) use Exp_smoking, estimate Exp_kerosine and Exp_gas
 
 Ds = Exp_smoking; 
-Dk = Dg;% Exp_kerosine;
 Dg = Exp_gas;
+Dk = Dg;% Exp_kerosine;
 Da =[Exp_smoking;Exp_kerosine;Exp_gas];
 
 % CHOOSE THE DATA with the number of inputs and output
@@ -346,7 +346,7 @@ end
 inputs = X';
 targets = Y';
 inputs_t = Xt';
-ANN = 5;
+ANN = 1;
 if ANN ==1
     disp('standard ANN')
 % ANN model
