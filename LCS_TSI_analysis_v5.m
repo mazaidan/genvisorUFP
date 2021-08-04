@@ -7,7 +7,7 @@
 % Senior Scientist, Helsinki University, Finland
 
 
-%% UNDERSTANDING AEROSOL DATA:
+%% UNDERSTANDING AEROSOL DATA: 
 % To understand how PND was formed. 
 % In practice, PND was formed using data from CPC, Ptrak and AeroTrak.
 % We also need to understand how PMD was calculated.
