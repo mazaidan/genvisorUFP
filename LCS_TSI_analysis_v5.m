@@ -14,8 +14,8 @@
 
 clc;clear;close all;
 % select any index in the data
-n=2150;%10000;%2002;
-r=-2;
+n=10002;2002;2150;%10000;%2002;
+r=0;%-2;
 load('Data_clean_processed.mat'); D=1;
 %load('Data_processed_Heaters/Data_processed_Kerosene_Heaters.mat'); D=2;
 %load('Data_processed_Heaters/Data_processed_NaturalGas_Heaters.mat'); D=3;
@@ -27,6 +27,28 @@ if D == 1
     disp(['PNSD              : ',num2str(roundn(PNSD(n,8:16),r))])
     disp(['PMD               : ',num2str(roundn(PMD(n,8:16),r))])
     disp(['PMSD              : ',num2str(roundn(PMSD(n,8:16),r))])
+    
+    bin2 = CPC(n,8) - Ptrak(n,8);
+    bin3 = Ptrak(n,8) - sum(AeroTrak_PN(n,8:13));
+    disp(bin2)
+    disp(bin3)
+    
+    figure(1); fig=gcf;
+    X = CPC(:,8) - Ptrak(:,8); % CPC - PTRAK == 10 - 25 nm
+    Y = PND(2:end,9);          
+    subplot(211);scatter(X,Y); hold on; grid on
+    xlabel('PND');ylabel('CPC - Ptrak');title('Bin 1: PND')
+    x = linspace(0,max(Y));
+    y = linspace(0,max(Y));
+    plot(x,y,'r');hold off   
+    X = Ptrak(:,8) - sum(AeroTrak_PN(:,8:13),2); % Ptrak - sum(aerotrak) == 25 - 300 nm
+    Y = PND(2:end,10);
+    subplot(212);scatter(X,Y); hold on; grid on
+    xlabel('PND');ylabel('Ptrak - sum(aerotrak)');title('Bin 2: PND')
+    x = linspace(0,max(Y));
+    y = linspace(0,max(Y));
+    plot(x,y,'r');hold off
+    set(findall(fig,'-property','FontSize'),'FontSize',22);
 else 
     disp('Kerosene/Natural Gas Data')
     disp(['CPC+Ptrak+AeroTrak: ',num2str(roundn([CPC(n,2),nan,Ptrak(n,2),AeroTrak_PN(n,2:7)],r))])
@@ -34,7 +56,38 @@ else
     disp(['PNSD              : ',num2str(roundn(PNSD(n,2:10),r))])
     disp(['PMD               : ',num2str(roundn(PMD(n,2:10),r))])
     disp(['PMSD              : ',num2str(roundn(PMSD(n,2:10),r))])
+    
+    bin1 = CPC(n,2) - Ptrak(n,2);
+    bin2 = Ptrak(n,2) - sum(AeroTrak_PN(n,2:7));
+    disp(bin1)
+    disp(bin2)
+    
+%     figure(1); fig=gcf;
+%     subplot(211);scatter(CPC(:,2) - Ptrak(:,2),PND(:,3));
+%     xlabel('PND');ylabel('CPC - Ptrak');title('Bin 1: PND')
+%     subplot(212);scatter(Ptrak(:,2) - sum(AeroTrak_PN(:,2:7),2),PND(:,4));
+%     xlabel('PND');ylabel('Ptrak - sum(aerotrak)');title('Bin 2: PND')
+%     set(findall(fig,'-property','FontSize'),'FontSize',22);
+    
+    figure(2); fig=gcf;
+    X = CPC(:,2) - Ptrak(:,2);
+    Y = PND(:,3);
+    subplot(211);scatter(X,Y); hold on; grid on
+    xlabel('PND');ylabel('CPC - Ptrak');title('Bin 1: PND')
+    x = linspace(0,max(Y));
+    y = linspace(0,max(Y));
+    plot(x,y,'r');hold off   
+    X = Ptrak(:,2) - sum(AeroTrak_PN(:,2:7),2);
+    Y = PND(:,4);
+    subplot(212);scatter(X,Y); hold on; grid on
+    xlabel('PND');ylabel('Ptrak - sum(aerotrak)');title('Bin 2: PND')
+    x = linspace(0,max(Y));
+    y = linspace(0,max(Y));
+    plot(x,y,'r');hold off
+    set(findall(fig,'-property','FontSize'),'FontSize',22);
+    
 end
+
 
 
 %% In this part, we pre-process the data
