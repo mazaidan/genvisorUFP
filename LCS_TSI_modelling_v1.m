@@ -27,10 +27,10 @@ Dg = Exp_gas;
 Dk = Dg;% Exp_kerosine;
 Da =[Exp_smoking;Exp_kerosine;Exp_gas];
 
-% CHOOSE THE DATA with the number of inputs and output
-Di = 2;
+% CHOOSE THE DATA with the different types of inputs
+Di = 1;
 
-if Di == 2
+if Di == 1
     disp('Temp and PM2.5')
     DATAi = [ [DATA.AT_T(Ds,1);DATA.CO_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
               [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
@@ -39,22 +39,25 @@ elseif Di == 2
     DATAi = [[DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
              [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
 elseif Di == 3
-    disp('RH and PM2.5')
-    DATAi = [[DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
+    disp('P and PM2.5')
+    DATAi = [[DATA.LCS_G2_01_met(Ds,3);DATA.CO_P(Dk,1);DATA.LCS_G2_01_met(Dg,3)], ...
              [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
-    
-elseif Di == 3
+elseif Di == 4
     disp('Temp, RH and PM2.5')
     DATAi = [[DATA.AT_T(Ds,1);DATA.CO_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
              [DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
              [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
-elseif Di == 4         
+elseif Di == 5         
+    disp('Temp, P and PM2.5')
+    DATAi = [[DATA.AT_T(Ds,1);DATA.CO_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
+             [DATA.LCS_G2_01_met(Ds,3);DATA.CO_P(Dk,1);DATA.LCS_G2_01_met(Dg,3)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
+elseif Di == 6         
     disp('RH, P and PM2.5')
     DATAi = [[DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
              [DATA.LCS_G2_01_met(Ds,3);DATA.CO_P(Dk,1);DATA.LCS_G2_01_met(Dg,3)], ...
-             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]]; 
-     
-elseif Di == 4
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
+elseif Di == 7
     disp('Temp, RH, P and PM2.5')
     %DATAi = [[DATA.AT_T(Ds,1);DATA.CO_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
     %         [DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
@@ -66,7 +69,13 @@ elseif Di == 4
              [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
 end
 
-% NORMALIZATION
+%% NORMALIZATION
+
+DATAi1 = DATAi;
+DATAi1(:,end) = log10(DATAi(:,end));
+
+%%
+%Di = 2;
 DATAi1 = zeros(size(DATAi));
 l = 0; u = 1;
 for n = 1: Di
@@ -88,9 +97,14 @@ for n = 1: Di
     end
 end
 
-
-%if Di == 4
-       
+%% PND data cleaning
+CLEAN_PND = 1;
+if CLEAN_PND == 0
+    disp('We do not remove PND data which is not clean')
+    DATAo  = [DATA.PND_c([Ds;Dk;Dg],1)];
+    DATAo1 = log10(DATAo);
+elseif CLEAN_PND == 1
+    disp('We remove PND data which is not clean')
     CPC = DATA.PND_c([Ds;Dk;Dg],1);
     %figure(100);plot(DATA.PND_c(Ds,1));hold on;plot(DATA.PND_c(Dk,1),'r');plot(DATA.PND_c(Dg,1),'g'); hold off
     CPClog = log10(CPC);
@@ -102,14 +116,13 @@ end
     CPCclean(idx,:)=nan;
     %CPCclean = CPC(idx,:);
     
-    %%%DATAo  = CPC; 
+    %%%DATAo  = CPC;
     DATAo  = CPCclean;
     %DATAo  = [DATA.PND_c(Da,1)];
     DATAo1 = log10(DATAo);
     % figure(100);plot(DATAo1(Ds,1));hold on;plot(DATAo1(Dk,1),'r');plot(DATAo1(Dg,1),'g'); hold off
     
-    
-    figure(13)
+    figure(100)
     for n=1:size(DATAi,2)
         subplot(2,5,n);plot(DATAi(:,n),'.');hold on
         subplot(2,5,n+5);plot(DATAi1(:,n),'.');
@@ -118,9 +131,7 @@ end
     subplot(2,5,10);plot(DATAo1(:,1),'.');
     hold off
     
-    
-    
-    figure(14); 
+    figure(101);
     subplot(511);plot(CPC,'b.');
     hold on; plot(CPCgradient,'r.'); hold off
     subplot(512);plot(CPClog,'b.');
@@ -129,9 +140,10 @@ end
     subplot(513);plot(CPCloggradient,'r.');hold off
     subplot(514);plot(CPC,'b.');hold on;plot(CPCclean,'r.');hold off
     subplot(515);plot(log10(CPC),'b.');hold on;plot(log10(CPCclean),'r.');hold off
-    %
-%end
-
+else
+    disp('We need to choose CLEAN_PND either 0 or 1')
+end
+%%
 % SELECT TRAINING AND TESTING DATA
 R     = zeros(1,12);
 MAPE  = zeros(1,12);
