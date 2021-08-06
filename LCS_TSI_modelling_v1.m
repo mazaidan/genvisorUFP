@@ -28,7 +28,7 @@ Dk = Dg;% Exp_kerosine;
 Da =[Exp_smoking;Exp_kerosine;Exp_gas];
 
 % CHOOSE THE DATA with the different types of inputs
-Di = 1;
+Di = 7;
 
 if Di == 1
     disp('Temp and PM2.5')
@@ -69,35 +69,62 @@ elseif Di == 7
              [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
 end
 
-%% NORMALIZATION
-
-DATAi1 = DATAi;
-DATAi1(:,end) = log10(DATAi(:,end));
-
-%%
-%Di = 2;
+% NORMALIZATION
+l = -1; u = 1;
+NORM = 1;
 DATAi1 = zeros(size(DATAi));
-l = 0; u = 1;
-for n = 1: Di
-    if n==1
-        disp('Temp'); inmin = 10; inmax = 40;
-    elseif n==2
-        disp('RH'); inmin = 10; inmax = 50;
-    elseif n==3
-        disp('P'); inmin = 890; inmax = 910;
-    else
-        disp('PM2.5')
-    end
-    if n == Di
-        disp('PM2.5')
-        DATAi1(:,n) = log10(DATAi(:,n));
-    else
-        %DATAi1(:,n) = l + [(DATAi(:,n)-inmin)./(inmax-inmin)].*(u-l);
-        DATAi1(:,n) = DATAi(:,n);
+if NORM == 0
+    disp('No NORMALIZATION for MET vars')
+    DATAi1(:,1:end-1) = DATAi(:,1:end-1);
+    DATAi1(:,end) = log10(DATAi(:,end));
+elseif NORM == 1
+    disp('NORMALIZATION for MET vars')
+    if Di == 1
+        disp('Temp and PM2.5'); inmin = 10; inmax = 40;
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,end) = log10(DATAi(:,end));
+    elseif Di == 2
+        disp('RH and PM2.5'); inmin = 10; inmax = 50;
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,end) = log10(DATAi(:,end));
+    elseif Di == 3
+        disp('P and PM2.5'); inmin = 890; inmax = 910;
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,end) = log10(DATAi(:,end));
+    elseif Di == 4
+        disp('Temp, RH and PM2.5'); 
+        inmin = 10; inmax = 40; % Temp
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        inmin = 10; inmax = 50; % RH
+        DATAi1(:,2) = l + [(DATAi(:,2)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,end) = log10(DATAi(:,end));
+    elseif Di == 5
+        disp('Temp, RH and PM2.5'); 
+        inmin = 10; inmax = 40; % Temp
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        inmin = 890; inmax = 910; % P
+        DATAi1(:,2) = l + [(DATAi(:,2)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,end) = log10(DATAi(:,end));
+    elseif Di == 6
+        disp('RH, P and PM2.5'); 
+        inmin = 10; inmax = 50; % RH
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        inmin = 890; inmax = 910; % P
+        DATAi1(:,2) = l + [(DATAi(:,2)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,end) = log10(DATAi(:,end));
+    elseif Di == 7
+        disp('Temp, RH, P and PM2.5');
+        inmin = 10; inmax = 40; % T
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        inmin = 10; inmax = 50; % RH
+        DATAi1(:,2) = l + [(DATAi(:,2)-inmin)./(inmax-inmin)].*(u-l);
+        inmin = 890; inmax = 910; % P
+        DATAi1(:,3) = l + [(DATAi(:,3)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,end) = log10(DATAi(:,end));
     end
 end
 
-%% PND data cleaning
+% PND data cleaning
 CLEAN_PND = 1;
 if CLEAN_PND == 0
     disp('We do not remove PND data which is not clean')
@@ -143,7 +170,7 @@ elseif CLEAN_PND == 1
 else
     disp('We need to choose CLEAN_PND either 0 or 1')
 end
-%%
+%
 % SELECT TRAINING AND TESTING DATA
 R     = zeros(1,12);
 MAPE  = zeros(1,12);
