@@ -28,7 +28,7 @@ Dk = Dg;% Exp_kerosine;
 Da =[Exp_smoking;Exp_kerosine;Exp_gas];
 
 % CHOOSE THE DATA with the different types of inputs
-Di = 7;
+Di = 1;
 
 if Di == 1
     disp('Temp and PM2.5')
@@ -172,8 +172,8 @@ else
 end
 %
 % SELECT TRAINING AND TESTING DATA
-R     = zeros(1,12);
-MAPE  = zeros(1,12);
+R     = zeros(2,12);
+MAPE  = zeros(2,12);
 
 for test_no=1:12
     if test_no == 1; TRAIN = Ds; TEST = Dk; end
@@ -550,9 +550,13 @@ end
 
     R0 =  corrcoef(Yt,Ypred_lm);
     R(1,test_no) = R0(2,1);
+    
+    R0 =  corrcoef(Yt,Ypred_snn);
+    R(2,test_no) = R0(2,1);
 
     %MAPE(1,test_no) = nanmean(abs((Yt-Ypred_lm)./Yt));
     MAPE(1,test_no)=errperf(Yt,Ypred_lm,'mape');
+    MAPE(2,test_no)=errperf(Yt,Ypred_snn','mape');
     
     figure(1);
     subplot(4,3,test_no);
@@ -582,6 +586,11 @@ end
     
     
 end
+
+Rmean     = mean(R,2);
+MAPEmean  = mean(MAPE,2); 
+disp(['Rmean of M1: ', num2str(Rmean(1)), ' and Rmean of M2: ', num2str(Rmean(2))])
+disp(['MAPEmean of M1: ', num2str(MAPEmean(1)), ' and MAPEmean of M2: ', num2str(MAPEmean(2))])
 
 
 figure(15); fig = gcf;
