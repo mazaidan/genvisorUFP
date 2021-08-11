@@ -6,7 +6,7 @@
 % Research Associate Professor, Nanjing University, China
 % Senior Scientist, Helsinki University, Finland
 
-clear all; close all;clc;
+clear; close all;clc;
 
 load('DATA2.mat') 
 DATA = DATA2;
@@ -17,63 +17,51 @@ Exp_gas = [30243:1:54721]';
 
 %% QUICK CORRELATION ANALYSIS including time-delayed features
 Ds = Exp_smoking; 
-Dk = Exp_kerosine;
 Dg = Exp_gas;
-%Da =[Exp_smoking;Exp_kerosine;Exp_gas];
-Da = Ds; [Ds;Dk;Dg];
+%Da =[Exp_smoking;Exp_gas];
+Da = Ds; [Ds;Dg];
 
-% no time-delayed
-Da_o = Da(1:end,1);
-Da_i = Da(1:end,1);
-% time-delayed 1
-Da_o = Da(2:end,1);
-Da_i = Da(1:end-1,1);
-% time-delayed 2
-Da_o = Da(3:end,1);
-Da_i = Da(1:end-2,1);
+% % time-delayed 0 (no time delayed)
+% Da_o = Da(1:end,1);
+% Da_i = Da(1:end,1);
+% % time-delayed 1
+% Da_o = Da(2:end,1);
+% Da_i = Da(1:end-1,1);
+% % time-delayed 2
+% Da_o = Da(3:end,1);
+% Da_i = Da(1:end-2,1);
 
 for T = 0:5
-% time-delayed T
-Da_o = Da(T+1:end,1);
-Da_i = Da(1:end-T,1);
-disp(['Time Delayed: ', num2str(T)])
-
-
-
-%CPC = DATA.PND_c([Ds;Dk;Dg],1);
-CPC = DATA.PND_c(Da_o,1);
-CPClog = log10(CPC);
-CPCgradient = gradient(CPC);
-CPCdiff = diff(CPC);
-CPCloggradient = gradient(CPClog);
-idx = find(CPCgradient <= nanmedian(CPCgradient)+10);
-CPCclean =CPC;
-CPCclean(idx,:)=nan;
-DATAo  = CPCclean;
-DATAo1 = log10(DATAo);
-
-%DATAi = [[DATA.AT_T(Ds,1);DATA.AT_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
-%         [DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
-%         [DATA.LCS_G2_01_met(Ds,3);DATA.CO_P(Dk,1);DATA.LCS_G2_01_met(Dg,3)], ...
-%         [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
-
-%Da = Da; % X(t)
-%Da = [Da(2:end,1);nan(1,1)]; % X(t-1);
-
-X0 = [DATA.AT_T(Da_i,1),DATA.AT_RH(Da_i,1),DATA.LCS_G2_01_met(Da_i,3),DATA.LCS_G1(Da_i,1)];
-%X0 = [DATA.AT_T(Da,1),DATA.AT_RH(Da,1),DATA.LCS_G2_01_met(Da,3),DATA.LCS_G1(Da,1)];
-%X0 = [DATA.AT_T(Ds,1),DATA.AT_RH(Ds,1),DATA.LCS_G2_01_met(Ds,3),DATA.LCS_G1(Ds,1)];
-
-for n = 1:4
-    Y = DATAo;DATAo1;
-    X = X0(:,n);
-    Rp = corr(X,Y,'Type','Pearson','Rows','complete');
-    Rs = corr(X,Y,'Type','Spearman','Rows','complete');
-    disp(['Rp: ',num2str(Rp), ' Rs: ',num2str(Rs), ' '])
+    % time-delayed T
+    Da_o = Da(T+1:end,1);
+    Da_i = Da(1:end-T,1);
+    disp(['Time Delayed: ', num2str(T)])
+    
+    %CPC = DATA.PND_c([Ds;Dk;Dg],1);
+    CPC = DATA.PND_c(Da_o,1);
+    CPClog = log10(CPC);
+    CPCgradient = gradient(CPC);
+    CPCdiff = diff(CPC);
+    CPCloggradient = gradient(CPClog);
+    idx = find(CPCgradient <= nanmedian(CPCgradient)+10);
+    CPCclean =CPC;
+    CPCclean(idx,:)=nan;
+    DATAo  = CPCclean;
+    DATAo1 = log10(DATAo);
+            
+    X0 = [DATA.AT_T(Da_i,1),DATA.AT_RH(Da_i,1),DATA.LCS_G2_01_met(Da_i,3),DATA.LCS_G1(Da_i,1)];
+    
+    for n = 1:4
+        Y = DATAo;DATAo1;
+        X = X0(:,n);
+        Rp = corr(X,Y,'Type','Pearson','Rows','complete');
+        Rs = corr(X,Y,'Type','Spearman','Rows','complete');
+        disp(['Rp: ',num2str(Rp), ' Rs: ',num2str(Rs), ' '])
+    end
+    disp('  ')
+    
 end
-disp('  ')
 
-end
 %% MODELLING Linear Models and Shallow Neural Networks (version 2)
 
 % 1) use all data, randominze, and predict CPC
@@ -81,67 +69,75 @@ end
 
 Ds = Exp_smoking; 
 Dg = Exp_gas;
-Dk = Dg;% Exp_kerosine;
-Da =[Exp_smoking;Exp_kerosine;Exp_gas];
+Da =[Exp_smoking;Exp_gas];
 
 % CHOOSE THE DATA with the different types of inputs
-Di = 7;
+Di = 9;
 
 if Di == 1
     disp('Temp and PM2.5')
-    DATAi = [ [DATA.AT_T(Ds,1);DATA.CO_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
-              [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
+    DATAi = [ [DATA.AT_T(Ds,1);DATA.LCS_G2_01_met(Dg,2)], ...
+              [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]];
 elseif Di == 2
     disp('RH and PM2.5')
-    DATAi = [[DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
-             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
+    DATAi = [[DATA.AT_RH(Ds,1);DATA.LCS_G2_01_met(Dg,1)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]];
 elseif Di == 3
     disp('P and PM2.5')
-    DATAi = [[DATA.LCS_G2_01_met(Ds,3);DATA.CO_P(Dk,1);DATA.LCS_G2_01_met(Dg,3)], ...
-             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
+    DATAi = [[DATA.LCS_G2_01_met(Ds,3);DATA.LCS_G2_01_met(Dg,3)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]];
 elseif Di == 4
     disp('Temp, RH and PM2.5')
-    DATAi = [[DATA.AT_T(Ds,1);DATA.CO_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
-             [DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
-             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
+    DATAi = [[DATA.AT_T(Ds,1);DATA.LCS_G2_01_met(Dg,2)], ...
+             [DATA.AT_RH(Ds,1);DATA.LCS_G2_01_met(Dg,1)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]];
 elseif Di == 5         
     disp('Temp, P and PM2.5')
-    DATAi = [[DATA.AT_T(Ds,1);DATA.CO_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
-             [DATA.LCS_G2_01_met(Ds,3);DATA.CO_P(Dk,1);DATA.LCS_G2_01_met(Dg,3)], ...
-             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
+    DATAi = [[DATA.AT_T(Ds,1);DATA.LCS_G2_01_met(Dg,2)], ...
+             [DATA.LCS_G2_01_met(Ds,3);DATA.LCS_G2_01_met(Dg,3)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]];
 elseif Di == 6         
     disp('RH, P and PM2.5')
-    DATAi = [[DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
-             [DATA.LCS_G2_01_met(Ds,3);DATA.CO_P(Dk,1);DATA.LCS_G2_01_met(Dg,3)], ...
-             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
+    DATAi = [[DATA.AT_RH(Ds,1);DATA.LCS_G2_01_met(Dg,1)], ...
+             [DATA.LCS_G2_01_met(Ds,3);DATA.LCS_G2_01_met(Dg,3)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]];
 elseif Di == 7
     disp('Temp, RH, P and PM2.5')
     %DATAi = [[DATA.AT_T(Ds,1);DATA.CO_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
     %         [DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
     %         [DATA.LCS_G2_01_met(Ds,3);DATA.CO_P(Dk,1);DATA.LCS_G2_01_met(Dg,3)], ...
     %         [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
-    
-    DATAi = [[DATA.AT_T(Ds,1);DATA.AT_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
-             [DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
-             [DATA.LCS_G2_01_met(Ds,3);DATA.CO_P(Dk,1);DATA.LCS_G2_01_met(Dg,3)], ...
-             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
+    DATAi = [[DATA.AT_T(Ds,1);DATA.LCS_G2_01_met(Dg,2)], ...
+             [DATA.AT_RH(Ds,1);DATA.LCS_G2_01_met(Dg,1)], ...
+             [DATA.LCS_G2_01_met(Ds,3);DATA.LCS_G2_01_met(Dg,3)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]];
 elseif Di == 8
+    disp('Temp, Temp(t-1), RH, P and PM2.5')
+    % Da_o = Da(T+1:end,1); Da_i = Da(1:end-T,1);
+    T = 1 ;
+    Ds_T = Ds(T+1:end,1);
+    Dg_T = Dg(T+1:end,1);
+    DATAi = [[DATA.AT_T(Ds,1);  DATA.LCS_G2_01_met(Dg,2)], ... 
+            [DATA.AT_T(Ds_T,1); nan(T,1); DATA.LCS_G2_01_met(Dg_T,2); nan(T,1)] ...
+             [DATA.AT_RH(Ds,1); DATA.LCS_G2_01_met(Dg,1)], ...
+             [DATA.LCS_G2_01_met(Ds,3); DATA.LCS_G2_01_met(Dg,3)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]];
+elseif Di == 9
     disp('Temp, Temp(t-1), RH, P and PM2.5, PM2.5(t-1)')
     % Da_o = Da(T+1:end,1); Da_i = Da(1:end-T,1);
     T = 1 ;
     Ds_T = Ds(T+1:end,1);
-    Dk_T = Dk(T+1:end,1);
     Dg_T = Dg(T+1:end,1);
-    DATAi = [[DATA.AT_T(Ds,1); DATA.AT_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ... 
-        [DATA.AT_T(Ds_T,1);nan(T,1); DATA.AT_T(Dk_T,1); nan(T,1); DATA.LCS_G2_01_met(Dg_T,2); nan(T,1)] ...
-             [DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
-             [DATA.LCS_G2_01_met(Ds,3);DATA.CO_P(Dk,1);DATA.LCS_G2_01_met(Dg,3)], ...
-             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
+    DATAi = [[DATA.AT_T(Ds,1);  DATA.LCS_G2_01_met(Dg,2)], ... 
+            [DATA.AT_T(Ds_T,1); nan(T,1); DATA.LCS_G2_01_met(Dg_T,2); nan(T,1)] ...
+             [DATA.AT_RH(Ds,1); DATA.LCS_G2_01_met(Dg,1)], ...
+             [DATA.LCS_G2_01_met(Ds,3); DATA.LCS_G2_01_met(Dg,3)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)] ...
+             [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)]];
 end
 
 % NORMALIZATION
-l = -1; u = 1;
-NORM = 1;
+NORM = 1; l = -1; u = 1;
 DATAi1 = zeros(size(DATAi));
 if NORM == 0
     disp('No NORMALIZATION for MET vars')
@@ -193,7 +189,7 @@ elseif NORM == 1
         DATAi1(:,end) = log10(DATAi(:,end));
         
      elseif Di == 8
-        disp('Temp, RH, P and PM2.5');
+        disp('Temp, Temp(t-1), RH, P and PM2.5');
         inmin = 10; inmax = 40; % T
         DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
         DATAi1(:,2) = l + [(DATAi(:,2)-inmin)./(inmax-inmin)].*(u-l);
@@ -201,6 +197,20 @@ elseif NORM == 1
         DATAi1(:,3) = l + [(DATAi(:,2)-inmin)./(inmax-inmin)].*(u-l);
         inmin = 890; inmax = 910; % P
         DATAi1(:,4) = l + [(DATAi(:,3)-inmin)./(inmax-inmin)].*(u-l);
+        % PM2.5
+        DATAi1(:,end) = log10(DATAi(:,end));
+        
+     elseif Di == 9
+        disp('Temp, Temp(t-1), RH, P and PM2.5, PM2.5(t-1)');
+        inmin = 10; inmax = 40; % T
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,2) = l + [(DATAi(:,2)-inmin)./(inmax-inmin)].*(u-l);
+        inmin = 10; inmax = 50; % RH
+        DATAi1(:,3) = l + [(DATAi(:,2)-inmin)./(inmax-inmin)].*(u-l);
+        inmin = 890; inmax = 910; % P
+        DATAi1(:,4) = l + [(DATAi(:,3)-inmin)./(inmax-inmin)].*(u-l);
+        % PM2.5
+        DATAi1(:,end) = log10(DATAi(:,end-1));
         DATAi1(:,end) = log10(DATAi(:,end));
     end
 end
@@ -209,11 +219,11 @@ end
 CLEAN_PND = 1;
 if CLEAN_PND == 0
     disp('We do not remove PND data which is not clean')
-    DATAo  = [DATA.PND_c([Ds;Dk;Dg],1)];
+    DATAo  = [DATA.PND_c([Ds;Dg],1)];
     DATAo1 = log10(DATAo);
 elseif CLEAN_PND == 1
     disp('We remove PND data which is not clean')
-    CPC = DATA.PND_c([Ds;Dk;Dg],1);
+    CPC = DATA.PND_c([Ds;Dg],1);
     %figure(100);plot(DATA.PND_c(Ds,1));hold on;plot(DATA.PND_c(Dk,1),'r');plot(DATA.PND_c(Dg,1),'g'); hold off
     CPClog = log10(CPC);
     CPCgradient = gradient(CPC);
@@ -230,14 +240,14 @@ elseif CLEAN_PND == 1
     DATAo1 = log10(DATAo);
     % figure(100);plot(DATAo1(Ds,1));hold on;plot(DATAo1(Dk,1),'r');plot(DATAo1(Dg,1),'g'); hold off
     
-    figure(100)
-    for n=1:size(DATAi,2)
-        subplot(2,5,n);plot(DATAi(:,n),'.');hold on
-        subplot(2,5,n+5);plot(DATAi1(:,n),'.');
-    end
-    subplot(2,5,5);plot(DATAo(:,1),'.');
-    subplot(2,5,10);plot(DATAo1(:,1),'.');
-    hold off
+% % %     figure(100)
+% % %     for n=1:size(DATAi,2)
+% % %         subplot(2,5,n);plot(DATAi(:,n),'.');hold on
+% % %         subplot(2,5,n+5);plot(DATAi1(:,n),'.');
+% % %     end
+% % %     subplot(2,5,5);plot(DATAo(:,1),'.');
+% % %     subplot(2,5,10);plot(DATAo1(:,1),'.');
+% % %     hold off
     
     figure(101);
     subplot(511);plot(CPC,'b.');
@@ -251,24 +261,30 @@ elseif CLEAN_PND == 1
 else
     disp('We need to choose CLEAN_PND either 0 or 1')
 end
-%
+Dk = Dg;
 % SELECT TRAINING AND TESTING DATA
-R     = zeros(2,12);
-MAPE  = zeros(2,12);
+R     = zeros(2,2);%zeros(2,12);
+MAPE  = zeros(2,2);%zeros(2,12);
+%R     = zeros(2,12);%zeros(2,12);
+%MAPE  = zeros(2,12);%zeros(2,12);
 
-for test_no=1:12
-    if test_no == 1; TRAIN = Ds; TEST = Dk; end
-    if test_no == 2; TRAIN = Ds; TEST = Dg; end
-    if test_no == 3; TRAIN = Ds; TEST = [Dk;Dg]; end
-    if test_no == 4; TRAIN = Dk; TEST = Ds; end
-    if test_no == 5; TRAIN = Dk; TEST = Dg; end
-    if test_no == 6; TRAIN = Dk; TEST = [Ds;Dg]; end
-    if test_no == 7; TRAIN = Dg; TEST = Ds; end
-    if test_no == 8; TRAIN = Dg; TEST = Dk; end
-    if test_no == 9; TRAIN = Dg; TEST = [Ds;Dk]; end
-    if test_no == 10; TRAIN = [Ds;Dk]; TEST = Dg; end
-    if test_no == 11; TRAIN = [Ds;Dg]; TEST = Dk; end
-    if test_no == 12; TRAIN = [Dk;Dg]; TEST = Ds; end
+
+for test_no=1:2%12
+    if test_no == 1; TRAIN = Ds; TEST = Dg; end
+    if test_no == 2; TRAIN = Dg; TEST = Ds; end
+    
+%     if test_no == 1; TRAIN = Ds; TEST = Dk; end
+%     if test_no == 2; TRAIN = Ds; TEST = Dg; end
+%     if test_no == 3; TRAIN = Ds; TEST = [Dk;Dg]; end
+%     if test_no == 4; TRAIN = Dk; TEST = Ds; end
+%     if test_no == 5; TRAIN = Dk; TEST = Dg; end
+%     if test_no == 6; TRAIN = Dk; TEST = [Ds;Dg]; end
+%     if test_no == 7; TRAIN = Dg; TEST = Ds; end
+%     if test_no == 8; TRAIN = Dg; TEST = Dk; end
+%     if test_no == 9; TRAIN = Dg; TEST = [Ds;Dk]; end
+%     if test_no == 10; TRAIN = [Ds;Dk]; TEST = Dg; end
+%     if test_no == 11; TRAIN = [Ds;Dg]; TEST = Dk; end
+%     if test_no == 12; TRAIN = [Dk;Dg]; TEST = Ds; end
 
 clc
 method = 7;
@@ -408,7 +424,8 @@ elseif method ==6
     
     %[Ds;Dk;Dg]
     %DATAt  = [DATAi1,DATAo1];
-    no = linspace(1, size(DATAi1,1), size(DATAi1,1))' ;
+    %%%no = linspace(1, size(DATAi1,1), size(DATAi1,1))' ;
+    no = [Ds;Dg];
     DATAt  = [DATAi1,DATAo1,no];
     DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
     
@@ -472,7 +489,7 @@ end
 inputs = X';
 targets = Y';
 inputs_t = Xt';
-ANN = 1;
+ANN = 5;
 if ANN ==1
     disp('standard ANN')
 % ANN model
@@ -629,18 +646,21 @@ elseif ANN == 5
 end
 
 
-    R0 =  corrcoef(Yt,Ypred_lm);
-    R(1,test_no) = R0(2,1);
+    %R0 =  corrcoef(Yt,Ypred_lm);
+    %R(1,test_no) = R0(2,1);
+    R(1,test_no) = corr(Yt,Ypred_lm,'Type','Spearman','Rows','complete');
     
-    R0 =  corrcoef(Yt,Ypred_snn);
-    R(2,test_no) = R0(2,1);
+    %R0 =  corrcoef(Yt,Ypred_snn);
+    %R(2,test_no) = R0(2,1);
+    R(2,test_no) = corr(Yt,Ypred_snn,'Type','Spearman','Rows','complete');
 
     %MAPE(1,test_no) = nanmean(abs((Yt-Ypred_lm)./Yt));
     MAPE(1,test_no)=errperf(Yt,Ypred_lm,'mape');
-    MAPE(2,test_no)=errperf(Yt,Ypred_snn','mape');
+    MAPE(2,test_no)=errperf(Yt,Ypred_snn,'mape');
     
     figure(1);
-    subplot(4,3,test_no);
+    subplot(1,2,test_no);
+    %subplot(4,3,test_no);
     scatter(Yt,Ypred_lm);hold on
     Xlim1 = 0;3;
     Ylim1 = 6;
@@ -652,7 +672,8 @@ end
     xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
     
     figure(2); %fig = gcf;
-    subplot(4,3,test_no);
+    subplot(1,2,test_no); %
+    %subplot(4,3,test_no);
     plot(10.^Yt,'b.','MarkerSize',12);hold on;grid on
     plot(10.^Ypred_lm,'g.','MarkerSize',12);
     plot(10.^Ypred_snn,'r.','MarkerSize',12);
@@ -661,6 +682,7 @@ end
     ylim([0 1e6])
     set(gca, 'YScale', 'log')
     legend('Real','M$_1$','M$_2$','interpreter','latex')
+    title(['Test No: ',num2str(test_no)])
     hold off
     %set(findall(fig,'-property','FontSize'),'FontSize',22);
 
