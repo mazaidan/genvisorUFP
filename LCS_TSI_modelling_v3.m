@@ -152,13 +152,14 @@ x4n = normalize_UFPsensors(x4,'PM25');
 Xd  = []; % Input delayed
 Xdn = []; % normalized input delayed
 for T = 1 : 2
-    T =1; % time delayed = 1
+    %T =1; % time delayed = 1
     Ds_T = Ds(T+1:end,1);
     Dg_T = Dg(T+1:end,1);
     % Only Temp and PM2.5 included, necause the auto-correlation which we
     % obtain indicate that these two variables influence PND
     Xd0 = [[DATA.AT_T(Ds_T,1); nan(T,1); DATA.LCS_G2_01_met(Dg_T,2); nan(T,1)], ... 
         [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)]];
+    %%%Xd0 = [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)];
     Xd = [Xd,Xd0];
     
     % Normalized values:
@@ -169,21 +170,27 @@ for T = 1 : 2
 end
 
 DATAi  = [x1,x2,x3,x4,Xd];      %  DATA Input
-DATAi1 = [x1n,x2n,x3n,x4n,Xdn]; %  DATA input (with normalization)
+%DATAi1 = [x1n,x2n,x3n,x4n,Xdn]; %  DATA input (with normalization)
+%DATAi1 = [x1n,x2n,x4n,Xdn]; %  DATA input (with normalization)
+%DATAi1 = [x1n.*x2n,x4n,Xdn]; %  DATA input (with normalization)
+DATAi1 = [x1n.*x2n.*x4n,Xdn]; %  DATA input (with normalization)
 
 
 
-%% MODELLING
+% MODELLING
 % INPUT   = DATAi, DATAi1
 % OUTPUT  = DATAo, DATAo1
 
+R     = zeros(2,2);%zeros(2,12);
+MAPE  = zeros(2,2);%zeros(2,12);
 for test_no=1:2%12
     if test_no == 1; TRAIN = Ds; TEST = Dg; end
     if test_no == 2; TRAIN = Dg; TEST = Ds; end
     
-    disp('Wavelet feature 2')
     
+    % Make the number for tracking
     no = [Ds;Dg];
+    % Remove NaN data
     DATAt  = [DATAi1,DATAo1,no];
     DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
     
@@ -198,16 +205,73 @@ for test_no=1:2%12
     end
     
     
-    
     tr = ismember(DATAt1(:,end),TRAIN);
     te = ismember(DATAt1(:,end),TEST);
     
-    Xtr = DATAt1(tr,1:end-2);
-    Ytr = DATAt1(tr,end-1);
-    Xte = DATAt1(te,1:end-2);
-    Yte = DATAt1(te,end-1);
+    X = DATAt1(tr,1:end-2);
+    Y = DATAt1(tr,end-1);
+    Xt = DATAt1(te,1:end-2);
+    Yt = DATAt1(te,end-1);
+     
+    Model1 = 'LM1'; 
+    Model2 = 'ANN1';
+    [Ypred_lm] = UFPmodelling(X,Y,Xt,Model1);
+    [Ypred_snn] = UFPmodelling(X,Y,Xt,Model2);
+
+   
+    % RESULT PLOTS and METRICS
+    figure(1); fig =gcf;
+    subplot(2,2, test_no*2 - 1 );
+    scatter(Yt,Ypred_lm);hold on
+    Xlim1 = 0;3;
+    Ylim1 = 6;
+    xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+    x = linspace(Xlim1,Ylim1);
+    y = linspace(Xlim1,Ylim1);
+    plot(x,y,'r');hold off
+    title(['M1: Test No: ',num2str(test_no)])
+    xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
+    subplot(2,2, test_no*2 );
+    scatter(Yt,Ypred_snn);hold on
+    Xlim1 = 0;3;
+    Ylim1 = 6;
+    xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+    x = linspace(Xlim1,Ylim1);
+    y = linspace(Xlim1,Ylim1);
+    plot(x,y,'r');hold off
+    title(['M2: Test No: ',num2str(test_no)])
+    xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
+    set(findall(fig,'-property','FontSize'),'FontSize',22);
     
+    figure(2); fig = gcf;
+    subplot(1,2,test_no); %
+    %subplot(4,3,test_no);
+    plot(10.^Yt,'b.','MarkerSize',12);hold on;grid on
+    plot(10.^Ypred_lm,'g.','MarkerSize',12);
+    plot(10.^Ypred_snn,'r.','MarkerSize',12);
+    ylabel('PND [/cm$^{-3}$]','interpreter','latex')
+    xlabel('Time Index')
+    ylim([0 1e6])
+    set(gca, 'YScale', 'log')
+    legend('Real','M$_1$','M$_2$','interpreter','latex')
+    title(['Test No: ',num2str(test_no)])
+    hold off
+    set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+ 
+    R(1,test_no) = corr(Yt,Ypred_lm,'Type','Spearman','Rows','complete');
+    R(2,test_no) = corr(Yt,Ypred_snn,'Type','Spearman','Rows','complete');
+
+    MAPE(1,test_no)=errperf(Yt,Ypred_lm,'mape');
+    MAPE(2,test_no)=errperf(Yt,Ypred_snn,'mape');
+         
 end
+
+Rmean     = mean(R,2);
+MAPEmean  = mean(MAPE,2);
+disp(['Rmean of M1: ', num2str(Rmean(1)), ' and Rmean of M2: ', num2str(Rmean(2))])
+disp(['MAPEmean of M1: ', num2str(MAPEmean(1)), ' and MAPEmean of M2: ', num2str(MAPEmean(2))])
+
 
 %%
 
