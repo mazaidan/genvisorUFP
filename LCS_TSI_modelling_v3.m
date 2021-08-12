@@ -6,6 +6,8 @@
 % Research Associate Professor, Nanjing University, China
 % Senior Scientist, Helsinki University, Finland
 
+addpath(genpath('Functions'));
+
 clear; close all;clc;
 
 load('DATA2.mat') 
@@ -62,6 +64,42 @@ for T = 0:5
     
 end
 
+%% Cross-correlation
+
+T = 0;
+Da_o = Da(T+1:end,1);
+Da_i = Da(1:end-T,1);
+
+% INPUTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+X = [DATA.AT_T(Da_i,1),DATA.AT_RH(Da_i,1),DATA.LCS_G2_01_met(Da_i,3),DATA.LCS_G1(Da_i,1)];
+
+% OUTPUT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+CPC = DATA.PND_c(Da_o,1);
+CPClog = log10(CPC);
+CPCgradient = gradient(CPC);
+CPCdiff = diff(CPC);
+CPCloggradient = gradient(CPClog);
+idx = find(CPCgradient <= nanmedian(CPCgradient)+10);
+CPCclean =CPC;
+CPCclean(idx,:)=nan;
+DATAo  = CPCclean;
+DATAo1 = log10(DATAo);
+Y = DATAo;DATAo1;
+
+% Compute XCORR and PLOT %%%%
+
+Vars_names = {'Temp','RH','Pressure','PM_{2.5}'};
+Corr_Type = 'Pearson';%'Spearman';
+Lag =10;
+Lags = [-Lag:1:Lag]';
+for n = 1:4
+    [R,L,pvalue] = crosscorrelation(X(:,n)',Y',Lag,Corr_Type);
+    figure(1);
+    subplot(2,2,n)
+    stem(Lags,R)
+    title(Vars_names{1,n})
+end
+
 %% MODELLING Linear Models and Shallow Neural Networks (version 2)
 
 % 1) use all data, randominze, and predict CPC
@@ -70,6 +108,108 @@ end
 Ds = Exp_smoking; 
 Dg = Exp_gas;
 Da =[Exp_smoking;Exp_gas];
+
+%% Available Output (with/without cleaning) and Input Features
+
+% PND data cleaning
+CLEAN_PND = 1;
+if CLEAN_PND == 0
+    disp('OUTPUT: We do not remove PND data which is not clean')
+    DATAo  = [DATA.PND_c([Ds;Dg],1)];
+    DATAo1 = log10(DATAo);
+elseif CLEAN_PND == 1
+    disp('OUTPUT: We remove PND data which is not clean and normalize it')
+    CPC = DATA.PND_c([Ds;Dg],1);
+    %figure(100);plot(DATA.PND_c(Ds,1));hold on;plot(DATA.PND_c(Dk,1),'r');plot(DATA.PND_c(Dg,1),'g'); hold off
+    CPClog = log10(CPC);
+    CPCgradient = gradient(CPC);
+    CPCdiff = diff(CPC);
+    CPCloggradient = gradient(CPClog);
+    idx = find(CPCgradient <= nanmedian(CPCgradient)+10);
+    CPCclean =CPC;
+    CPCclean(idx,:)=nan;
+    %CPCclean = CPC(idx,:);   
+    %%%DATAo  = CPC;
+    DATAo  = CPCclean;
+    %DATAo  = [DATA.PND_c(Da,1)];
+    DATAo1 = log10(DATAo);
+end
+
+% PND data cleaning
+
+x1 = [DATA.AT_T(Ds,1);  DATA.LCS_G2_01_met(Dg,2)]; % Temp
+x1n = normalize_UFPsensors(x1,'Temp');
+
+x2 = [DATA.AT_RH(Ds,1); DATA.LCS_G2_01_met(Dg,1)]; % RH
+x2n = normalize_UFPsensors(x2,'RH');
+
+x3 = [DATA.LCS_G2_01_met(Ds,3); DATA.LCS_G2_01_met(Dg,3)]; % P
+x3n = normalize_UFPsensors(x3,'P');
+
+x4 = [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]; % PM2.5
+x4n = normalize_UFPsensors(x4,'PM25');
+
+Xd  = []; % Input delayed
+Xdn = []; % normalized input delayed
+for T = 1 : 2
+    T =1; % time delayed = 1
+    Ds_T = Ds(T+1:end,1);
+    Dg_T = Dg(T+1:end,1);
+    % Only Temp and PM2.5 included, necause the auto-correlation which we
+    % obtain indicate that these two variables influence PND
+    Xd0 = [[DATA.AT_T(Ds_T,1); nan(T,1); DATA.LCS_G2_01_met(Dg_T,2); nan(T,1)], ... 
+        [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)]];
+    Xd = [Xd,Xd0];
+    
+    % Normalized values:
+    xdn0a = normalize_UFPsensors(Xd0(:,1),'Temp');
+    xdn0b = normalize_UFPsensors(Xd0(:,2),'PM25');
+    Xdn0 = [xdn0a,xdn0b];
+    Xdn = [Xdn,Xdn0]; 
+end
+
+DATAi  = [x1,x2,x3,x4,Xd];      %  DATA Input
+DATAi1 = [x1n,x2n,x3n,x4n,Xdn]; %  DATA input (with normalization)
+
+
+
+%% MODELLING
+% INPUT   = DATAi, DATAi1
+% OUTPUT  = DATAo, DATAo1
+
+for test_no=1:2%12
+    if test_no == 1; TRAIN = Ds; TEST = Dg; end
+    if test_no == 2; TRAIN = Dg; TEST = Ds; end
+    
+    disp('Wavelet feature 2')
+    
+    no = [Ds;Dg];
+    DATAt  = [DATAi1,DATAo1,no];
+    DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
+    
+    Feature = 1;
+    if Feature == 1
+        disp('Wavelet filtering')
+        d = DATAt1(:,end-1);
+        xden = wdenoise(d,4);
+        DATAt1(:,end-1) = xden ;
+    else
+        disp('No feature extraction')
+    end
+    
+    
+    
+    tr = ismember(DATAt1(:,end),TRAIN);
+    te = ismember(DATAt1(:,end),TEST);
+    
+    Xtr = DATAt1(tr,1:end-2);
+    Ytr = DATAt1(tr,end-1);
+    Xte = DATAt1(te,1:end-2);
+    Yte = DATAt1(te,end-1);
+    
+end
+
+%%
 
 % CHOOSE THE DATA with the different types of inputs
 Di = 9;
