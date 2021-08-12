@@ -184,8 +184,18 @@ DATAi1 = [x1n.*x2n.*x4n,Xdn]; %  DATA input (with normalization)
 R     = zeros(2,2);%zeros(2,12);
 MAPE  = zeros(2,2);%zeros(2,12);
 for test_no=1:2%12
-    if test_no == 1; TRAIN = Ds; TEST = Dg; end
-    if test_no == 2; TRAIN = Dg; TEST = Ds; end
+    if test_no == 1 
+        Ds_half = roundn(size(Ds,1)/2,0);
+        Dg_half = roundn(size(Dg,1)/2,0);
+        TRAIN = [Ds(1:Ds_half);Dg(1:Dg_half)]; 
+        TEST  = [Ds(Ds_half+1:end);Dg(Dg_half+1:end)]; 
+    end
+    if test_no == 2 
+        TRAIN = [Ds(Ds_half+1:end);Dg(Dg_half+1:end)];  
+        TEST  = [Ds(1:Ds_half);Dg(1:Dg_half)]; 
+    end
+    %if test_no == 1; TRAIN = Ds; TEST = Dg; end
+    %if test_no == 2; TRAIN = Dg; TEST = Ds; end
     
     
     % Make the number for tracking
