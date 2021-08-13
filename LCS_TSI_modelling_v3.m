@@ -7,7 +7,7 @@
 % Senior Scientist, Helsinki University, Finland
 
 addpath(genpath('Functions'));
-addpath(genpath('Functions_special'));
+%addpath(genpath('Functions_special'));
 
 
 clear; close all;clc;
@@ -198,6 +198,8 @@ for test_no=1:2%12
     end
     if test_no == 1; TRAIN = Ds; TEST = Dg; end
     if test_no == 2; TRAIN = Dg; TEST = Ds; end
+    %if test_no == 1; TRAIN = Ds; TEST = Ds; end
+    %if test_no == 2; TRAIN = Dg; TEST = Dg; end
     
     
     % Make the number for tracking
@@ -231,18 +233,22 @@ for test_no=1:2%12
 MoE = 1;
     if MoE == 1
         
-%         median_Y = 5;%median(Y);
-%         idx1 = find(Y<median_Y);
-%         idx2 = find(Y>=median_Y);
-        idx1 = find(Y <= 4.5);
-        idx2 = find(Y > 4.5 & Y <= 5);
-        idx3 = find(Y > 5);
-
-        p1{1,1} = idx1;
-        p1{1,2} = idx2;
-        p1{1,3} = idx3;
+        NumberExperts=2;
         
-        NumberExperts=3;
+         median_Y = median(Y); 5;%
+         idx1 = find(Y<median_Y);
+         idx2 = find(Y>=median_Y);
+        %idx1 = find(Y <= 4.5);
+        %idx2 = find(Y > 4.5 & Y <= 5);
+        %idx3 = find(Y > 5);
+        
+        IDX={idx1,idx2};
+        
+        for n=1:NumberExperts
+            p1{1,n} = IDX{1,n};
+        end
+        
+        
         
         for n=1:NumberExperts
             X1{1,n}=X(p1{1,n},:);
@@ -314,7 +320,7 @@ MoE = 1;
     set(findall(fig,'-property','FontSize'),'FontSize',22);
     
     figure(2); fig = gcf;
-    subplot(1,2,test_no); %
+    subplot(2,1,test_no); %
     %subplot(4,3,test_no);
     plot(10.^Yt,'b.','MarkerSize',12);hold on;grid on
     plot(10.^Ypred_lm,'g.','MarkerSize',12);
