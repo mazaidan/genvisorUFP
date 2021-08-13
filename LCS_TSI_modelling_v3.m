@@ -112,7 +112,7 @@ Da =[Exp_smoking;Exp_gas];
 %% Available Output (with/without cleaning) and Input Features
 
 % PND data cleaning
-CLEAN_PND = 1;
+CLEAN_PND = 0;
 if CLEAN_PND == 0
     disp('OUTPUT: We do not remove PND data which is not clean')
     DATAo  = [DATA.PND_c([Ds;Dg],1)];
@@ -194,8 +194,8 @@ for test_no=1:2%12
         TRAIN = [Ds(Ds_half+1:end);Dg(Dg_half+1:end)];  
         TEST  = [Ds(1:Ds_half);Dg(1:Dg_half)]; 
     end
-    %if test_no == 1; TRAIN = Ds; TEST = Dg; end
-    %if test_no == 2; TRAIN = Dg; TEST = Ds; end
+    if test_no == 1; TRAIN = Ds; TEST = Dg; end
+    if test_no == 2; TRAIN = Dg; TEST = Ds; end
     
     
     % Make the number for tracking
