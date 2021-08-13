@@ -7,6 +7,8 @@
 % Senior Scientist, Helsinki University, Finland
 
 addpath(genpath('Functions'));
+addpath(genpath('Functions_special'));
+
 
 clear; close all;clc;
 
@@ -204,7 +206,7 @@ for test_no=1:2%12
     DATAt  = [DATAi1,DATAo1,no];
     DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
     
-    Feature = 1;
+    Feature = 0;
     if Feature == 1
         disp('Wavelet filtering')
         d = DATAt1(:,end-1);
@@ -222,12 +224,70 @@ for test_no=1:2%12
     Y = DATAt1(tr,end-1);
     Xt = DATAt1(te,1:end-2);
     Yt = DATAt1(te,end-1);
+    
+
+%%%%%%%% MoE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MoE data division: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+MoE = 1;
+    if MoE == 1
+        
+%         median_Y = 5;%median(Y);
+%         idx1 = find(Y<median_Y);
+%         idx2 = find(Y>=median_Y);
+        idx1 = find(Y <= 4.5);
+        idx2 = find(Y > 4.5 & Y <= 5);
+        idx3 = find(Y > 5);
+
+        p1{1,1} = idx1;
+        p1{1,2} = idx2;
+        p1{1,3} = idx3;
+        
+        NumberExperts=3;
+        
+        for n=1:NumberExperts
+            X1{1,n}=X(p1{1,n},:);
+            Y1{1,n}=Y(p1{1,n},:);
+                      
+            mdl = fitlm(X1{1,n},Y1{1,n});
+            [Ypred0,Ypred_std0] = predict(mdl,X1{1,n}); % [ypred,yci] = predict(mdl,Xnew)
+            
+            yTot{1,n}=Ypred0;%y{1,n};
+            sig2Tot{1,n}=Ypred_std0(:,2); % sig2{1,n};
+            netTot{1,n}=mdl;%net{1,n};
+            
+        end
+        
+        
+        MaxIterations=100;
+        [Prior, Mu, Sigma,Likelihood] =...
+            TrainMoE2(X1,Y1,yTot,sig2Tot,...
+            NumberExperts,MaxIterations);
+        
+        for n=1:3
+            Prior0=Prior;
+            Mu0=Mu;
+            Sigma0=Sigma;
+            Likelihood0=Likelihood;
+            
+            if  Likelihood0(end)>Likelihood(end)
+                Prior=Prior0;
+                Mu=Mu0;
+                Sigma=Sigma0;
+                Likelihood=Likelihood0;
+            end
+        end
+        
+        [TotalOutput,TotalVar,ExpertOutput,GateProbability] = ...
+            OutputMoE2(Prior,Mu,Sigma,X1,Y1,Xt,netTot);
+    end
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      
     Model1 = 'LM1'; 
     Model2 = 'ANN1';
     [Ypred_lm] = UFPmodelling(X,Y,Xt,Model1);
-    [Ypred_snn] = UFPmodelling(X,Y,Xt,Model2);
-
+    %[Ypred_snn] = UFPmodelling(X,Y,Xt,Model2);
+    Ypred_snn = TotalOutput;
    
     % RESULT PLOTS and METRICS
     figure(1); fig =gcf;
