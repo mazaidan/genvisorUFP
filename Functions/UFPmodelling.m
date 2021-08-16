@@ -8,7 +8,7 @@ switch Model
     case {'ANN1'}
         disp('Shallow Neural Network')
         % Create a Fitting Network
-        hiddenLayerSize = 20;50;100;25;20;%15;
+        hiddenLayerSize = [5 5];% 20;50;100;25;20;%15;
         net = fitnet(hiddenLayerSize);
         net.trainfcn = 'trainlm';%'trainbr'
         % Set up Division of Data for Training, Validation, Testing

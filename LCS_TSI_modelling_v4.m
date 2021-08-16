@@ -135,6 +135,12 @@ elseif CLEAN_PND == 1
     DATAo  = CPCclean;
     %DATAo  = [DATA.PND_c(Da,1)];
     DATAo1 = log10(DATAo);
+elseif CLEAN_PND == 2
+    disp('Another way how to clean the data')
+    DATAo  = [DATA.PND_c([Ds;Dg],1)];
+    IDX = find(DATAo < 0.1e5); % 0.3e5
+    DATAo(IDX,:) = nan;
+    DATAo1 = log10(DATAo);
 end
 
 % PND data cleaning
@@ -153,7 +159,7 @@ x4n = normalize_UFPsensors(x4,'PM25');
 
 Xd  = []; % Input delayed
 Xdn = []; % normalized input delayed
-for T = 1 : 1
+for T = 1 : 2
     %T =1; % time delayed = 1
     Ds_T = Ds(T+1:end,1);
     Dg_T = Dg(T+1:end,1);
@@ -295,13 +301,15 @@ MoE = 1;
          median_Y =  5; %median(Y);%
          idx1 = IDX ==1 ;find(Y<median_Y);
          idx2 = IDX ==2 ;find(Y>=median_Y);
+         %idx3 = IDX ==3 ;
+         %idx4 = IDX ==4 ;
          %idx1 = find(Y<median_Y); %IDX ==1 ;find(Y<median_Y);
          %idx2 = find(Y>=median_Y); %IDX ==2 ;find(Y>=median_Y);
         %idx1 = find(Y <= 4.5);
         %idx2 = find(Y > 4.5 & Y <= 5);
         %idx3 = find(Y > 5);
         
-        IDX1={idx1,idx2};
+        IDX1={idx1,idx2};%,idx3,idx4};
         
         for n=1:NumberExperts
             p1{1,n} = IDX1{1,n};
@@ -316,8 +324,7 @@ MoE = 1;
             
             yTot{1,n}=Ypred0;%y{1,n};
             sig2Tot{1,n}=Ypred_std0(:,2); % sig2{1,n};
-            netTot{1,n}=mdl;%net{1,n};
-            
+            netTot{1,n}=mdl;%net{1,n};            
         end
         
         
@@ -353,12 +360,55 @@ MoE = 1;
     Ypred_snn = TotalOutput;
    
     
- 
     R(1,test_no) = corr(Yt,Ypred_lm,'Type','Spearman','Rows','complete');
     R(2,test_no) = corr(Yt,Ypred_snn,'Type','Spearman','Rows','complete');
 
     MAPE(1,test_no)=errperf(Yt,Ypred_lm,'mape');
     MAPE(2,test_no)=errperf(Yt,Ypred_snn,'mape');
+    
+    
+    % RESULT PLOTS and METRICS
+    figure(1); fig = gcf;
+    subplot(4,2, test_no);
+    scatter(Yt,Ypred_lm);hold on
+    Xlim1 = 0;3;
+    Ylim1 = 6;
+    xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+    x = linspace(Xlim1,Ylim1);
+    y = linspace(Xlim1,Ylim1);
+    plot(x,y,'r');hold off
+    title(['M1: Test No: ',num2str(test_no)])
+    xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
+    set(findall(fig,'-property','FontSize'),'FontSize',22);
+    
+    figure(2); fig =gcf;
+    subplot(4,2, test_no);
+    scatter(Yt,Ypred_snn);hold on
+    Xlim1 = 0;3;
+    Ylim1 = 6;
+    xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+    x = linspace(Xlim1,Ylim1);
+    y = linspace(Xlim1,Ylim1);
+    plot(x,y,'r');hold off
+    title(['M2: Test No: ',num2str(test_no)])
+    xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
+    set(findall(fig,'-property','FontSize'),'FontSize',22);
+    
+    figure(3); fig = gcf;
+    subplot(4,2,test_no); %
+    %subplot(4,3,test_no);
+    plot(10.^Yt,'b.','MarkerSize',12);hold on;grid on
+    plot(10.^Ypred_lm,'g.','MarkerSize',12);
+    plot(10.^Ypred_snn,'r.','MarkerSize',12);
+    ylabel('PND [/cm$^{-3}$]','interpreter','latex')
+    xlabel('Time Index')
+    ylim([0 1e6])
+    set(gca, 'YScale', 'log')
+    legend('Real','M$_1$','M$_2$','interpreter','latex')
+    title(['Test No: ',num2str(test_no)])
+    hold off
+    set(findall(fig,'-property','FontSize'),'FontSize',22);
+    
          
 end
 
