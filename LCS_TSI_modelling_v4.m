@@ -153,7 +153,7 @@ x4n = normalize_UFPsensors(x4,'PM25');
 
 Xd  = []; % Input delayed
 Xdn = []; % normalized input delayed
-for T = 1 : 2
+for T = 1 : 1
     %T =1; % time delayed = 1
     Ds_T = Ds(T+1:end,1);
     Dg_T = Dg(T+1:end,1);
@@ -168,6 +168,10 @@ for T = 1 : 2
     xdn0a = normalize_UFPsensors(Xd0(:,1),'Temp');
     xdn0b = normalize_UFPsensors(Xd0(:,2),'PM25');
     Xdn0 = [xdn0a,xdn0b];
+    
+    %%%xdn0a = normalize_UFPsensors(Xd0(:,1),'PM25');
+    %%%Xdn0 = [xdn0a];
+    
     Xdn = [Xdn,Xdn0]; 
 end
 
