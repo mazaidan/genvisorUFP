@@ -174,6 +174,7 @@ end
 DATAi  = [x1,x2,x3,x4,Xd];      %  DATA Input
 %DATAi1 = [x1n,x2n,x3n,x4n,Xdn]; %  DATA input (with normalization)
 %DATAi1 = [x1n,x2n,x4n,Xdn]; %  DATA input (with normalization)
+%DATAi1 = [x1n,x4n,Xdn]; %  DATA input (with normalization)
 DATAi1 = [x1n.*x2n,x4n,Xdn]; %  DATA input (with normalization)
 %DATAi1 = [x1n.*x2n.*x4n,Xdn]; %  DATA input (with normalization)
 
@@ -183,23 +184,32 @@ DATAi1 = [x1n.*x2n,x4n,Xdn]; %  DATA input (with normalization)
 % INPUT   = DATAi, DATAi1
 % OUTPUT  = DATAo, DATAo1
 
-R     = zeros(2,2);%zeros(2,12);
-MAPE  = zeros(2,2);%zeros(2,12);
-for test_no=1:2%12
-    if test_no == 1 
-        Ds_half = roundn(size(Ds,1)/2,0);
-        Dg_half = roundn(size(Dg,1)/2,0);
+R     = zeros(2,8);%zeros(2,12);
+MAPE  = zeros(2,8);%zeros(2,12);
+Ds_half = roundn(size(Ds,1)/2,0);
+Dg_half = roundn(size(Dg,1)/2,0);
+for test_no=1:8%12
+    disp(['Test Number: ' num2str(test_no)])
+    if test_no == 1; TRAIN = Ds; TEST = Ds; end
+    if test_no == 2; TRAIN = Dg; TEST = Dg; end
+    if test_no == 3 
         TRAIN = [Ds(1:Ds_half);Dg(1:Dg_half)]; 
         TEST  = [Ds(Ds_half+1:end);Dg(Dg_half+1:end)]; 
     end
-    if test_no == 2 
+    if test_no == 4
         TRAIN = [Ds(Ds_half+1:end);Dg(Dg_half+1:end)];  
         TEST  = [Ds(1:Ds_half);Dg(1:Dg_half)]; 
     end
-    %if test_no == 1; TRAIN = Ds; TEST = Dg; end
-    %if test_no == 2; TRAIN = Dg; TEST = Ds; end
-    if test_no == 1; TRAIN = Ds; TEST = Ds; end
-    if test_no == 2; TRAIN = Dg; TEST = Dg; end
+    if test_no == 5 
+        TRAIN = [Ds(1:Ds_half);Dg(Dg_half+1:end)]; 
+        TEST  = [Ds(Ds_half+1:end);Dg(1:Dg_half)]; 
+    end
+    if test_no == 6
+        TRAIN = [Ds(Ds_half+1:end);Dg(1:Dg_half)];  
+        TEST  = [Ds(1:Ds_half);Dg(Dg_half+1:end)]; 
+    end    
+    if test_no == 7; TRAIN = Ds; TEST = Dg; end
+    if test_no == 8; TRAIN = Dg; TEST = Ds; end
     
     
     % Make the number for tracking
@@ -278,21 +288,21 @@ MoE = 1;
         
         NumberExperts=2;
         
-         median_Y = median(Y); 5;%
+         median_Y =  5; %median(Y);%
          idx1 = IDX ==1 ;find(Y<median_Y);
          idx2 = IDX ==2 ;find(Y>=median_Y);
+         %idx1 = find(Y<median_Y); %IDX ==1 ;find(Y<median_Y);
+         %idx2 = find(Y>=median_Y); %IDX ==2 ;find(Y>=median_Y);
         %idx1 = find(Y <= 4.5);
         %idx2 = find(Y > 4.5 & Y <= 5);
         %idx3 = find(Y > 5);
         
-        IDX={idx1,idx2};
+        IDX1={idx1,idx2};
         
         for n=1:NumberExperts
-            p1{1,n} = IDX{1,n};
+            p1{1,n} = IDX1{1,n};
         end
-        
-        
-        
+             
         for n=1:NumberExperts
             X1{1,n}=X(p1{1,n},:);
             Y1{1,n}=Y(p1{1,n},:);
@@ -338,7 +348,25 @@ MoE = 1;
     %[Ypred_snn] = UFPmodelling(X,Y,Xt,Model2);
     Ypred_snn = TotalOutput;
    
-    % RESULT PLOTS and METRICS
+    
+ 
+    R(1,test_no) = corr(Yt,Ypred_lm,'Type','Spearman','Rows','complete');
+    R(2,test_no) = corr(Yt,Ypred_snn,'Type','Spearman','Rows','complete');
+
+    MAPE(1,test_no)=errperf(Yt,Ypred_lm,'mape');
+    MAPE(2,test_no)=errperf(Yt,Ypred_snn,'mape');
+         
+end
+
+Rmean     = mean(R,2);
+MAPEmean  = mean(MAPE,2);
+disp(['Rmean of M1: ', num2str(Rmean(1)), ' and Rmean of M2: ', num2str(Rmean(2))])
+disp(['MAPEmean of M1: ', num2str(MAPEmean(1)), ' and MAPEmean of M2: ', num2str(MAPEmean(2))])
+
+%%
+
+
+% RESULT PLOTS and METRICS
     figure(1); fig =gcf;
     subplot(2,2, test_no*2 - 1 );
     scatter(Yt,Ypred_lm);hold on
@@ -376,20 +404,6 @@ MoE = 1;
     title(['Test No: ',num2str(test_no)])
     hold off
     set(findall(fig,'-property','FontSize'),'FontSize',22);
-
- 
-    R(1,test_no) = corr(Yt,Ypred_lm,'Type','Spearman','Rows','complete');
-    R(2,test_no) = corr(Yt,Ypred_snn,'Type','Spearman','Rows','complete');
-
-    MAPE(1,test_no)=errperf(Yt,Ypred_lm,'mape');
-    MAPE(2,test_no)=errperf(Yt,Ypred_snn,'mape');
-         
-end
-
-Rmean     = mean(R,2);
-MAPEmean  = mean(MAPE,2);
-disp(['Rmean of M1: ', num2str(Rmean(1)), ' and Rmean of M2: ', num2str(Rmean(2))])
-disp(['MAPEmean of M1: ', num2str(MAPEmean(1)), ' and MAPEmean of M2: ', num2str(MAPEmean(2))])
 
 
 %%
