@@ -12,7 +12,7 @@ switch Model
     case {'ANN1'}
         disp('Shallow Neural Network')
         % Create a Fitting Network
-        hiddenLayerSize = [5 5];% 20;50;100;25;20;%15;
+        hiddenLayerSize = [15 5];% 20;50;100;25;20;%15;
         net = fitnet(hiddenLayerSize);
         net.trainfcn = 'trainbr';'trainlm';%'trainbr'
         % Set up Division of Data for Training, Validation, Testing
@@ -23,6 +23,15 @@ switch Model
         [net,tr] = train(net,X',Y');
         % Test the Network
         outputs = net(Xt');
+        Ypred   = outputs';
+        Ypred_std = ones(size(Ypred));
+        M = net;
+    case {'ANN2'}
+        disp('Generalized Regression Neural Networks')
+        % https://www.mathworks.com/help/deeplearning/ug/generalized-regression-neural-networks.html
+        net = newgrnn(X',Y');
+        %net = train(net,X',Y');
+        outputs = sim(net,Xt');
         Ypred   = outputs';
         Ypred_std = ones(size(Ypred));
         M = net;
