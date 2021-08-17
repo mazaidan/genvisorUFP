@@ -288,80 +288,37 @@ for test_no=1:8%12
         %colorbar
         set(findall(fig,'-property','FontSize'),'FontSize',22);
     end
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+NumberExperts=2;
 
-%%%
-%%%%%%%% MoE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% MoE data division: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-MoE = 1;
-    if MoE == 1
+median_Y =  4.75;%4.75; %median(Y);%
+%idx1 = IDX ==1 ;find(Y<median_Y);
+%idx2 = IDX ==2 ;find(Y>=median_Y);
+%idx3 = IDX ==3 ;
+%idx4 = IDX ==4 ;
+idx1 = find(Y<median_Y); %IDX ==1 ;find(Y<median_Y);
+idx2 = find(Y>=median_Y); %IDX ==2 ;find(Y>=median_Y);
+%idx1 = find(Y <= 4.5);
+%idx2 = find(Y > 4.5 & Y <= 5);
+%idx3 = find(Y > 5);
+
+IDX1={idx1,idx2};%,idx3,idx4};
+
+Models = {'LM1','ANN1'} ;
+
+[TotalOutput,TotalVar] = MixtureOfExperts(X,Y,Xt,Models,NumberExperts,IDX1);
         
-        NumberExperts=2;
-        
-         median_Y =  5; %median(Y);%
-         idx1 = IDX ==1 ;find(Y<median_Y);
-         idx2 = IDX ==2 ;find(Y>=median_Y);
-         %idx3 = IDX ==3 ;
-         %idx4 = IDX ==4 ;
-         %idx1 = find(Y<median_Y); %IDX ==1 ;find(Y<median_Y);
-         %idx2 = find(Y>=median_Y); %IDX ==2 ;find(Y>=median_Y);
-        %idx1 = find(Y <= 4.5);
-        %idx2 = find(Y > 4.5 & Y <= 5);
-        %idx3 = find(Y > 5);
-        
-        IDX1={idx1,idx2};%,idx3,idx4};
-        
-        for n=1:NumberExperts
-            p1{1,n} = IDX1{1,n};
-        end
-             
-        for n=1:NumberExperts
-            X1{1,n}=X(p1{1,n},:);
-            Y1{1,n}=Y(p1{1,n},:);
-                      
-            mdl = fitlm(X1{1,n},Y1{1,n});
-            [Ypred0,Ypred_std0] = predict(mdl,X1{1,n}); % [ypred,yci] = predict(mdl,Xnew)
-            
-            yTot{1,n}=Ypred0;%y{1,n};
-            sig2Tot{1,n}=Ypred_std0(:,2); % sig2{1,n};
-            netTot{1,n}=mdl;%net{1,n};            
-        end
-        
-        
-        MaxIterations=100;
-        [Prior, Mu, Sigma,Likelihood] =...
-            TrainMoE2(X1,Y1,yTot,sig2Tot,...
-            NumberExperts,MaxIterations);
-        
-        for n=1:3
-            Prior0=Prior;
-            Mu0=Mu;
-            Sigma0=Sigma;
-            Likelihood0=Likelihood;
-            
-            if  Likelihood0(end)>Likelihood(end)
-                Prior=Prior0;
-                Mu=Mu0;
-                Sigma=Sigma0;
-                Likelihood=Likelihood0;
-            end
-        end
-        
-        [TotalOutput,TotalVar,ExpertOutput,GateProbability] = ...
-            OutputMoE2(Prior,Mu,Sigma,X1,Y1,Xt,netTot);
-    end
-    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      
     Model1 = 'LM1'; 
-    Model2 = 'ANN1';
-    [Ypred_lm] = UFPmodelling(X,Y,Xt,Model1);
-    %[Ypred_snn] = UFPmodelling(X,Y,Xt,Model2);
+    %Model2 = 'ANN1';
+    [Ypred_lm,~] = UFPmodelling(X,Y,Xt,Model1);
+    %[Ypred_snn,~] = UFPmodelling(X,Y,Xt,Model2);
     Ypred_snn = TotalOutput;
    
     
-    R(1,test_no) = corr(Yt,Ypred_lm,'Type','Spearman','Rows','complete');
-    R(2,test_no) = corr(Yt,Ypred_snn,'Type','Spearman','Rows','complete');
+    R(1,test_no) = corr(Yt,Ypred_lm,'Type','Pearson','Rows','complete');
+    R(2,test_no) = corr(Yt,Ypred_snn,'Type','Pearson','Rows','complete');
 
     MAPE(1,test_no)=errperf(Yt,Ypred_lm,'mape');
     MAPE(2,test_no)=errperf(Yt,Ypred_snn,'mape');
