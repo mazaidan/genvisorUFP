@@ -36,7 +36,7 @@ switch Model
         Ypred_std = ones(size(Ypred));
         M = net;
     case {'BNN1'}
-        
+        disp('Bayesian Neural Networks')
         % Set up network parameters.
         nin = size(X,2);		% Number of inputs.
         nhidden = 3;		% Number of hidden units.
@@ -68,7 +68,7 @@ switch Model
         end
         
         %fprintf(1, 'true beta: %f\n', 1/(noise*noise));
-                
+        
         % Evaluate error bars.
         %[y, sig2] = netevfwd(mlppak(net), net, x, t, plotvals);\
         [y, sig2] = netevfwd(mlppak(net), net, X, Y, Xt);
@@ -77,7 +77,40 @@ switch Model
         Ypred   = y;
         Ypred_std = sig;
         M = net;
-           
+        
+    case {'BLM'}
+        disp('Bayesian Modelling')
+        p = size(X,2);
+        %PriorMdl = bayeslm(p,'ModelType','lasso');
+        %PriorMdl.Lambda = 10.*ones(p+1,1);%[10; 1e5; 10];
+        %%%PriorMdl = bayeslm(p,'ModelType','semiconjugate'); PriorMdl.A = 5; PriorMdl.A = 0.1;
+        %%%PriorMdl = bayeslm(p,'ModelType','semiconjugate','Intercept',false); PriorMdl.A = 5; PriorMdl.A = 0.1;
+        %PriorMdl = bayeslm(p,'ModelType','mixconjugate');
+        %PriorMdl = bayeslm(p,'ModelType','mixsemiconjugate');
+        LS = 0;
+        if LS ==1
+            if p ==4
+                PriorMdl = bayeslm(p,'ModelType','lasso','Intercept',false,'VarNames',["PM25" "T" "RH" "P"]);
+                PriorMdl.Lambda = [0.1 1e2 1e2 1e3];
+            else
+                PriorMdl = bayeslm(p,'ModelType','lasso','Intercept',false);
+            end
+        else
+            %PriorMdl = bayeslm(p,'ModelType','diffuse','Intercept',false);
+            PriorMdl = bayeslm(p,'ModelType','diffuse','Intercept',true);
+            %PriorMdl = bayeslm(p,'ModelType','lasso','Intercept',true);
+            %PriorMdl = bayeslm(p,'ModelType','mixsemiconjugate');
+            %PriorMdl = bayeslm(p,'ModelType','mixconjugate');
+        end
+        
+        rng(1);
+        PosteriorMdl = estimate(PriorMdl,X,Y);
+        [yfit,ycov] = forecast(PosteriorMdl ,Xt);
+        
+        Ypred   = yfit;
+        Ypred_std = sqrt(ycov);
+        M = PosteriorMdl;
+        
     otherwise
         warning('Please choose a Model')
 end

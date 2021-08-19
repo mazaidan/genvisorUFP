@@ -1,6 +1,6 @@
 %% This code is written in MATLAB
-% The purpose aims to develop the estimator for ultra-fine particles based
-% on low-cost sensors
+% The objective is to develop estimator for ultra-fine particles based
+% on low-cost sensor devices
 % Written by:
 % Martha Arbayani Bin Zaidan, Ph.D., Docent, CEng.
 % Research Associate Professor, Nanjing University, China
@@ -9,8 +9,6 @@
 addpath(genpath('Functions'));
 addpath(genpath('Functions_special/BayesianNeuralNetworks'));
 rmpath('Functions_special/BayesianNeuralNetworks/netlab/Garbages');
-
-
 
 clear; close all; clc;
 
@@ -25,7 +23,7 @@ Exp_gas = [30243:1:54721]';
 Ds = Exp_smoking; 
 Dg = Exp_gas;
 %Da =[Exp_smoking;Exp_gas];
-Da = Ds; [Ds;Dg];
+Da = [Ds;Dg]; Ds; 
 
 % % time-delayed 0 (no time delayed)
 % Da_o = Da(1:end,1);
@@ -68,7 +66,7 @@ for T = 0:5
     
 end
 
-%% Cross-correlation
+% Cross-correlation
 
 T = 0;
 Da_o = Da(T+1:end,1);
@@ -98,6 +96,10 @@ Lag =100;
 Lags = [-Lag:1:Lag]';
 for n = 1:4
     [R,L,pvalue] = crosscorrelation(X(:,n)',Y',Lag,Corr_Type);
+    idx = find(R == max(R));
+    %max_positive_corr = L(idx);
+    disp(['Max positive correlation for var ', Vars_names{1,n}, ': ' , ... 
+        num2str(L(idx))]);
     figure(1);
     subplot(2,2,n)
     stem(Lags,R)
@@ -115,13 +117,21 @@ Da =[Exp_smoking;Exp_gas];
 
 %% Available Output (with/without cleaning) and Input Features
 
-% PND data cleaning
-CLEAN_PND = 0;
+% Choose the method for cleaning PND data:
+CLEAN_PND = 1; 
+% Choose the model if we want to contain time delay or not:
+ModelDelay = 'DelayedModel'; DM = 1.5;
+%ModelDelay = 'NoDelayedModel';
+
+% PND data cleaning Porcess: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 if CLEAN_PND == 0
+    disp('CLEAN PND = 0 ')
     disp('OUTPUT: We do not remove PND data which is not clean')
     DATAo  = [DATA.PND_c([Ds;Dg],1)];
     DATAo1 = log10(DATAo);
 elseif CLEAN_PND == 1
+    disp('CLEAN PND = 1 ')
     disp('OUTPUT: We remove PND data which is not clean and normalize it')
     CPC = DATA.PND_c([Ds;Dg],1);
     %figure(100);plot(DATA.PND_c(Ds,1));hold on;plot(DATA.PND_c(Dk,1),'r');plot(DATA.PND_c(Dg,1),'g'); hold off
@@ -138,7 +148,8 @@ elseif CLEAN_PND == 1
     %DATAo  = [DATA.PND_c(Da,1)];
     DATAo1 = log10(DATAo);
 elseif CLEAN_PND == 2
-    disp('Another way how to clean the data')
+    disp('CLEAN PND = 2 ')
+    disp('We make threshold, and clean the data')
     DATAo  = [DATA.PND_c([Ds;Dg],1)];
     IDX = find(DATAo < 0.1e5); % 0.3e5
     DATAo(IDX,:) = nan;
@@ -159,29 +170,96 @@ x3n = normalize_UFPsensors(x3,'P');
 x4 = [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]; % PM2.5
 x4n = normalize_UFPsensors(x4,'PM25');
 
-Xd  = []; % Input delayed
-Xdn = []; % normalized input delayed
-for T = 1 : 2
-    %T =1; % time delayed = 1
-    Ds_T = Ds(T+1:end,1);
-    Dg_T = Dg(T+1:end,1);
-    % Only Temp and PM2.5 included, necause the auto-correlation which we
-    % obtain indicate that these two variables influence PND
-    Xd0 = [[DATA.AT_T(Ds_T,1); nan(T,1); DATA.LCS_G2_01_met(Dg_T,2); nan(T,1)], ... 
-        [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)]];
-    %%%Xd0 = [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)];
-    Xd = [Xd,Xd0];
-    
-    % Normalized values:
-    xdn0a = normalize_UFPsensors(Xd0(:,1),'Temp');
-    xdn0b = normalize_UFPsensors(Xd0(:,2),'PM25');
-    Xdn0 = [xdn0a,xdn0b];
-    
-    %%%xdn0a = normalize_UFPsensors(Xd0(:,1),'PM25');
-    %%%Xdn0 = [xdn0a];
-    
-    Xdn = [Xdn,Xdn0]; 
+switch ModelDelay
+    case {'NoDelayedModel'}
+        disp('The chosen model does not contain delayed inputs')
+        Xd  = [];
+        Xdn = [];
+    case {'DelayedModel'}
+        disp('The chosen model contains delayed inputs')
+        
+        if DM == 1
+            disp('Only Delay for PM2.5')
+            Xd  = []; % Input delayed
+            Xdn = []; % normalized input delayed
+            for T = 1 : 2
+                %T =1; % time delayed = 1
+                Ds_T = Ds(T+1:end,1);
+                Dg_T = Dg(T+1:end,1);
+                % Only Temp and PM2.5 included, necause the auto-correlation which we
+                % obtain indicate that these two variables influence PND
+                Xd0 = [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)];
+                %%%Xd0 = [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)];
+                Xd = [Xd,Xd0];
+                
+                % Normalized values:
+                Xdn0 = normalize_UFPsensors(Xd0(:,1),'PM25');
+                Xdn = [Xdn,Xdn0];
+            end
+        elseif DM == 1.5
+            disp('Delay for Temp(t-1) and PM2.5(t-1), PM2.5(t-2)')
+            Xd  = []; % Input delayed
+            Xdn = []; % normalized input delayed
+            for T = 1 : 2
+                %T =1; % time delayed = 1
+                Ds_T = Ds(T+1:end,1);
+                Dg_T = Dg(T+1:end,1);
+                % Only Temp and PM2.5 included, necause the auto-correlation which we
+                % obtain indicate that these two variables influence PND
+                if T == 1
+                    Xd0 = [[DATA.AT_T(Ds_T,1); nan(T,1); DATA.LCS_G2_01_met(Dg_T,2); nan(T,1)], ...
+                        [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)]];
+                elseif T == 2
+                    Xd0 = [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)];
+                else
+                    Xd0 = [[DATA.AT_T(Ds_T,1); nan(T,1); DATA.LCS_G2_01_met(Dg_T,2); nan(T,1)], ...
+                        [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)]];    
+                end
+                
+                Xd = [Xd,Xd0];
+                
+                % Normalized values:
+                if T == 2
+                    xdn0a = [];
+                    xdn0b = normalize_UFPsensors(Xd0(:,1),'PM25');
+                else
+                    xdn0a = normalize_UFPsensors(Xd0(:,1),'Temp');
+                    xdn0b = normalize_UFPsensors(Xd0(:,2),'PM25');
+                end
+                
+                Xdn0 = [xdn0a,xdn0b];
+                
+                Xdn = [Xdn,Xdn0];
+            end
+        elseif DM == 2
+            disp('Delay for Temp and PM2.5')
+            Xd  = []; % Input delayed
+            Xdn = []; % normalized input delayed
+            for T = 1 : 2
+                %T =1; % time delayed = 1
+                Ds_T = Ds(T+1:end,1);
+                Dg_T = Dg(T+1:end,1);
+                % Only Temp and PM2.5 included, necause the auto-correlation which we
+                % obtain indicate that these two variables influence PND
+                Xd0 = [[DATA.AT_T(Ds_T,1); nan(T,1); DATA.LCS_G2_01_met(Dg_T,2); nan(T,1)], ...
+                    [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)]];
+                %%%Xd0 = [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)];
+                Xd = [Xd,Xd0];
+                
+                % Normalized values:
+                xdn0a = normalize_UFPsensors(Xd0(:,1),'Temp');
+                xdn0b = normalize_UFPsensors(Xd0(:,2),'PM25');
+                Xdn0 = [xdn0a,xdn0b];
+                
+                Xdn = [Xdn,Xdn0];
+            end
+        else
+            warning('Choose DM')
+        end
+    otherwise
+        warning('Choose ModelDelay name properly: either DelayedModel or NoDelayedModel')
 end
+
 
 DATAi  = [x1,x2,x3,x4,Xd];      %  DATA Input
 %DATAi1 = [x1n,x2n,x3n,x4n,Xdn]; %  DATA input (with normalization)
@@ -191,7 +269,6 @@ DATAi1 = [x1n.*x2n,x4n,Xdn]; %  DATA input (with normalization)
 %DATAi1 = [x1n.*x2n.*x4n,Xdn]; %  DATA input (with normalization)
 
 
-%
 % MODELLING
 % INPUT   = DATAi, DATAi1
 % OUTPUT  = DATAo, DATAo1
@@ -256,7 +333,7 @@ for test_no=1:8%12
     if in == 3
         c=Yt;
         markerSize = 100;
-        figure(10)
+        fig10 = figure(10);
         scatter3(X(:,1),X(:,2),X(:,3),markerSize,c,'filled')
         xlabel('Temp');ylabel('RH');zlabel('PM_{2.5}')
         colorbar
@@ -266,7 +343,7 @@ for test_no=1:8%12
         markerSize = 100;       
         %scatter3(DATAi1(:,1),DATAi1(:,2),DATAo1,markerSize,c,'filled')
         %scatter3(X(:,1),X(:,2),Y)
-        figure(10)
+        fig10 = figure(10);
         %IDX = kmeans([X(:,1),X(:,2),Y], 2);
         
         gmfit = fitgmdist([X(:,1),X(:,2),Y],2);
@@ -283,18 +360,19 @@ for test_no=1:8%12
         %colorbar
         set(findall(fig,'-property','FontSize'),'FontSize',22);
     elseif in == 1
-        figure(10)
+        fig10 =  figure(10);
         scatter(X(:,1),Y(:,1))
         xlabel('Temp \times RH \times PM_{2.5}');ylabel('PND')
         %colorbar
         set(findall(fig,'-property','FontSize'),'FontSize',22);
     end
+    close(fig10)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 NumberExperts=2;
 noClus = 1 ;
 
 if noClus == 1
-    median_Y =  4.5;% median(Y);%5.25;4.75;%4.75; %median(Y);%
+    median_Y =  4;%4.5;% median(Y);%5.25;4.75;%4.75; %median(Y);%
     %idx1 = IDX ==1 ;find(Y<median_Y);
     %idx2 = IDX ==2 ;find(Y>=median_Y);
     %idx3 = IDX ==3 ;
@@ -314,18 +392,18 @@ IDX1={idx1,idx2};%,idx3,idx4};
 
 %Models = {'ANN1','LM1'} ;
 %Models = {'LM1','ANN1'} ;
-Models = {'LM1','BNN1'} ;
+%Models = {'LM1','LM1'} ;
 %Models = {'ANN1','ANN1'} ;
 
-[TotalOutput,TotalVar] = MixtureOfExperts(X,Y,Xt,Models,NumberExperts,IDX1);
-        
+%[TotalOutput,TotalVar] = MixtureOfExperts(X,Y,Xt,Models,NumberExperts,IDX1);
+%Ypred_snn = TotalOutput;        
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      
     Model1 = 'LM1';%'LM1'; 
-    %Model2 = 'ANN1';
+    Model2 = 'BLM';%'ANN1';
     [Ypred_lm,~] = UFPmodelling(X,Y,Xt,Model1);
-    %[Ypred_snn,~] = UFPmodelling(X,Y,Xt,Model2);
-    Ypred_snn = TotalOutput;
+    [Ypred_snn,~] = UFPmodelling(X,Y,Xt,Model2);
+    
    
     
     R(1,test_no) = corr(Yt,Ypred_lm,'Type','Pearson','Rows','complete');
@@ -337,7 +415,7 @@ Models = {'LM1','BNN1'} ;
     
     % RESULT PLOTS and METRICS
     figure(1); fig = gcf;
-    subplot(4,2, test_no);
+    subplot(4,4, test_no);
     scatter(Yt,Ypred_lm);hold on
     Xlim1 = 0;3;
     Ylim1 = 6;
@@ -347,10 +425,10 @@ Models = {'LM1','BNN1'} ;
     plot(x,y,'r');hold off
     title(['M1: Test No: ',num2str(test_no)])
     xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
-    set(findall(fig,'-property','FontSize'),'FontSize',22);
+    %set(findall(fig,'-property','FontSize'),'FontSize',22);
     
-    figure(2); fig =gcf;
-    subplot(4,2, test_no);
+    %figure(2); fig =gcf;
+    subplot(4,4, test_no + 8);
     scatter(Yt,Ypred_snn);hold on
     Xlim1 = 0;3;
     Ylim1 = 6;
