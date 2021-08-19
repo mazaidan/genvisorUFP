@@ -118,7 +118,7 @@ Dg = Exp_gas;
 Da =[Exp_smoking;Exp_gas];
 
 
-%PN=3;
+PN=2;
 % Available Output (with/without cleaning) and Input Features
 % Choose the method for cleaning PND data:
 CLEAN_PND = 0; 
@@ -263,7 +263,7 @@ switch ModelDelay
         warning('Choose ModelDelay name properly: either DelayedModel or NoDelayedModel')
 end
 
-DMc = 2;
+DMc = 3;
 DATAi  = [x1,x2,x3,x4,Xd];      %  DATA Input
 if DMc == 1
     disp('DATAi1 = [x1n,x2n,x3n,x4n,Xdn]')
@@ -274,6 +274,9 @@ elseif DMc == 2
 elseif DMc == 3
     disp('DATAi1 = [x1n.*x2n,x4n,Xdn]')
     DATAi1 = [x1n.*x2n,x4n,Xdn]; %  DATA input (with normalization)
+elseif DMc == 4
+    disp('DATAi1 = [x1n.*x2n.*x4n,Xdn]')
+    DATAi1 = [x1n.*x2n.*x4n,Xdn]; %  DATA input (with normalization)
 else
     disp('DATAi1 = [x1n.*x2n.*x4n,Xdn]')
     DATAi1 = [x1n.*x2n.*x3n.*x4n,Xdn]; %  DATA input (with normalization)

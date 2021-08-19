@@ -49,6 +49,32 @@ if D == 1
     y = linspace(0,max(Y));
     plot(x,y,'r');hold off
     set(findall(fig,'-property','FontSize'),'FontSize',22);
+    
+    figure(2); fig=gcf;
+    X = CPC(:,8); % CPC 
+    Y = PND(2:end,8);          
+    subplot(311);scatter(X,Y); hold on; grid on
+    xlabel('PND');ylabel('CPC');title('Bin 1: PND')
+    x = linspace(0,max(Y));
+    y = linspace(0,max(Y));
+    plot(x,y,'r');hold off
+    
+    X = CPC(:,8) - Ptrak(:,8); % CPC - PTRAK == 10 - 25 nm
+    Y = PND(2:end,9);
+    subplot(312);scatter(X,Y); hold on; grid on
+    xlabel('PND');ylabel('CPC - Ptrak');title('Bin 2: PND')
+    x = linspace(0,max(Y));
+    y = linspace(0,max(Y));
+    plot(x,y,'r');hold off
+      
+    X = Ptrak(:,8) - sum(AeroTrak_PN(:,8:13),2); % Ptrak - sum(aerotrak) == 25 - 300 nm
+    Y = PND(2:end,10);
+    subplot(313);scatter(X,Y); hold on; grid on
+    xlabel('PND');ylabel('Ptrak - sum(aerotrak)');title('Bin 3: PND')
+    x = linspace(0,max(Y));
+    y = linspace(0,max(Y));
+    plot(x,y,'r');hold off
+    set(findall(fig,'-property','FontSize'),'FontSize',22);
 else 
     disp('Kerosene/Natural Gas Data')
     disp(['CPC+Ptrak+AeroTrak: ',num2str(roundn([CPC(n,2),nan,Ptrak(n,2),AeroTrak_PN(n,2:7)],r))])
