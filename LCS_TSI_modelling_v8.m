@@ -25,6 +25,8 @@ Dg = Exp_gas;
 %Da =[Exp_smoking;Exp_gas];
 Da = [Ds;Dg]; Ds; 
 
+PN =1;
+
 % % time-delayed 0 (no time delayed)
 % Da_o = Da(1:end,1);
 % Da_i = Da(1:end,1);
@@ -42,7 +44,7 @@ for T = 0:5
     disp(['Time Delayed: ', num2str(T)])
     
     %CPC = DATA.PND_c([Ds;Dk;Dg],1);
-    CPC = DATA.PND_c(Da_o,1);
+    CPC = DATA.PND_c(Da_o,PN);
     CPClog = log10(CPC);
     CPCgradient = gradient(CPC);
     CPCdiff = diff(CPC);
@@ -76,7 +78,7 @@ Da_i = Da(1:end-T,1);
 X = [DATA.AT_T(Da_i,1),DATA.AT_RH(Da_i,1),DATA.LCS_G2_01_met(Da_i,3),DATA.LCS_G1(Da_i,1)];
 
 % OUTPUT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-CPC = DATA.PND_c(Da_o,1);
+CPC = DATA.PND_c(Da_o,PN);
 CPClog = log10(CPC);
 CPCgradient = gradient(CPC);
 CPCdiff = diff(CPC);
@@ -91,8 +93,8 @@ Y = DATAo;DATAo1;
 % Compute XCORR and PLOT %%%%
 
 Vars_names = {'Temp','RH','Pressure','PM_{2.5}'};
-Corr_Type = 'Pearson';%'Spearman';%'Pearson';%
-Lag =100;
+Corr_Type = 'Pearson';'Spearman';%'Pearson';%
+Lag =20;
 Lags = [-Lag:1:Lag]';
 for n = 1:4
     [R,L,pvalue] = crosscorrelation(X(:,n)',Y',Lag,Corr_Type);
@@ -115,12 +117,13 @@ Ds = Exp_smoking;
 Dg = Exp_gas;
 Da =[Exp_smoking;Exp_gas];
 
-%% Available Output (with/without cleaning) and Input Features
 
+%PN=3;
+% Available Output (with/without cleaning) and Input Features
 % Choose the method for cleaning PND data:
-CLEAN_PND = 1; 
+CLEAN_PND = 0; 
 % Choose the model if we want to contain time delay or not:
-ModelDelay = 'DelayedModel'; DM = 1.5;1.5;2; 
+ModelDelay = 'DelayedModel'; DM = 1.5; 1.5;1;%1.5;1.5;2; 
 %ModelDelay = 'NoDelayedModel';
 
 % PND data cleaning Porcess: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -128,12 +131,12 @@ ModelDelay = 'DelayedModel'; DM = 1.5;1.5;2;
 if CLEAN_PND == 0
     disp('CLEAN PND = 0 ')
     disp('OUTPUT: We do not remove PND data which is not clean')
-    DATAo  = [DATA.PND_c([Ds;Dg],1)];
-    DATAo1 = log10(DATAo);
+    DATAo  = [DATA.PND_c([Ds;Dg],PN)];
+    DATAo1 = real(log10(DATAo));
 elseif CLEAN_PND == 1
     disp('CLEAN PND = 1 ')
     disp('OUTPUT: We remove PND data which is not clean and normalize it')
-    CPC = DATA.PND_c([Ds;Dg],1);
+    CPC = DATA.PND_c([Ds;Dg],PN);
     %figure(100);plot(DATA.PND_c(Ds,1));hold on;plot(DATA.PND_c(Dk,1),'r');plot(DATA.PND_c(Dg,1),'g'); hold off
     CPClog = log10(CPC);
     CPCgradient = gradient(CPC);
@@ -146,11 +149,11 @@ elseif CLEAN_PND == 1
     %%%DATAo  = CPC;
     DATAo  = CPCclean;
     %DATAo  = [DATA.PND_c(Da,1)];
-    DATAo1 = log10(DATAo);
+    DATAo1 = real(log10(DATAo));
 elseif CLEAN_PND == 2
     disp('CLEAN PND = 2 ')
     disp('We make threshold, and clean the data')
-    DATAo  = [DATA.PND_c([Ds;Dg],1)];
+    DATAo  = [DATA.PND_c([Ds;Dg],PN)];
     IDX = find(DATAo < 0.1e5); % 0.3e5
     DATAo(IDX,:) = nan;
     DATAo1 = log10(DATAo);
@@ -182,7 +185,7 @@ switch ModelDelay
             disp('Only Delay for PM2.5')
             Xd  = []; % Input delayed
             Xdn = []; % normalized input delayed
-            for T = 1 : 2
+            for T = 1 : 3
                 %T =1; % time delayed = 1
                 Ds_T = Ds(T+1:end,1);
                 Dg_T = Dg(T+1:end,1);
@@ -260,12 +263,25 @@ switch ModelDelay
         warning('Choose ModelDelay name properly: either DelayedModel or NoDelayedModel')
 end
 
-
+DMc = 2;
 DATAi  = [x1,x2,x3,x4,Xd];      %  DATA Input
-%DATAi1 = [x1n,x2n,x3n,x4n,Xdn]; %  DATA input (with normalization)
+if DMc == 1
+    disp('DATAi1 = [x1n,x2n,x3n,x4n,Xdn]')
+    DATAi1 = [x1n,x2n,x3n,x4n,Xdn]; %  DATA input (with normalization)
+elseif DMc == 2
+    disp('DATAi1 = [x1n.*x4n,Xdn]')
+    DATAi1 = [x1n.*x4n,Xdn]; %  DATA input (with normalization)
+elseif DMc == 3
+    disp('DATAi1 = [x1n.*x2n,x4n,Xdn]')
+    DATAi1 = [x1n.*x2n,x4n,Xdn]; %  DATA input (with normalization)
+else
+    disp('DATAi1 = [x1n.*x2n.*x4n,Xdn]')
+    DATAi1 = [x1n.*x2n.*x3n.*x4n,Xdn]; %  DATA input (with normalization)
+end
+
 %DATAi1 = [x1n,x2n,x4n,Xdn]; %  DATA input (with normalization)
 %DATAi1 = [x1n,x4n,Xdn]; %  DATA input (with normalization)
-DATAi1 = [x1n.*x2n,x4n,Xdn]; %  DATA input (with normalization)
+%DATAi1 = [x1n.*x2n,x4n,Xdn]; %  DATA input (with normalization)
 %DATAi1 = [x1n.*x2n.*x4n,Xdn]; %  DATA input (with normalization)
 %DATAi1 = [x1n.*x2n.*x3n.*x4n,Xdn]; %  DATA input (with normalization)
 %DATAi1 = [x1.*x2,x4n];

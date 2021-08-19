@@ -80,6 +80,7 @@ switch Model
         
     case {'BLM'}
         disp('Bayesian Modelling')
+        % https://www.mathworks.com/help/econ/bayesian-linear-regression-models.html
         p = size(X,2);
         %PriorMdl = bayeslm(p,'ModelType','lasso');
         %PriorMdl.Lambda = 10.*ones(p+1,1);%[10; 1e5; 10];
@@ -97,10 +98,12 @@ switch Model
             end
         else
             %PriorMdl = bayeslm(p,'ModelType','diffuse','Intercept',false);
-            PriorMdl = bayeslm(p,'ModelType','diffuse','Intercept',true);
+            %PriorMdl = bayeslm(p,'ModelType','diffuse','Intercept',true);
             %PriorMdl = bayeslm(p,'ModelType','lasso','Intercept',true);
             %PriorMdl = bayeslm(p,'ModelType','mixsemiconjugate');
             %PriorMdl = bayeslm(p,'ModelType','mixconjugate');
+            PriorMdl = bayeslm(p,'ModelType','conjugateblm','Intercept',true);
+            %PriorMdl = bayeslm(p,'ModelType','semiconjugateblm','Intercept',true);
         end
         
         rng(1);
