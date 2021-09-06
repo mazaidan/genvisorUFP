@@ -521,7 +521,7 @@ Exp_gas = [30243:1:54721]';
 inst_res_PND = [0.025,0.3,0.5,1,2.5,5,10,45].*1e3;
 Time_index   = [1:1:size(DATA.T1,1)]';
 
-% AFTER SYNCRONIZATION (DATA2)
+% AFTER SYNCRONIZATION (DATA2) 
 figure(2);fig=gcf; 
 fig.Position = [100 100 540 400].*2.5;
 FS=26; PMx=6;
