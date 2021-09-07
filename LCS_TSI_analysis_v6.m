@@ -1078,6 +1078,7 @@ hold off
 %% MATRIX PLOT between all variables
 
 DATA = [DATAs2;DATAn2];
+%DATA = [DATAs2];
 
 DATAx = [DATA.PND_c(:,1),DATA.PMD_c(:,6),DATA.DustTrak_c(:,2),DATA.SidePak_c(:,1), ...
     DATA.LCS_G1(:,1),DATA.LCS_G2_01(:,1),DATA.LCS_G2_02(:,1) ...
@@ -1124,6 +1125,33 @@ if true
     Rms= abs(corrP);
     [m n]=size(Rms);
     imagesc(Rms,'CdataMapping','scaled');
+    %colormap(hot)
+    %colormap jet%parula
+    %colormap(fig, flipud(colormap(fig)))
+    
+    no =1;
+    if no == 1
+        disp('Display corr coefficient in the matrix plot')
+    %%% https://stackoverflow.com/questions/3942892/how-do-i-visualize-a-matrix-with-colors-and-values-displayed
+    %%% colormap(flipud(gray));  % Change the colormap to gray (so higher values are
+    %   black and lower values are white)
+    
+    textStrings = num2str(Rms(:), '%0.2f');       % Create strings from the matrix values
+    textStrings = strtrim(cellstr(textStrings));  % Remove any space padding
+    [x, y] = meshgrid(1:length(Rms));  % Create x and y coordinates for the strings
+    hStrings = text(x(:), y(:), textStrings(:), ...  % Plot the strings
+        'HorizontalAlignment', 'center');
+    midValue = mean(get(gca, 'CLim'));  % Get the middle value of the color range
+    textColors = repmat(Rms(:) > midValue, 1, 3);  % Choose white or black for the
+    %   text color of the strings so
+    %   they can be easily seen over
+    %   the background color
+    else
+        disp('DO NOT Display corr coefficient in the matrix plot')
+    end
+    %%%%%%%%%%
+    
+    
     colorbar    
     hold on;
     for i = 1:m
