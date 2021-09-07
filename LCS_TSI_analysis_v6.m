@@ -395,7 +395,7 @@ DATA2 = [DATAs2;DATAk2;DATAn2];
 DATA3 = [DATAs3;DATAk3;DATAn3];
 DATA4 = [DATAs4;DATAk4;DATAn4];
 
-clearvars -except DATA1 DATA2 DATA3 DATA4 DATA4_label %DATAs DATAk DATAn syn_s syn_k syn_n
+clearvars -except DATA1 DATA2 DATAs2 DATAn2 DATA3 DATA4 DATA4_label %DATAs DATAk DATAn syn_s syn_k syn_n
  
 
 %% 
@@ -1026,9 +1026,60 @@ set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 %C = xcorr(DATA.PND_c(D,1),DATA.LCS_G1(D,1));
 
+%% Accuracy Tests: Temp, RH, P and PM2.5
+addpath Functions
+
+%DATA = DATAn2;%DATAs2;
+DATA = [DATAs2;DATAn2];
+CT = 'Spearman';
+var = 1;
+LCS = 1;
+if var == 1
+    disp('Temp')
+    T = DATA.AT_T;
+    %T = DATA.CO_T;
+    if LCS == 1; P = DATA.LCS_G2_01_met(:,2);
+    elseif LCS == 2; P = DATA.LCS_G2_02_met(:,2); end
+elseif var == 2
+    disp('RH')
+    T = DATA.AT_RH;
+    %T = DATA.CO_RH;
+    if LCS == 1; P = DATA.LCS_G2_01_met(:,1);
+    elseif LCS == 2; P = DATA.LCS_G2_02_met(:,1); end
+elseif var == 3
+    disp('P')
+    T = DATA.CO_P(:,1);
+        if LCS == 1; P = DATA.LCS_G2_01_met(:,3);
+    elseif LCS == 2; P = DATA.LCS_G2_02_met(:,3); end
+elseif var == 4
+    disp('PM25')
+    T = DATA.PMD_c(:,5); %DATA.PMD_c(:,6);
+        if LCS == 1; P = DATA.LCS_G1(:,1);DATA.LCS_G2_01(:,1);
+    elseif LCS == 2; P = DATA.LCS_G2_02(:,1); end
+end
+
+O = rmmissing([T,P]);
+T = O(:,1);
+P = O(:,2);
+
+R = corr(T,P,'Type',CT,'Rows','pairwise')
+MAE = errperf(T,P,'mae')
+MAPE = errperf(T,P,'mape')
+
+figure(1);scatter(T,P);
+xlabel('Reference');ylabel('LCSs')
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+
+figure(2);plot(T);hold on;plot(P,'r'); 
+legend('Reference','LCSs')
+hold off
+
 %% MATRIX PLOT between all variables
 
-DATAx = [DATA.PMD_c(:,2),DATA.PMD_c(:,6),DATA.DustTrak_c(:,2),DATA.SidePak_c(:,1), ...
+DATA = [DATAs2;DATAn2];
+
+DATAx = [DATA.PND_c(:,1),DATA.PMD_c(:,6),DATA.DustTrak_c(:,2),DATA.SidePak_c(:,1), ...
     DATA.LCS_G1(:,1),DATA.LCS_G2_01(:,1),DATA.LCS_G2_02(:,1) ...
     DATA.AT_T,DATA.CO_T,DATA.LCS_G2_01_met(:,2),DATA.LCS_G2_01_met(:,2) ...
     DATA.AT_RH,DATA.CO_RH,DATA.LCS_G2_01_met(:,1),DATA.LCS_G2_01_met(:,1) ...
