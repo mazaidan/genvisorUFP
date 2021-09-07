@@ -77,3 +77,74 @@ set( gca, 'Color', 'None', 'XColor', 'White', 'YColor', 'White' ) ;
 %      'HorizontalAlignment', 'Center', 'VerticalAlignment', 'Bottom' ) ;
 
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+
+
+%%
+
+clear;clc;close all;
+
+% SMOKING ACTIVITIES
+
+load('Data_clean_processed.mat')
+
+%%
+FS =22;
+figure(2); fig = gcf;
+PMx = 6;
+%X = SidePak(:,8);
+X = DATAs2.DustTrak_c(:,2); %DATAs2.SidePak_c(:,1);%DATAs2.PMD_c(:,PMx); %DATAs2.DustTrak_c(:,2);  % 
+%Y = ISEE_LCS_G202(:,end); 
+Y = DATAs2.LCS_G2_02(:,1); Temp =DATAs2.LCS_G2_02_met(:,2);% 
+
+O = rmmissing([X,Y,Temp]);
+X = O(:,1);
+Y = O(:,2);
+Temp = O(:,3);
+
+
+MINx = 1e-2; MAXx = 1e5; MINy = 1e-2; MAXy = 1e5;  
+%MINx = 0;0.01*min(X); MAXx = 100*max(X); MINy = 0;0.01*min(Y); MAXy = 100*max(Y);
+scatter(X,Y);hold on
+grid on
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+xlabel('SidePak','interpreter','latex')
+ylabel('LCSs','interpreter','latex')
+xlim([MINx MAXx]);ylim([MINy MAXy]);
+x = linspace(MINx,MAXx,1000);
+y = linspace(MINy,MAXy,1000);
+plot(x,y,'r');
+
+Xlog = abs(log10(X));
+Ylog = abs(log10(Y));
+
+idx = isinf(Xlog);
+Xlog(idx) = [];
+Ylog(idx) = [];
+Temp(idx) = [];
+
+idx = isinf(Ylog);
+Xlog(idx) = [];
+Ylog(idx) = [];
+Temp(idx) = [];
+
+Te =1;
+if Te ==0
+    mdl = fitlm(Xlog,Ylog);
+    Ylm = predict(mdl,Xlog);
+else
+    mdl = fitlm([Xlog, Temp],Ylog);
+    Ylm = predict(mdl,[Xlog, Temp]);
+end
+scatter(10.^Ylog,10.^Ylm,'g.');
+
+hold off
+
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+anova(mdl,'summary')
+
+figure(10);
+plot(10.^Ylog);hold on
+plot(10.^Ylm,'r'); hold off
