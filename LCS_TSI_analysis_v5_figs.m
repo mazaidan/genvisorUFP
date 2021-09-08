@@ -78,24 +78,60 @@ set( gca, 'Color', 'None', 'XColor', 'White', 'YColor', 'White' ) ;
 
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
-
-
-%%
+%% Tareq plot's data:
 
 clear;clc;close all;
 
 % SMOKING ACTIVITIES
 
-load('Data_clean_processed.mat')
+load('Data_clean_processed.mat');
 
-%%
+FS =26;
+figure(1); fig = gcf;
+Y = SidePak(:,8);
+X = ISEE_LCS_G202(:,end); 
+
+MINx = 1e-2; MAXx = 1e5; MINy = 1e-2; MAXy = 1e5;  
+%MINx = 0;0.01*min(X); MAXx = 100*max(X); MINy = 0;0.01*min(Y); MAXy = 100*max(Y);
+scatter(X,Y);hold on
+grid on
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+xlabel('LCSs','interpreter','latex')
+ylabel('SidePak','interpreter','latex')
+xlim([MINx MAXx]);ylim([MINy MAXy]);
+x = linspace(MINx,MAXx,1000);
+y = linspace(MINy,MAXy,1000);
+plot(x,y,'r');
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+
+%% CALIBRATIONS LCS PM2.5
+
+addpath(genpath('Functions'));
+addpath(genpath('Functions_special/BayesianNeuralNetworks'));
+rmpath('Functions_special/BayesianNeuralNetworks/netlab/Garbages');
+
+clear; close all; clc;
+
+load('DATA2.mat') ;
+
+Exp_smoking = [1:1:11521]';
+Exp_kerosine = [11522:1:30242]';
+Exp_gas = [30243:1:54721]';
+
+%DATA = DATA2([Exp_smoking;Exp_gas],:);
+DATAs2 = DATA2(Exp_smoking,:);
+%DATAn2 = DATA2(Exp_gas,:);
+
+
 FS =22;
 figure(2); fig = gcf;
 PMx = 6;
-%X = SidePak(:,8);
-X = DATAs2.DustTrak_c(:,2); %DATAs2.SidePak_c(:,1);%DATAs2.PMD_c(:,PMx); %DATAs2.DustTrak_c(:,2);  % 
-%Y = ISEE_LCS_G202(:,end); 
-Y = DATAs2.LCS_G2_02(:,1); Temp =DATAs2.LCS_G2_02_met(:,2);% 
+%Y = SidePak(:,8);
+Y = DATAs2.DustTrak_c(:,2); %DATAs2.SidePak_c(:,1);%DATAs2.PMD_c(:,PMx); %DATAs2.DustTrak_c(:,2);  % 
+%X = ISEE_LCS_G202(:,end); 
+X = DATAs2.LCS_G2_02(:,1); Temp =DATAs2.LCS_G2_02_met(:,2);% 
 
 O = rmmissing([X,Y,Temp]);
 X = O(:,1);
@@ -105,16 +141,11 @@ Temp = O(:,3);
 
 MINx = 1e-2; MAXx = 1e5; MINy = 1e-2; MAXy = 1e5;  
 %MINx = 0;0.01*min(X); MAXx = 100*max(X); MINy = 0;0.01*min(Y); MAXy = 100*max(Y);
-scatter(X,Y);hold on
-grid on
-set(gca, 'XScale', 'log')
-set(gca, 'YScale', 'log')
-xlabel('SidePak','interpreter','latex')
-ylabel('LCSs','interpreter','latex')
+scatter(X,Y,'r');hold on; grid on;
+set(gca, 'XScale', 'log');set(gca, 'YScale', 'log');
+xlabel('PM$_{2.5}$ [$\mu$g/m$^3$] (DustTrak)','interpreter','latex');
+ylabel('PM$_{2.5}$ [$\mu$g/m$^3$] ($\mathcal{L}_{2a}$)','interpreter','latex');
 xlim([MINx MAXx]);ylim([MINy MAXy]);
-x = linspace(MINx,MAXx,1000);
-y = linspace(MINy,MAXy,1000);
-plot(x,y,'r');
 
 Xlog = abs(log10(X));
 Ylog = abs(log10(Y));
@@ -139,12 +170,24 @@ else
 end
 scatter(10.^Ylog,10.^Ylm,'g.');
 
+x = linspace(MINx,MAXx,1000);
+y = linspace(MINy,MAXy,1000);
+plot(x,y,'r');
+
+legend('Before calibration','After calibration','interpreter','latex')
+
 hold off
 
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 anova(mdl,'summary')
 
-figure(10);
-plot(10.^Ylog);hold on
-plot(10.^Ylm,'r'); hold off
+figure(3);
+plot(10.^Xlog,'r.');
+hold on; grid on;
+plot(10.^Ylog,'b.');
+plot(10.^Ylm,'g'); 
+legend('$\mathcal{L}$ before calibration','Reference instrument', ...
+    '$\mathcal{L}$ after calibration','interpreter','latex');
+set(gca, 'YScale', 'log');
+hold off
