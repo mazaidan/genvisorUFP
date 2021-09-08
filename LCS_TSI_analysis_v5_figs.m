@@ -125,18 +125,20 @@ DATAs2 = DATA2(Exp_smoking,:);
 %DATAn2 = DATA2(Exp_gas,:);
 
 
-FS =22;
+FS =20;
 figure(2); fig = gcf;
 PMx = 6;
 %Y = SidePak(:,8);
 Y = DATAs2.DustTrak_c(:,2); %DATAs2.SidePak_c(:,1);%DATAs2.PMD_c(:,PMx); %DATAs2.DustTrak_c(:,2);  % 
 %X = ISEE_LCS_G202(:,end); 
 X = DATAs2.LCS_G2_02(:,1); Temp =DATAs2.LCS_G2_02_met(:,2);% 
+index = linspace(1,size(X,1),size(X,1))';
 
-O = rmmissing([X,Y,Temp]);
+O = rmmissing([X,Y,Temp,index]);
 X = O(:,1);
 Y = O(:,2);
 Temp = O(:,3);
+index = O(:,4);
 
 
 MINx = 1e-2; MAXx = 1e5; MINy = 1e-2; MAXy = 1e5;  
@@ -154,11 +156,13 @@ idx = isinf(Xlog);
 Xlog(idx) = [];
 Ylog(idx) = [];
 Temp(idx) = [];
+index(idx) = [];
 
 idx = isinf(Ylog);
 Xlog(idx) = [];
 Ylog(idx) = [];
 Temp(idx) = [];
+index(idx) = [];
 
 Te =1;
 if Te ==0
@@ -182,12 +186,14 @@ set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 anova(mdl,'summary')
 
-figure(3);
-plot(10.^Xlog,'r.');
+figure(3); fig = gcf;
+plot(DATAs2.T1(index),10.^Ylog,'b.');
 hold on; grid on;
-plot(10.^Ylog,'b.');
-plot(10.^Ylm,'g'); 
-legend('$\mathcal{L}$ before calibration','Reference instrument', ...
-    '$\mathcal{L}$ after calibration','interpreter','latex');
+plot(DATAs2.T1(index),10.^Xlog,'r.');
+plot(DATAs2.T1(index),10.^Ylm,'g'); 
+ylabel('PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
+legend('Reference instrument','$\mathcal{L}_{2a}$ before calibration', ...
+    '$\mathcal{L}_{2a}$ after calibration','interpreter','latex');
 set(gca, 'YScale', 'log');
 hold off
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
