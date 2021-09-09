@@ -199,7 +199,7 @@ hold off
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 
-%% CALIBRATIONS LCS PM2.5 (lopping iteratuvely)
+%% CALIBRATIONS LCS PM2.5 (lopping on different calibrators)
 addpath(genpath('Functions'));
 
 clear; close all; clc;
@@ -218,50 +218,82 @@ DATAs2 = DATA2(Exp_smoking,:);
 FS =20;
 figure(2); fig = gcf;
 PMx = 6;
-%Y = SidePak(:,8);
+X = DATAs2.LCS_G2_02(:,1); 
 Y = DATAs2.DustTrak_c(:,2); %DATAs2.SidePak_c(:,1);%DATAs2.PMD_c(:,PMx); %DATAs2.DustTrak_c(:,2);  % 
-%X = ISEE_LCS_G202(:,end); 
-X = DATAs2.LCS_G2_02(:,1); Temp =DATAs2.LCS_G2_02_met(:,2);% 
+Temp = DATAs2.LCS_G2_02_met(:,2);
+RH   = DATAs2.LCS_G2_02_met(:,1);
+P    = DATAs2.LCS_G2_02_met(:,3);
 index = linspace(1,size(X,1),size(X,1))';
 
-O = rmmissing([X,Y,Temp,index]);
-X = O(:,1);
-Y = O(:,2);
-Temp = O(:,3);
-index = O(:,4);
 
+%%%%%%%%%%%%%%%%%%%
 
-MINx = 1e-2; MAXx = 1e5; MINy = 1e-2; MAXy = 1e5;  
-%MINx = 0;0.01*min(X); MAXx = 100*max(X); MINy = 0;0.01*min(Y); MAXy = 100*max(Y);
-scatter(X,Y,'r');hold on; grid on;
-set(gca, 'XScale', 'log');set(gca, 'YScale', 'log');
-xlabel('PM$_{2.5}$ [$\mu$g/m$^3$] (DustTrak)','interpreter','latex');
-ylabel('PM$_{2.5}$ [$\mu$g/m$^3$] ($\mathcal{L}_{2a}$)','interpreter','latex');
-xlim([MINx MAXx]);ylim([MINy MAXy]);
+O = rmmissing([X,Y,Temp,RH,P,index]);
+X     = O(:,1);
+Y     = O(:,2);
+Temp  = O(:,3);
+RH    = O(:,4);
+P     = O(:,5);
+index = O(:,6);
 
 Xlog = abs(log10(X));
 Ylog = abs(log10(Y));
 
 idx = isinf(Xlog);
-Xlog(idx) = [];
-Ylog(idx) = [];
-Temp(idx) = [];
+Xlog(idx)  = [];
+Ylog(idx)  = [];
+Temp(idx)  = [];
+RH(idx)    = [];
+P(idx)     = [];
 index(idx) = [];
 
 idx = isinf(Ylog);
 Xlog(idx) = [];
 Ylog(idx) = [];
 Temp(idx) = [];
+RH(idx)    = [];
+P(idx)     = [];
 index(idx) = [];
 
-Te =1;
-if Te ==0
+for Cal = 0:4
+    
+%Cal =2;
+if Cal == 0
+    Ylm = Xlog;
+elseif Cal == 1
     mdl = fitlm(Xlog,Ylog);
     Ylm = predict(mdl,Xlog);
-else
+elseif Cal == 2
     mdl = fitlm([Xlog, Temp],Ylog);
     Ylm = predict(mdl,[Xlog, Temp]);
+elseif Cal == 3
+    mdl = fitlm([Xlog, Temp, RH],Ylog);
+    Ylm = predict(mdl,[Xlog, Temp, RH]);
+elseif Cal == 4
+    mdl = fitlm([Xlog, Temp, RH, P],Ylog);
+    Ylm = predict(mdl,[Xlog, Temp, RH, P]);
 end
+
+Rp    = corr(Ylog,Ylm,'Type','Pearson','Rows','complete');
+MAPE  = errperf(Ylog,Ylm,'mape');
+MAE   = errperf(10.^Ylog,10.^Ylm,'mae');
+
+Rp1(1,Cal+1) = Rp;
+MAPE1(1,Cal+1) = MAPE;
+MAE1(1,Cal+1) = MAE;
+
+end
+%%%%%%
+
+%%
+
+MINx = 1e-2; MAXx = 1e5; MINy = 1e-2; MAXy = 1e5;  
+scatter(X,Y,'r');hold on; grid on;
+set(gca, 'XScale', 'log');set(gca, 'YScale', 'log');
+xlabel('PM$_{2.5}$ [$\mu$g/m$^3$] (DustTrak)','interpreter','latex');
+ylabel('PM$_{2.5}$ [$\mu$g/m$^3$] ($\mathcal{L}_{2a}$)','interpreter','latex');
+xlim([MINx MAXx]);ylim([MINy MAXy]);
+
 scatter(10.^Ylog,10.^Ylm,'g.');
 
 x = linspace(MINx,MAXx,1000);
@@ -287,3 +319,119 @@ legend('Reference instrument','$\mathcal{L}_{2a}$ before calibration', ...
 set(gca, 'YScale', 'log');
 hold off
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+
+
+%%
+%% CALIBRATIONS LCS PM2.5 (lopping on different scenarios and 
+%% different calibrators)
+addpath(genpath('Functions'));
+
+clear; close all; clc;
+
+load('DATA2.mat') ;
+
+Exp_smoking = [1:1:11521]';
+Exp_kerosine = [11522:1:30242]';
+Exp_gas = [30243:1:54721]';
+
+%DATA = DATA2([Exp_smoking;Exp_gas],:);
+DATAs2 = DATA2(Exp_smoking,:);
+%DATAn2 = DATA2(Exp_gas,:);
+
+
+FS =20;
+figure(2); fig = gcf;
+PMx = 6;
+R      = DATAs2.DustTrak_c(:,2);
+Rl     = abs(log10(R));
+
+A1     = DATAs2.LCS_G2_01(:,1);
+A1l    = abs(log10(A1));
+T1     = DATAs2.LCS_G2_01_met(:,2);
+RH1    = DATAs2.LCS_G2_01_met(:,1);
+P1     = DATAs2.LCS_G2_01_met(:,3);
+index1 = linspace(1,size(A1,1),size(A1,1))';
+
+A2     = DATAs2.LCS_G2_01(:,1);
+A2l    = abs(log10(A2));
+T2     = DATAs2.LCS_G2_02_met(:,2);
+RH2    = DATAs2.LCS_G2_02_met(:,1);
+P2     = DATAs2.LCS_G2_02_met(:,3);
+index2 = linspace(1,size(A2,1),size(A2,1))';
+
+%%%%%%%%%%%%%%%%%%%
+
+%D  = [R,Rl,A1,A1l,A2,A2l,T1,T2,RH1,RH2,P1,P2,index1,index2];
+D  = [R,Rl, A1,A1l,T1,RH1,P1,index1, A2,A2l,T2,RH2,P2,index2]; 
+D1 = rmmissing(D);
+
+idx = isinf(D1);
+idx1 = sum(idx,2);
+idx2 = idx1>0;
+D1(idx2,:) = [];
+
+%S = 1;
+for S = 1:4
+if S == 1
+    Y  = D1(:,2);
+    Y1 = Y;
+    X  = D1(:,[3:8]);  % LCS2a
+    X1 = D1(:,[9:14]); % LCS2b
+elseif S == 2
+    Y  = D1(:,2);
+    Y1 = Y;
+    X  = D1(:,[9:14]);  % LCS2b
+    X1 = D1(:,[3:8]); % LCS2a
+elseif S == 3
+    th = roundn(0.7 .* size(D1,1),0);
+    RandIdx = randperm(size(D1,1))';
+    Tr = RandIdx(1:th,1);
+    Te = RandIdx(th+1:end,1);
+    Y  = D1(Tr,2);
+    Y1 = D1(Te,2);
+    X  = D1(Tr,[3:8]);   % LCS2a
+    X1 = D1(Te,[9:14]);  % LCS2b
+elseif S == 4
+    th = roundn(0.7 .* size(D1,1),0);
+    RandIdx = randperm(size(D1,1))';
+    Tr = RandIdx(1:th,1);
+    Te = RandIdx(th+1:end,1);
+    Y  = D1(Tr,2);
+    Y1 = D1(Te,2);
+    X   = D1(Tr,[9:14]);  % LCS2b
+    X1  = D1(Te,[3:8]);   % LCS2a
+else
+    error('Please select S Scenario')
+end
+
+for Cal = 0:4
+    
+if Cal == 0
+    Ylm = X1(:,2);
+elseif Cal == 1
+    mdl = fitlm(X(:,2),Y);
+    Ylm = predict(mdl,X1(:,2));
+elseif Cal == 2
+    mdl = fitlm(X(:,[2:3]),Y);
+    Ylm = predict(mdl,X1(:,[2:3]));
+elseif Cal == 3
+    mdl = fitlm(X(:,[2:4]),Y);
+    Ylm = predict(mdl,X1(:,[2:4]));
+elseif Cal == 4
+    mdl = fitlm(X(:,[2:6]),Y);
+    Ylm = predict(mdl,X1(:,[2:6]));
+end
+
+Rp    = corr(Y1,Ylm,'Type','Pearson','Rows','complete');
+MAPE  = errperf(Y1,Ylm,'mape');
+MAE   = errperf(10.^Y1,10.^Ylm,'mae');
+
+Rp1(S,Cal+1)   = Rp;
+MAPE1(S,Cal+1) = MAPE;
+MAE1(S,Cal+1)  = MAE;
+
+end
+end
+%%%%%%
+
