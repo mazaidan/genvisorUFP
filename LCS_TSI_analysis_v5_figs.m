@@ -285,7 +285,7 @@ MAE1(1,Cal+1) = MAE;
 end
 %%%%%%
 
-%%
+%
 
 MINx = 1e-2; MAXx = 1e5; MINy = 1e-2; MAXy = 1e5;  
 scatter(X,Y,'r');hold on; grid on;
@@ -427,11 +427,66 @@ Rp    = corr(Y1,Ylm,'Type','Pearson','Rows','complete');
 MAPE  = errperf(Y1,Ylm,'mape');
 MAE   = errperf(10.^Y1,10.^Ylm,'mae');
 
-Rp1(S,Cal+1)   = Rp;
-MAPE1(S,Cal+1) = MAPE;
-MAE1(S,Cal+1)  = MAE;
+Rp1(S,Cal+1)   = roundn(Rp,-2);
+MAPE1(S,Cal+1) = roundn(MAPE,-2);
+MAE1(S,Cal+1)  = roundn(MAE,-2);
 
 end
 end
 %%%%%%
+
+
+%% FIG.2: MATRIX PLOT BETWEEN AEROSOL SENSORS
+
+labelX = {'$\mathcal{R}_1$','$\mathcal{R}_2$', ...
+            '$\mathcal{L}_1$','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$'};
+        
+%labelX = {'$\mathcal{R}_1$','$\mathcal{R}_2$', ...
+%            '$\mathcal{S}_1$','$\mathcal{S}_2$','$\mathcal{S}_3$'};
+
+labelY = fliplr({'$\mathcal{R}_1$','$\mathcal{R}_2$', ...
+          '$\mathcal{L}_1$','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$'});
+
+corrP = corr(DATA1,'Type','Pearson','Rows','pairwise');
+corrP = abs(corrP);
+corrP = tril(corrP,-1);
+for i=1:5
+for j=1:5
+mape(i,j) = nanmean(abs(DATA1(:,i)-DATA1(:,j))./(abs(DATA1(:,i))+abs(DATA1(:,j)))/2);
+end
+end
+mape = triu(mape,1);
+clc
+figure(2);fig=gcf;
+set(fig,'Position',[10.3333 41.6667 1280 599.3333])
+
+Rms= corrP+mape;
+Rms(Rms==0)=NaN;
+Rms = fliplr(Rms);
+Rms(:,end+1)=Rms(:,end);
+Rms(end+1,:)=Rms(end,:);
+p = pcolor(Rms);
+p.LineStyle='None';
+hold on
+fill([1 2 2 3 3 4 4 5 5 6 6 5 5 4 4 3 3 2 2 1 1],...
+     [6 6 5 5 4 4 3 3 2 2 1 1 2 2 3 3 4 4 5 5 6],[1 1 1],'LineStyle','None')
+hold on
+fill([1 1 2 2 3 3 4 4 5 5 1],[1 5 5 4 4 3 3 2 2 1 1],'k','FaceAlpha',0,'LineWidth',1)
+hold on
+fill([2 2 6 6 5 5 4 4 3 3 2],[5 6 6 2 2 3 3 4 4 5 5],'k','FaceAlpha',0,'LineWidth',1)
+xlabel({'Mean absolute percentage error ($MAPE$)','Pearson coefficient ($R$)'}, 'Interpreter', 'latex')
+h = colorbar;
+h.Label.String = '$R$/$MAPE$';
+h.Label.Interpreter = 'latex';
+colormap(jet)
+ax = gca;
+caxis([0 1])
+set(ax,'Position',[0.15 0.2 0.6 0.65])
+set(ax, 'XTick', 1.5:length(labelX)+0.5, 'XTickLabel', labelX, 'TickLabelInterpreter', 'latex')
+set(ax, 'YTick', 1.5:length(labelY)+0.5, 'YTickLabel', labelY, 'TickLabelInterpreter', 'latex')
+set(h,'Ticks',0:0.2:1,'TickLabelInterpreter', 'latex')
+%colorbar off
+box off
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+print(gcf,'Fig2.png','-dpng','-r1000')
 
