@@ -88,8 +88,10 @@ load('Data_clean_processed.mat');
 
 FS =26;
 figure(1); fig = gcf;
+%Y = PM2p5(:,8); 
 Y = SidePak(:,8);
 X = ISEE_LCS_G202(:,end); 
+%X = PMSD(1:end-1,10);
 
 MINx = 1e-2; MAXx = 1e5; MINy = 1e-2; MAXy = 1e5;  
 %MINx = 0;0.01*min(X); MAXx = 100*max(X); MINy = 0;0.01*min(Y); MAXy = 100*max(Y);
