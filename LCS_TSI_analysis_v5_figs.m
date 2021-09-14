@@ -126,7 +126,7 @@ Time_index   = [1:1:size(PNSD,1)]';
 
 % AFTER SYNCRONIZATION (DATA2)
 figure(6);fig=gcf; 
-fig.Position = [100 100 540 400].*2.5;
+fig.Position = [120 120 690 450].*2.5;
 FS=26; PMx=6;
 lc =1e0; hc=10e5;
 tiledlayout(2,1);
@@ -193,6 +193,12 @@ set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 
 %% Tareq's computations for derived variables 
+
+clear;clc;close all;
+
+% SMOKING ACTIVITIES
+
+load('Data_clean_processed.mat');
 
 % How to calculate PND
 
@@ -275,13 +281,46 @@ set(findall(fig,'-property','FontSize'),'FontSize',22);
 figure(2); fig = gcf;
 for n= 1:8
     subplot(4,2,n);
-    PNSD1 = PND(:,8)./log10(Dp_max(1,1)/Dp_min(1,1));
-    scatter(PNSD(:,8),PNSD1)
+    PNSD1 = (PND(:,n+8))./log10(Dp_max(1,n)/Dp_min(1,n));
+    %PNSD1 = abs(PND(:,n+7) - PND(:,n+8))./log10(Dp_max(1,n)/Dp_min(1,n));
+    scatter(PNSD(:,n+8),PNSD1); hold on; grid on
+    x = linspace(0,max(PNSD1));
+    y = linspace(0,max(PNSD1));
+    plot(x,y,'r');hold off
     xlabel('PNSD');ylabel('PNSD1');
-    title(['Bin ',num2str(n), ' : ',num2str(Dp_min(1,n)),' - ',num2str(Dp_max(1,n)),' m'])
+    title(['Bin ',num2str(n), ' : ',num2str(Dp_min(1,n)*1e6),' - ',num2str(Dp_max(1,n)*1e6),'$\mu$m'], 'interpreter','latex')
 end
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
+%% Computing PMD
+PN = pi * (PND(:,8).*(Dp_gmd(1,1)^3)/6)*rho_unit;
+
+% From PND, how to calculate PNSD:
+
+for n= 1:8
+    
+    figure(3); fig = gcf;
+    subplot(4,2,n);
+    PMD1 = 1e6*PND(:,n+8) .* (pi/6)*((Dp_gmd(1,n))^3)*(1e9.*rho_unit);
+    scatter(PMD(:,n+8),PMD1); hold on
+    x = linspace(0,max(PMD1));
+    y = linspace(0,max(PMD1));
+    plot(x,y,'r');hold off
+    xlabel('PMSD');ylabel('PMSD1');
+    title(['Bin ',num2str(n), ' : ',num2str(Dp_min(1,n)*1e6),' - ',num2str(Dp_max(1,n)*1e6),'$\mu$m'], 'interpreter','latex')
+    set(findall(fig,'-property','FontSize'),'FontSize',22);
+    
+    figure(4); fig = gcf;
+    subplot(4,2,n);
+    PMSD1 = 1e6*PNSD(:,n+8) .* (pi/6)*((Dp_gmd(1,n))^3)*(1e9.*rho_unit);
+    scatter(PMSD(:,n+8),PMSD1); hold on
+    x = linspace(0,max(PMSD1));
+    y = linspace(0,max(PMSD1));
+    plot(x,y,'r');hold off
+    xlabel('PMSD');ylabel('PMSD1');
+    title(['Bin ',num2str(n), ' : ',num2str(Dp_min(1,n)*1e6),' - ',num2str(Dp_max(1,n)*1e6),'$\mu$m'], 'interpreter','latex')
+    set(findall(fig,'-property','FontSize'),'FontSize',22);
+end
 
 %% CALIBRATIONS LCS PM2.5
 
