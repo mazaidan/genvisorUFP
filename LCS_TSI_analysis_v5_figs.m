@@ -320,8 +320,24 @@ for n= 1:8
     xlabel('PMSD');ylabel('PMSD1');
     title(['Bin ',num2str(n), ' : ',num2str(Dp_min(1,n)*1e6),' - ',num2str(Dp_max(1,n)*1e6),'$\mu$m'], 'interpreter','latex')
     set(findall(fig,'-property','FontSize'),'FontSize',22);
+    
 end
 
+%%
+clc
+Dp
+figure(5);
+PM25b  =[];
+for n = 6:7
+    PM25a = PMSD(2:end,n+1) * log10(Dp_max(1,n)/Dp_min(1,n));
+    PM25b = [PM25b,PM25a];
+end
+PM25 = sum(PM25b,2);
+%PM25 = sum(PMD(2:end,9:end),2);
+%for n=1:8
+scatter(PM25,PM2p5(:,8));
+    %pause
+%end
 %% CALIBRATIONS LCS PM2.5
 
 addpath(genpath('Functions'));
