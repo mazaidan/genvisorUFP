@@ -108,6 +108,181 @@ plot(x,y,'r');
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 
+%% Plot PNSD
+
+clear;clc;close all;
+
+% SMOKING ACTIVITIES
+
+load('Data_clean_processed.mat');
+
+%Exp_smoking = [1:1:11521]';
+%Exp_kerosine = [11521:1:30242]';
+%Exp_gas = [30243:1:54721]';
+
+%inst_res_PND = [0.025,0.3,0.5,1,2.5,5,10,45].*1e3;
+inst_res_PND = [Dp_min(1,1),Dp_max];
+Time_index   = [1:1:size(PNSD,1)]';
+
+% AFTER SYNCRONIZATION (DATA2)
+figure(6);fig=gcf; 
+fig.Position = [100 100 540 400].*2.5;
+FS=26; PMx=6;
+lc =1e0; hc=10e5;
+tiledlayout(2,1);
+nexttile % subplot(231)
+plot(Time_index(2:end,1),DustTrak(:,9),'b.');
+hold off
+legend('PM$_{2.5}$','interpreter','latex')
+ylim([1e-1 1e5]); grid on
+xlabel('Time Index','interpreter','latex')
+ylabel('PM$_{2.5}$ ($\mu$g/m$^3$)','interpreter','latex')
+title('PM$_{2.5}$ Smoking','interpreter','latex')
+set(gca, 'YScale', 'log')
+
+
+nexttile % subplot(224)
+%h3 = pcolor(Time_index(:,1)',inst_res_PND',[DATA1.PND_c(Exp_gas,1),DATA1.PND_c(Exp_gas,3:end)]');
+h3 = pcolor(Time_index(:,1)',inst_res_PND',[PNSD(:,8:end)]');
+set(h3, 'EdgeColor', 'none')
+xlabel('Time Index','interpreter','latex')
+ylabel('Particle size (nm)','interpreter','latex')
+title('PNSD smoking','interpreter','latex')
+colormap jet
+caxis([lc, hc])
+set(gca, 'YScale', 'log','colorscale','log')
+cb = colorbar;
+%cb.Limits= [1e0, 1e5];
+cb.Layout.Tile = 'east';
+%cb.Location = 'southoutside';
+
+% - Build title axes and title.
+axes( 'Position', [0, 0.95, 1, 0.05] ) ;
+set( gca, 'Color', 'None', 'XColor', 'White', 'YColor', 'White' ) ;
+
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+%% Tareq plot's data:
+
+clear;clc;close all;
+
+% SMOKING ACTIVITIES
+
+load('Data_clean_processed.mat');
+
+FS =26;
+figure(1); fig = gcf;
+%Y = PM2p5(:,8); 
+Y = SidePak(:,8);
+X = ISEE_LCS_G202(:,end); 
+%X = PMSD(1:end-1,10);
+
+MINx = 1e-2; MAXx = 1e5; MINy = 1e-2; MAXy = 1e5;  
+%MINx = 0;0.01*min(X); MAXx = 100*max(X); MINy = 0;0.01*min(Y); MAXy = 100*max(Y);
+scatter(X,Y);hold on
+grid on
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+xlabel('LCSs','interpreter','latex')
+ylabel('SidePak','interpreter','latex')
+xlim([MINx MAXx]);ylim([MINy MAXy]);
+x = linspace(MINx,MAXx,1000);
+y = linspace(MINy,MAXy,1000);
+plot(x,y,'r');
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+
+%% Tareq's computations for derived variables 
+
+% How to calculate PND
+
+figure(1); fig=gcf;
+X = CPC(:,8); % CPC
+Y = PND(2:end,8);
+subplot(421);scatter(X,Y); hold on; grid on
+xlabel('PND');ylabel('CPC');
+title(['Bin 1: ',num2str(Dp_min(1,1)),' - ',num2str(Dp_max(1,1)),' m'])
+x = linspace(0,max(Y));
+y = linspace(0,max(Y));
+plot(x,y,'r');hold off
+
+X = CPC(:,8) - Ptrak(:,8); % CPC - PTRAK == 10 - 25 nm
+Y = PND(2:end,9);
+subplot(422);scatter(X,Y); hold on; grid on
+xlabel('PND');ylabel('CPC - Ptrak'); %title('Bin 2: PND')
+title(['Bin 2: ',num2str(Dp_min(1,2)),' - ',num2str(Dp_max(1,2)),' m'])
+x = linspace(0,max(Y));
+y = linspace(0,max(Y));
+plot(x,y,'r');hold off
+
+X = Ptrak(:,8) - sum(AeroTrak_PN(:,8:13),2); % Ptrak - sum(aerotrak) == 25 - 300 nm
+Y = PND(2:end,10);
+subplot(423);scatter(X,Y); hold on; grid on
+xlabel('PND');ylabel('Ptrak - sum(aerotrak)');%title('Bin 3: PND')
+title(['Bin 3: ',num2str(Dp_min(1,3)),' - ',num2str(Dp_max(1,3)),' m'])
+x = linspace(0,max(Y));
+y = linspace(0,max(Y));
+plot(x,y,'r');hold off
+
+X = AeroTrak_PN(:,8); 
+Y = PND(2:end,11);
+subplot(424);scatter(X,Y); hold on; grid on
+xlabel('PND');ylabel('AeoTrak');%title('Bin 4: PND')
+title(['Bin 4: ',num2str(Dp_min(1,4)),' - ',num2str(Dp_max(1,4)),' m'])
+x = linspace(0,max(Y));
+y = linspace(0,max(Y));
+plot(x,y,'r');hold off
+
+X = AeroTrak_PN(:,9); 
+Y = PND(2:end,12);
+subplot(425);scatter(X,Y); hold on; grid on
+xlabel('PND');ylabel('AeoTrak');%title('Bin 5: PND')
+title(['Bin 5: ',num2str(Dp_min(1,5)),' - ',num2str(Dp_max(1,5)),' m'])
+x = linspace(0,max(Y));
+y = linspace(0,max(Y));
+plot(x,y,'r');hold off
+
+X = AeroTrak_PN(:,10); 
+Y = PND(2:end,13);
+subplot(426);scatter(X,Y); hold on; grid on
+xlabel('PND');ylabel('AeoTrak');%title('Bin 6: PND')
+title(['Bin 6: ',num2str(Dp_min(1,6)),' - ',num2str(Dp_max(1,6)),' m'])
+x = linspace(0,max(Y));
+y = linspace(0,max(Y));
+plot(x,y,'r');hold off
+
+X = AeroTrak_PN(:,11); 
+Y = PND(2:end,14);
+subplot(427);scatter(X,Y); hold on; grid on
+xlabel('PND');ylabel('AeoTrak');%title('Bin 7: PND')
+title(['Bin 7: ',num2str(Dp_min(1,7)),' - ',num2str(Dp_max(1,7)),' m'])
+x = linspace(0,max(Y));
+y = linspace(0,max(Y));
+plot(x,y,'r');hold off
+
+X = AeroTrak_PN(:,12); 
+Y = PND(2:end,15);
+subplot(428);scatter(X,Y); hold on; grid on
+xlabel('PND');ylabel('AeoTrak');%title('Bin 8: PND')
+title(['Bin 8: ',num2str(Dp_min(1,8)),' - ',num2str(Dp_max(1,8)),' m'])
+x = linspace(0,max(Y));
+y = linspace(0,max(Y));
+plot(x,y,'r');hold off
+
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+% From PND, how to calculate PNSD:
+figure(2); fig = gcf;
+for n= 1:8
+    subplot(4,2,n);
+    PNSD1 = PND(:,8)./log10(Dp_max(1,1)/Dp_min(1,1));
+    scatter(PNSD(:,8),PNSD1)
+    xlabel('PNSD');ylabel('PNSD1');
+    title(['Bin ',num2str(n), ' : ',num2str(Dp_min(1,n)),' - ',num2str(Dp_max(1,n)),' m'])
+end
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+
 %% CALIBRATIONS LCS PM2.5
 
 addpath(genpath('Functions'));
