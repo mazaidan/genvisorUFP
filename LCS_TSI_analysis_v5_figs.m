@@ -596,8 +596,8 @@ DATAs2 = DATA2(Exp_smoking,:);
 
 
 FS =20;
-figure(2); fig = gcf;
-PMx = 6;
+
+%PMx = 6;
 R      = DATAs2.DustTrak_c(:,2);
 Rl     = abs(log10(R));
 
@@ -674,8 +674,8 @@ elseif Cal == 3
     mdl = fitlm(X(:,[2:4]),Y);
     Ylm = predict(mdl,X1(:,[2:4]));
 elseif Cal == 4
-    mdl = fitlm(X(:,[2:6]),Y);
-    Ylm = predict(mdl,X1(:,[2:6]));
+    mdl = fitlm(X(:,[2:5]),Y);
+    Ylm = predict(mdl,X1(:,[2:5]));
 end
 
 Rp    = corr(Y1,Ylm,'Type','Pearson','Rows','complete');
@@ -690,8 +690,86 @@ end
 end
 %%%%%%
 
+index = X1(:,6);
+%%
+figure(4); fig = gcf;
+%plot(DATAs2.T1(index),10.^Ylog,'b.');
+plot(DATAs2.T1(index),DATAs2.LCS_G2_01(index,1),'b.');
+hold on; grid on;
+%%plot(DATAs2.T1(index),10.^Xlog,'r.');
+plot(DATAs2.T1(index),10.^Ylm,'g.'); hold off
+ylabel('PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
+%legend('Reference instrument','$\mathcal{L}_{2a}$ before calibration', ...
+%    '$\mathcal{L}_{2a}$ after calibration','interpreter','latex');
+legend('$\mathcal{L}_{2a}$ before calibration', ...
+    '$\mathcal{L}_{2a}$ after calibration','interpreter','latex');
+set(gca, 'YScale', 'log');
+hold off
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+
+%% To test the developed calibration on natural gas heater data
+
+DATAs2 = DATA2(Exp_gas,:);
+
+%PMx = 6;
+R      = DATAs2.DustTrak_c(:,2);
+Rl     = abs(log10(R));
+
+A1     = DATAs2.LCS_G2_01(:,1);
+A1l    = abs(log10(A1));
+T1     = DATAs2.LCS_G2_01_met(:,2);
+RH1    = DATAs2.LCS_G2_01_met(:,1);
+P1     = DATAs2.LCS_G2_01_met(:,3);
+index1 = linspace(1,size(A1,1),size(A1,1))';
+
+A2     = DATAs2.LCS_G2_01(:,1);
+A2l    = abs(log10(A2));
+T2     = DATAs2.LCS_G2_02_met(:,2);
+RH2    = DATAs2.LCS_G2_02_met(:,1);
+P2     = DATAs2.LCS_G2_02_met(:,3);
+index2 = linspace(1,size(A2,1),size(A2,1))';
+
+%%%%%%%%%%%%%%%%%%%
+
+%D  = [R,Rl, A1,A1l,T1,RH1,P1,index1, A2,A2l,T2,RH2,P2,index2];
+D0  = [A1,A1l,T1,RH1,P1,index1, A2,A2l,T2,RH2,P2,index2];
+D00 = rmmissing(D0);
+D1 = [nan(size(D00,1),2),D00];
+
+idx = isinf(D1);
+idx1 = sum(idx,2);
+idx2 = idx1>0;
+D1(idx2,:) = [];
+
+X1  = D1(:,[3:8]);   % LCS2a
+X1  = D1(:,[9:14]);  % LCS2b
+
+Ylm = predict(mdl,X1(:,[2:5])); % only PM2.5 and Temp 
+
+
+index = X1(:,6);
+
+figure(5); fig = gcf;
+%plot(DATAs2.T1(index),10.^Ylog,'b.');
+plot(DATAs2.T1(index),DATAs2.LCS_G2_01(index,1),'b.');
+hold on; grid on;
+%%plot(DATAs2.T1(index),10.^Xlog,'r.');
+plot(DATAs2.T1(index),10.^Ylm,'g.'); hold off
+ylabel('PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
+%legend('Reference instrument','$\mathcal{L}_{2a}$ before calibration', ...
+%    '$\mathcal{L}_{2a}$ after calibration','interpreter','latex');
+legend('$\mathcal{L}_{2a}$ before calibration', ...
+    '$\mathcal{L}_{2a}$ after calibration','interpreter','latex');
+set(gca, 'YScale', 'log');
+hold off
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
 
 %% FIG.2: MATRIX PLOT BETWEEN AEROSOL SENSORS
+% We do not use this.
+
+
 
 labelX = {'$\mathcal{R}_1$','$\mathcal{R}_2$', ...
             '$\mathcal{L}_1$','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$'};
