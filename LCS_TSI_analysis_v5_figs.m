@@ -300,6 +300,7 @@ PN = pi * (PND(:,8).*(Dp_gmd(1,1)^3)/6)*rho_unit;
 for n= 1:8
     
     figure(3); fig = gcf;
+    fig.Position = [120 120 690 690].*1.5;
     subplot(4,2,n);
     PMD1 = 1e6*PND(:,n+8) .* (pi/6)*((Dp_gmd(1,n))^3)*(1e9.*rho_unit);
     scatter(PMD(:,n+8),PMD1); hold on
@@ -307,10 +308,11 @@ for n= 1:8
     y = linspace(0,max(PMD1));
     plot(x,y,'r');hold off
     xlabel('PMSD');ylabel('PMSD1');
-    title(['Bin ',num2str(n), ' : ',num2str(Dp_min(1,n)*1e6),' - ',num2str(Dp_max(1,n)*1e6),'$\mu$m'], 'interpreter','latex')
+    title(['Bin ',num2str(n), ' : ',num2str(Dp_min(1,n)*1e6),' - ',num2str(Dp_max(1,n)*1e6),' $\mu$m'], 'interpreter','latex')
     set(findall(fig,'-property','FontSize'),'FontSize',22);
     
     figure(4); fig = gcf;
+    fig.Position = [120 120 690 690].*1.5;
     subplot(4,2,n);
     PMSD1 = 1e6*PNSD(:,n+8) .* (pi/6)*((Dp_gmd(1,n))^3)*(1e9.*rho_unit);
     scatter(PMSD(:,n+8),PMSD1); hold on
@@ -318,26 +320,47 @@ for n= 1:8
     y = linspace(0,max(PMSD1));
     plot(x,y,'r');hold off
     xlabel('PMSD');ylabel('PMSD1');
-    title(['Bin ',num2str(n), ' : ',num2str(Dp_min(1,n)*1e6),' - ',num2str(Dp_max(1,n)*1e6),'$\mu$m'], 'interpreter','latex')
+    title(['Bin ',num2str(n), ' : ',num2str(Dp_min(1,n)*1e6),' - ',num2str(Dp_max(1,n)*1e6),' $\mu$m'], 'interpreter','latex')
     set(findall(fig,'-property','FontSize'),'FontSize',22);
     
 end
 
-%%
+%% Calculating PM2.5 from PMD
 clc
-Dp
+Dp = [Dp_min',Dp_gmd',Dp_max']
+
 figure(5);
 PM25b  =[];
 for n = 6:7
+    %PM25a = PMSD(2:end,n+1) * log10(Dp_max(1,n)/Dp_min(1,n));
     PM25a = PMSD(2:end,n+1) * log10(Dp_max(1,n)/Dp_min(1,n));
     PM25b = [PM25b,PM25a];
 end
-PM25 = sum(PM25b,2);
+%PM25 = sum(PM25b,2);
+PM25 = abs(PM25b(:,2) - PM25b(:,1));
 %PM25 = sum(PMD(2:end,9:end),2);
-%for n=1:8
+%PM25 = PM25b;
 scatter(PM25,PM2p5(:,8));
-    %pause
-%end
+
+%%
+Dp
+figure(6);
+PM25b  =[];
+for n = 5%6:7
+    %PM25a = PMSD(2:end,n+1) * log10(Dp_max(1,n)/Dp_min(1,n));
+    PM25a = PMSD(2:end,n+8)*log10(Dp_max(1,n)/Dp_min(1,n));
+    PM25b = [PM25b,PM25a];
+end
+%PM25 = sum(PM25b,2);
+%PM25 = abs(PM25b(:,2) - PM25b(:,1));
+%PM25 = sum(PMD(2:end,9:end),2);
+PM25 = PM25b;
+scatter(PM25,PM2p5(:,8));
+
+
+
+
+
 %% CALIBRATIONS LCS PM2.5
 
 addpath(genpath('Functions'));
