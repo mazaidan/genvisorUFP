@@ -660,7 +660,7 @@ else
     error('Please select S Scenario')
 end
 
-for Cal = 0:4
+for Cal = 0:2%0:4
     
 if Cal == 0
     Ylm = X1(:,2);
@@ -691,7 +691,7 @@ end
 %%%%%%
 
 index = X1(:,6);
-%%
+
 figure(4); fig = gcf;
 %plot(DATAs2.T1(index),10.^Ylog,'b.');
 plot(DATAs2.T1(index),DATAs2.LCS_G2_01(index,1),'b.');
@@ -705,6 +705,15 @@ legend('$\mathcal{L}_{2a}$ before calibration', ...
     '$\mathcal{L}_{2a}$ after calibration','interpreter','latex');
 set(gca, 'YScale', 'log');
 hold off
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+figure(5); fig = gcf;
+scatter(DATAs2.LCS_G2_01(index,1),10.^Ylm);
+xlabel('Uncalibrated PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
+ylabel('Calibrated PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
+set(gca, 'XScale', 'log');
+set(gca, 'YScale', 'log');
+xlim([1 1e3]);ylim([1 1e4])
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 
@@ -745,14 +754,15 @@ D1(idx2,:) = [];
 X1  = D1(:,[3:8]);   % LCS2a
 X1  = D1(:,[9:14]);  % LCS2b
 
-Ylm = predict(mdl,X1(:,[2:5])); % only PM2.5 and Temp 
+Ylm = predict(mdl,X1(:,[2:3])); % only PM2.5 and Temp 
 
 
 index = X1(:,6);
 
-figure(5); fig = gcf;
-%plot(DATAs2.T1(index),10.^Ylog,'b.');
-plot(DATAs2.T1(index),DATAs2.LCS_G2_01(index,1),'b.');
+figure(6); fig = gcf;
+%plot(DATAs2.T1,DATAs2.LCS_G1(:,1),'b.');
+plot(DATAs2.T1,DATAs2.LCS_G2_02(:,1),'b.');
+%%%plot(DATAs2.T1(index),DATAs2.LCS_G2_01(index,1),'b.');
 hold on; grid on;
 %%plot(DATAs2.T1(index),10.^Xlog,'r.');
 plot(DATAs2.T1(index),10.^Ylm,'g.'); hold off
@@ -765,6 +775,15 @@ set(gca, 'YScale', 'log');
 hold off
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
+figure(7); fig = gcf;
+%scatter(DATAs2.LCS_G2_01(index,1),10.^Ylm);
+scatter(DATAs2.LCS_G2_02(index,1),10.^Ylm);
+xlabel('Uncalibrated PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
+ylabel('Calibrated PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
+set(gca, 'XScale', 'log');
+set(gca, 'YScale', 'log');
+xlim([1 1e3]);ylim([1 1e4]);
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
 %% FIG.2: MATRIX PLOT BETWEEN AEROSOL SENSORS
 % We do not use this.
