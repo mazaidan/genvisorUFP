@@ -293,6 +293,7 @@ end
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 %% Computing PMD
+
 PN = pi * (PND(:,8).*(Dp_gmd(1,1)^3)/6)*rho_unit;
 
 % From PND, how to calculate PNSD:
@@ -329,18 +330,23 @@ end
 clc
 Dp = [Dp_min',Dp_gmd',Dp_max']
 
-figure(5);
+figure(5); fig = gcf;
+title('Calculating PM$_{2.5}$','interpreter','latex');
 PM25b  =[];
-for n = 6:7
-    %PM25a = PMSD(2:end,n+1) * log10(Dp_max(1,n)/Dp_min(1,n));
-    PM25a = PMSD(2:end,n+1) * log10(Dp_max(1,n)/Dp_min(1,n));
+for n = 1:5
+    PM25a = PMSD(2:end,n+8) * log10(Dp_max(1,n)/Dp_min(1,n));
     PM25b = [PM25b,PM25a];
 end
-%PM25 = sum(PM25b,2);
-PM25 = abs(PM25b(:,2) - PM25b(:,1));
-%PM25 = sum(PMD(2:end,9:end),2);
-%PM25 = PM25b;
-scatter(PM25,PM2p5(:,8));
+PM25 = sum(PM25b,2);
+scatter(PM2p5(:,8),PM25); grid on
+hold on;
+x = linspace(0,max(PM25));
+y = linspace(0,max(PM25));
+plot(x,y,'r');hold off
+xlabel('PM$_{2.5}$ [Data]','interpreter','latex');
+ylabel('PM$_{2.5}$ [Recalculate]','interpreter','latex');
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
 
 %%
 Dp
