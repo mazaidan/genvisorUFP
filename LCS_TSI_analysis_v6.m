@@ -1,5 +1,5 @@
 %% This code is written in MATLAB
-% The purpose aims to develop the estimator for ultra-fine particles based
+% The purpose aims to develop an estimator for ultra-fine particles based
 % on low-cost sensors
 % Written by:
 % Martha Arbayani Bin Zaidan, Ph.D., Docent, CEng.
@@ -8,7 +8,7 @@
 
 
 %% UNDERSTANDING AEROSOL DATA: 
-% To understand how PND was formed. 
+% (1) To understand how PND was formed. 
 % In practice, PND was formed using data from CPC, Ptrak and AeroTrak.
 % We also need to understand how PMD was calculated.
 
