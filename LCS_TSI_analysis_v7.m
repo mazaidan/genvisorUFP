@@ -1,14 +1,16 @@
-% DATA ANALYSIS OF Experiments using LCSs and Reference Instruments
-% The purpose aims to develop an estimator for ultra-fine particles based
-% on low-cost sensors
-% This code is written in MATLAB
-% Written by:
+% DATA ANALYSIS Indoor air quality experiments 
+% using LCSs and Reference Instruments
+%
+% The purpose of this work aims to develop an estimator for 
+% ultra-fine particles based on low-cost sensors (LCSs)
+%
+% This code is written in MATLAB by:
 % Martha Arbayani Bin Zaidan, Ph.D., Docent, CEng.
 % Research Associate Professor, Nanjing University, China
 % Senior Scientist, Helsinki University, Finland
 
 %% UNDERSTANDING AEROSOL DATA: 
-% To understand how PND, PNSD, PMD, PMSD and PM2.5 were formed.
+% To understand how the data of PND, PNSD, PMD, PMSD and PM2.5 were formed.
 
 % In practice, PND was formed using data from CPC, Ptrak and AeroTrak.
 % We also need to understand how PMD was calculated.
@@ -1240,7 +1242,9 @@ ylabel('SidePak','interpreter','latex')
 xlim([1e-1 1e4]);ylim([1e-1 1e4]);grid on
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
-%%
+%% PNSD (CPC) vs PM2.5 (DustTrak)
+% We need to show how different sources generate different linear results.
+% meaning that some cigarretes produce higher PNSD than other cigarretes.
 
 % Remember that: PNC_c(:,1) = PNSD_c(:,1) = CPC
 figure(8);scatter(DATA.PND_c(:,1),DATA.PNSD_c(:,1))
@@ -1252,8 +1256,8 @@ sgtitle('PND (CPC) vs PM$_{2.5}$','interpreter','latex')
 scatter(DATA.PNSD_c(:,1),DATA.DustTrak_c(:,2)); %hold on
 set(gca, 'XScale', 'log')
 set(gca, 'YScale', 'log')
-xlabel('PND (CPC) [cm$^{-3}$]','interpreter','latex')
-ylabel('DustTrak [$\mug/m^3$]','interpreter','latex')
+xlabel('PNSD (CPC) [cm$^{-3}$]','interpreter','latex')
+ylabel('DustTrak [$\mu$g/m$^3$]','interpreter','latex')
 xlim([1e3 max(DATA.PNSD_c(:,1))]);ylim([1e0 max(DATA.DustTrak_c(:,2))]);
 grid on
 set(findall(fig,'-property','FontSize'),'FontSize',22);
@@ -1412,11 +1416,13 @@ set(gca, 'YScale', 'log')
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 subplot(245)
-scatter(DATA.PND_c(D,1),DATA.LCS_G1(D,1));
+%scatter(DATA.PND_c(D,1),DATA.LCS_G1(D,1));
+scatter(DATA.PND_c(D,1),DATA.DustTrak_c(D,1));
 xlabel('PNC (CPC)','interpreter','latex')
-ylabel('PM$_{2.5}$ (LCS)','interpreter','latex')
+%ylabel('PM$_{2.5}$ (LCS)','interpreter','latex')
+ylabel('PM$_{2.5}$ (DT)','interpreter','latex')
 xlim([1e3 7e5]); 
-ylim([1e0 1e3]);
+ylim([1e0 1e5]);
 grid on
 set(gca, 'XScale', 'log')
 set(gca, 'YScale', 'log')
@@ -1465,44 +1471,45 @@ set(gca, 'YScale', 'log')
 set(gca, 'XScale', 'log')
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
-%% SAMPAI DISINI (22-9)
-%%
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Check the effectiveness of wavelet filter,
+% Conclusion: NO DIFFERENT with / without filter
 
 D=[Exp_smoking;Exp_kerosine;Exp_gas];
 
-figure(10)
+figure(14); fig=gcf;
 subplot(211)
-plot(DATA.PND_c(D,1));
+plot(DATA.PNSD_c(D,1));
+ylabel('PNSD')
+xlabel('Time Index')
 subplot(212)
-plot(DATA.LCS_G1(D,1));
+plot(DATA.DustTrak_c(D,1));
+ylabel('DT')
+xlabel('Time Index')
+set(findall(fig,'-property','FontSize'),'FontSize',22);
 
-
-figure(11)
-Dat_temp = [DATA.PND_c(D,1),DATA.LCS_G1(D,1)];
+figure(15); fig=gcf;
+Dat_temp = [DATA.PNSD_c(D,1),DATA.DustTrak_c(D,1)];
 %Dat_temp(isnan(Dat_temp)) = 0;
 Dat_temp = Dat_temp( ~any( isnan( Dat_temp ) | isinf( Dat_temp ), 2 ),: );
 feature1 = abs(wdenoise(Dat_temp(:,1)));
 feature2 = abs(wdenoise(Dat_temp(:,2))); 
 %feature1 = abs(cwt(Dat_temp(:,1)))';
-%feature2 = abs(cwt(Dat_temp(:,2)))'; 
+%feature2 = abs(cwt(Dat_temp(:,2)))';
 scatter(feature1(:,1),feature2(:,1));
+title('The correlation remain the same after wavelet filter')
 %scatter(abs(cwt(Dat_temp(:,1))),abs(cwt(Dat_temp(:,2))));
-%xlabel('PNC (CPC)','interpreter','latex')
-%ylabel('PM$_{2.5}$ (LCS)','interpreter','latex')
+xlabel('PNSD (CPC)','interpreter','latex')
+ylabel('PM$_{2.5}$ (DustTrak)','interpreter','latex')
 %xlim([0 2]);
 %xlim([1e3 7e5]); 
 %ylim([1e0 1e3]);
 %grid on
 %scatter(feature1(:,2),feature2(:,2));
-%set(gca, 'YScale', 'log')
-%set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+set(gca, 'XScale', 'log')
 set(findall(fig,'-property','FontSize'),'FontSize',22);
 
 
-%C = xcorr(DATA.PND_c(D,1),DATA.LCS_G1(D,1));
 
 %% Accuracy Tests: Temp, RH, P and PM2.5
 addpath Functions
@@ -1558,14 +1565,14 @@ hold off
 DATA = [DATAs2;DATAn2];
 %DATA = [DATAs2];
 
-DATAx = [DATA.PND_c(:,1),DATA.PMD_c(:,6),DATA.DustTrak_c(:,2),DATA.SidePak_c(:,1), ...
+DATAx = [DATA.PNSD_c(:,1),DATA.DustTrak_c(:,2),DATA.SidePak_c(:,1), ...
     DATA.LCS_G1(:,1),DATA.LCS_G2_01(:,1),DATA.LCS_G2_02(:,1) ...
     DATA.AT_T,DATA.CO_T,DATA.LCS_G2_01_met(:,2),DATA.LCS_G2_01_met(:,2) ...
     DATA.AT_RH,DATA.CO_RH,DATA.LCS_G2_01_met(:,1),DATA.LCS_G2_01_met(:,1) ...
     DATA.CO_P,DATA.LCS_G2_01_met(:,3),DATA.LCS_G2_01_met(:,3)
     ];
 
-labelX = {'CPC','PMD', ...
+labelX = {'PN$_{10-25}$ (CPC)', ...
         'PM$_{2.5}$ (DT)', ...
         'PM$_{2.5}$ (SP)', ...
         'PM$_{2.5}$ ($\mathcal{L}_1$)', ...
@@ -1607,7 +1614,7 @@ if true
     %colormap jet%parula
     %colormap(fig, flipud(colormap(fig)))
     
-    no =1;
+    no =0;
     if no == 1
         disp('Display corr coefficient in the matrix plot')
     %%% https://stackoverflow.com/questions/3942892/how-do-i-visualize-a-matrix-with-colors-and-values-displayed
@@ -1655,7 +1662,12 @@ xtickangle(45)
 %xtickangle(-180)
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
-%% HISTOGRAMS of the measurements
+
+%% HISTOGRAMS and NORMALIZATION of the measurements
+% Conclusion: We go for min-max normalization
+
+DATA = DATA2;
+
 FS = 16;
 figure(11); fig = gcf;
 fig.Position = [100 100 540 400].*2.5;
@@ -1884,6 +1896,13 @@ title('P (norm)')
 xlabel('P (norm)')
 hold off
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%% SAMPAI DISINI (22-9)
+%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 
 %% MODELLING Linear Models and Shallow Neural Networks (version 1)
