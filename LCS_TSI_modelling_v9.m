@@ -1,0 +1,1846 @@
+% CALIBRATIONS and VIRTUAL SENSORS of UFPs
+%
+% The purpose of this work aims to develop an estimator for 
+% ultra-fine particles based on low-cost sensors (LCSs)
+%
+% There are two main parts here:
+% (1) Calibrations
+% (2) Virtual sensors
+%
+% This code is written in MATLAB by:
+% Martha Arbayani Bin Zaidan, Ph.D., Docent, CEng.
+% Research Associate Professor, Nanjing University, China
+% Senior Scientist, Helsinki University, Finland
+
+%%
+%% CALIBRATIONS LCS PM2.5 
+% Train and test using the same data sets
+
+addpath(genpath('Functions'));
+addpath(genpath('Functions_special/BayesianNeuralNetworks'));
+rmpath('Functions_special/BayesianNeuralNetworks/netlab/Garbages');
+
+clear; close all; clc;
+
+load('DATA2.mat') ;
+
+Exp_smoking = [1:1:11521]';
+Exp_kerosine = [11522:1:30242]';
+Exp_gas = [30243:1:54721]';
+
+%DATA = DATA2([Exp_smoking;Exp_gas],:);
+DATAs2 = DATA2(Exp_smoking,:);
+%DATAn2 = DATA2(Exp_gas,:);
+
+FS =20;
+figure(2); fig = gcf;
+PMx = 6;
+%Y = SidePak(:,8);
+Y = DATAs2.DustTrak_c(:,2); %DATAs2.SidePak_c(:,1);%DATAs2.PMD_c(:,PMx); %DATAs2.DustTrak_c(:,2);  % 
+%X = ISEE_LCS_G202(:,end); 
+X = DATAs2.LCS_G2_02(:,1); Temp =DATAs2.LCS_G2_02_met(:,2);% 
+index = linspace(1,size(X,1),size(X,1))';
+
+O = rmmissing([X,Y,Temp,index]);
+X = O(:,1);
+Y = O(:,2);
+Temp = O(:,3);
+index = O(:,4);
+
+
+MINx = 1e-2; MAXx = 1e5; MINy = 1e-2; MAXy = 1e5;  
+%MINx = 0;0.01*min(X); MAXx = 100*max(X); MINy = 0;0.01*min(Y); MAXy = 100*max(Y);
+scatter(X,Y,'r');hold on; grid on;
+set(gca, 'XScale', 'log');set(gca, 'YScale', 'log');
+xlabel('PM$_{2.5}$ [$\mu$g/m$^3$] (DustTrak)','interpreter','latex');
+ylabel('PM$_{2.5}$ [$\mu$g/m$^3$] ($\mathcal{L}_{2a}$)','interpreter','latex');
+xlim([MINx MAXx]);ylim([MINy MAXy]);
+
+Xlog = abs(log10(X));
+Ylog = abs(log10(Y));
+
+idx = isinf(Xlog);
+Xlog(idx) = [];
+Ylog(idx) = [];
+Temp(idx) = [];
+index(idx) = [];
+
+idx = isinf(Ylog);
+Xlog(idx) = [];
+Ylog(idx) = [];
+Temp(idx) = [];
+index(idx) = [];
+
+Te =1;
+if Te ==0
+    mdl = fitlm(Xlog,Ylog);
+    Ylm = predict(mdl,Xlog);
+else
+    mdl = fitlm([Xlog, Temp],Ylog);
+    Ylm = predict(mdl,[Xlog, Temp]);
+end
+scatter(10.^Ylog,10.^Ylm,'g.');
+
+x = linspace(MINx,MAXx,1000);
+y = linspace(MINy,MAXy,1000);
+plot(x,y,'r');
+
+legend('Before calibration','After calibration','interpreter','latex')
+
+hold off
+
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+anova(mdl,'summary')
+
+figure(1); fig = gcf;
+plot(DATAs2.T1(index),10.^Ylog,'b.');
+hold on; grid on;
+plot(DATAs2.T1(index),10.^Xlog,'r.');
+plot(DATAs2.T1(index),10.^Ylm,'g'); 
+title('Train and Test using the same data')
+ylabel('PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
+legend('Reference instrument','$\mathcal{L}_{2a}$ before calibration', ...
+    '$\mathcal{L}_{2a}$ after calibration','interpreter','latex');
+set(gca, 'YScale', 'log');
+hold off
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+%% CALIBRATIONS LCS PM2.5 (lopping on different calibrators)
+% Different calibrators take different types of inputs
+
+addpath(genpath('Functions'));
+
+clear; close all; clc;
+
+load('DATA2.mat') ;
+
+Exp_smoking = [1:1:11521]';
+Exp_kerosine = [11522:1:30242]';
+Exp_gas = [30243:1:54721]';
+
+%DATA = DATA2([Exp_smoking;Exp_gas],:);
+DATAs2 = DATA2(Exp_smoking,:);
+%DATAn2 = DATA2(Exp_gas,:);
+
+
+PMx = 6;
+X = DATAs2.LCS_G2_02(:,1);
+Y = DATAs2.DustTrak_c(:,2); %DATAs2.SidePak_c(:,1);%DATAs2.PMD_c(:,PMx); %DATAs2.DustTrak_c(:,2);  %
+Temp = DATAs2.LCS_G2_02_met(:,2);
+RH   = DATAs2.LCS_G2_02_met(:,1);
+P    = DATAs2.LCS_G2_02_met(:,3);
+index = linspace(1,size(X,1),size(X,1))';
+
+% To remove missing data:
+O = rmmissing([X,Y,Temp,RH,P,index]);
+X     = O(:,1);
+Y     = O(:,2);
+Temp  = O(:,3);
+RH    = O(:,4);
+P     = O(:,5);
+index = O(:,6);
+
+Xlog = abs(log10(X));
+Ylog = abs(log10(Y));
+
+% To remove inf and -inf data:
+idx = isinf(Xlog);
+Xlog(idx)  = [];
+Ylog(idx)  = [];
+Temp(idx)  = [];
+RH(idx)    = [];
+P(idx)     = [];
+index(idx) = [];
+
+idx = isinf(Ylog);
+Xlog(idx) = [];
+Ylog(idx) = [];
+Temp(idx) = [];
+RH(idx)    = [];
+P(idx)     = [];
+index(idx) = [];
+
+for Cal = 0:4
+    
+    if Cal == 0
+        Ylm = Xlog;
+    elseif Cal == 1
+        mdl = fitlm(Xlog,Ylog);
+        Ylm = predict(mdl,Xlog);
+    elseif Cal == 2
+        mdl = fitlm([Xlog, Temp],Ylog);
+        Ylm = predict(mdl,[Xlog, Temp]);
+    elseif Cal == 3
+        mdl = fitlm([Xlog, Temp, RH],Ylog);
+        Ylm = predict(mdl,[Xlog, Temp, RH]);
+    elseif Cal == 4
+        mdl = fitlm([Xlog, Temp, RH, P],Ylog);
+        Ylm = predict(mdl,[Xlog, Temp, RH, P]);
+    end
+    
+    Rp    = corr(Ylog,Ylm,'Type','Pearson','Rows','complete');
+    MAPE  = errperf(Ylog,Ylm,'mape');
+    MAE   = errperf(10.^Ylog,10.^Ylm,'mae');
+    
+    Rp1(1,Cal+1) = Rp;
+    MAPE1(1,Cal+1) = MAPE;
+    MAE1(1,Cal+1) = MAE;
+    
+end
+
+FS =20;
+figure(2); fig = gcf;
+MINx = 1e-2; MAXx = 1e5; MINy = 1e-2; MAXy = 1e5;
+scatter(X,Y,'r');hold on; grid on;
+set(gca, 'XScale', 'log');set(gca, 'YScale', 'log');
+xlabel('PM$_{2.5}$ [$\mu$g/m$^3$] (DustTrak)','interpreter','latex');
+ylabel('PM$_{2.5}$ [$\mu$g/m$^3$] ($\mathcal{L}_{2a}$)','interpreter','latex');
+xlim([MINx MAXx]);ylim([MINy MAXy]);
+
+scatter(10.^Ylog,10.^Ylm,'g.');
+
+x = linspace(MINx,MAXx,1000);
+y = linspace(MINy,MAXy,1000);
+plot(x,y,'r');
+legend('Before calibration','After calibration','interpreter','latex')
+hold off
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+anova(mdl,'summary')
+
+figure(3); fig = gcf;
+plot(DATAs2.T1(index),10.^Ylog,'b.');
+hold on; grid on;
+plot(DATAs2.T1(index),10.^Xlog,'r.');
+plot(DATAs2.T1(index),10.^Ylm,'g');
+ylabel('PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
+legend('Reference instrument','$\mathcal{L}_{2a}$ before calibration', ...
+    '$\mathcal{L}_{2a}$ after calibration','interpreter','latex');
+set(gca, 'YScale', 'log');
+hold off
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+
+%% CALIBRATIONS LCS PM2.5 (Looping on different scenarios and 
+%% different calibrators)
+
+addpath(genpath('Functions'));
+
+clear; close all; clc;
+
+load('DATA2.mat') ;
+
+Exp_smoking = [1:1:11521]';
+Exp_kerosine = [11522:1:30242]';
+Exp_gas = [30243:1:54721]';
+
+%DATA = DATA2([Exp_smoking;Exp_gas],:);
+DATAs2 = DATA2(Exp_smoking,:);
+%DATAn2 = DATA2(Exp_gas,:);
+
+
+FS =20;
+
+R      = DATAs2.DustTrak_c(:,2); % Reference instruments (RI)
+Rl     = abs(log10(R));          % Log10(RI) because PM2.5 should be in log
+
+A1     = DATAs2.LCS_G2_01(:,1);  % LCSs
+A1l    = abs(log10(A1));
+T1     = DATAs2.LCS_G2_01_met(:,2);
+RH1    = DATAs2.LCS_G2_01_met(:,1);
+P1     = DATAs2.LCS_G2_01_met(:,3);
+index1 = linspace(1,size(A1,1),size(A1,1))';
+
+A2     = DATAs2.LCS_G2_02(:,1);
+A2l    = abs(log10(A2));
+T2     = DATAs2.LCS_G2_02_met(:,2);
+RH2    = DATAs2.LCS_G2_02_met(:,1);
+P2     = DATAs2.LCS_G2_02_met(:,3);
+index2 = linspace(1,size(A2,1),size(A2,1))';
+
+%%%%%%%%%%%%%%%%%%%
+
+%D  = [R,Rl,A1,A1l,A2,A2l,T1,T2,RH1,RH2,P1,P2,index1,index2];
+D  = [R,Rl, A1,A1l,T1,RH1,P1,index1, A2,A2l,T2,RH2,P2,index2];
+D_label = {'RI','RIlog', ...
+    'LCS2a_PM25','LCS2a_PM25log','Temp1','RH1','P1','index1', ...
+    'LCS2b_PM25','LCS2b_PM25log','Temp2','RH2','P2','index2',};
+
+D1 = rmmissing(D);
+
+idx = isinf(D1);
+idx1 = sum(idx,2);
+idx2 = idx1>0;
+D1(idx2,:) = [];
+
+for S = 1:4
+    if S == 1
+        Y  = D1(:,2);
+        Y1 = Y;
+        X  = D1(:,[3:8]);  % LCS2a
+        X1 = D1(:,[9:14]); % LCS2b
+    elseif S == 2
+        Y  = D1(:,2);
+        Y1 = Y;
+        X  = D1(:,[9:14]);  % LCS2b
+        X1 = D1(:,[3:8]); % LCS2a
+    elseif S == 3
+        th = roundn(0.7 .* size(D1,1),0);
+        RandIdx = randperm(size(D1,1))';
+        Tr = RandIdx(1:th,1);
+        Te = RandIdx(th+1:end,1);
+        Y  = D1(Tr,2);
+        Y1 = D1(Te,2);
+        X  = D1(Tr,[3:8]);   % LCS2a
+        X1 = D1(Te,[9:14]);  % LCS2b
+    elseif S == 4
+        th = roundn(0.7 .* size(D1,1),0);
+        RandIdx = randperm(size(D1,1))';
+        Tr = RandIdx(1:th,1);
+        Te = RandIdx(th+1:end,1);
+        Y  = D1(Tr,2);
+        Y1 = D1(Te,2);
+        X   = D1(Tr,[9:14]);  % LCS2b
+        X1  = D1(Te,[3:8]);   % LCS2a
+    else
+        error('Please select S Scenario')
+    end
+    
+    for Cal = 0:4
+        
+        if Cal == 0
+            
+        elseif Cal == 1
+            In  = X(:,2); Out = Y;
+            In1 = X1(:,2);
+        elseif Cal == 2
+            In  = X(:,[2:3]); Out = Y;
+            In1 = X1(:,[2:3]);
+        elseif Cal == 3
+            In  = X(:,[2:4]); Out = Y;
+            In1 = X1(:,[2:4]);
+        elseif Cal == 4
+            In  = X(:,[2:5]); Out = Y;
+            In1 = X1(:,[2:5]);
+        end
+        
+        if Cal == 0
+            Ylm = X1(:,2);
+        else
+            disp('Linear Models')
+            mdl = fitlm(In,Out);
+            Ylm = predict(mdl,In1);
+        end
+        
+        if S == 1 && Cal  == 2%S == 4 && Cal  == 4
+            disp(['S = ',num2str(S), ', Cal = ',num2str(Cal) ])
+            Re.X    = X ;
+            Re.X1   = X1;
+            Re.Y    = Y ;
+            Re.Y1   = Y1;
+            Re.Ylm  = Ylm;
+            re.mdl  = mdl;
+        else
+        end
+        
+        Rp    = corr(Y1,Ylm,'Type','Pearson','Rows','complete');
+        MAPE  = errperf(Y1,Ylm,'mape');
+        MAE   = errperf(10.^Y1,10.^Ylm,'mae');
+        
+        Rp1(S,Cal+1)   = roundn(Rp,-2);
+        MAPE1(S,Cal+1) = roundn(MAPE,-2);
+        MAE1(S,Cal+1)  = roundn(MAE,-2);
+        
+    end
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Plot the chose one from the loop %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%close all; clc
+index = Re.X1(:,6);
+figure(1);fig = gcf;
+% Reference instrument:
+plot(DATAs2.T1,DATAs2.DustTrak_c,'b.');
+hold on; 
+% LCS before calibration:
+plot(DATAs2.T1,DATAs2.LCS_G2_01,'r.');
+grid on;
+% LCS after calibration:
+plot(DATAs2.T1(index),10.^(Re.Ylm),'g.'); 
+hold off
+ylabel('PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
+legend('Reference instrument','$\mathcal{L}_{2a}$ before calibration', ...
+    '$\mathcal{L}_{2a}$ after calibration','interpreter','latex');
+set(gca, 'YScale', 'log');
+ylim([0.1 1e5])
+hold off
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+FS =20;
+figure(2); fig = gcf;
+MINx = 1e-2; MAXx = 1e5; MINy = 1e-2; MAXy = 1e5;
+scatter(DATAs2.DustTrak_c(index,1),DATAs2.LCS_G2_02(index,1),'r');hold on; grid on;
+set(gca, 'XScale', 'log');set(gca, 'YScale', 'log');
+xlabel('PM$_{2.5}$ [$\mu$g/m$^3$] (DustTrak)','interpreter','latex');
+ylabel('PM$_{2.5}$ [$\mu$g/m$^3$] ($\mathcal{L}_{2a}$)','interpreter','latex');
+xlim([MINx MAXx]);ylim([MINy MAXy]);
+
+scatter(10.^(Re.Y1),10.^(Re.Ylm),'g.');
+
+x = linspace(MINx,MAXx,1000);
+y = linspace(MINy,MAXy,1000);
+plot(x,y,'r');
+legend('Before calibration','After calibration','interpreter','latex')
+hold off
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Now we will fill the main DATA2 with the calibrated LCSs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%DATA5 = DATA2(Exp_gas,:);
+DATA5 = DATA2;
+
+R      = DATA5.DustTrak_c(:,2);
+Rl     = abs(log10(R));
+
+A1     = DATA5.LCS_G2_01(:,1);
+A1l    = abs(log10(A1));
+T1     = DATA5.LCS_G2_01_met(:,2);
+RH1    = DATA5.LCS_G2_01_met(:,1);
+P1     = DATA5.LCS_G2_01_met(:,3);
+index1 = linspace(1,size(A1,1),size(A1,1))';
+
+A2     = DATA5.LCS_G2_02(:,1);
+A2l    = abs(log10(A2));
+T2     = DATA5.LCS_G2_02_met(:,2);
+RH2    = DATA5.LCS_G2_02_met(:,1);
+P2     = DATA5.LCS_G2_02_met(:,3);
+index2 = linspace(1,size(A2,1),size(A2,1))';
+
+%%%%%%%%%%%%%%%%%%%
+
+D  = [R,Rl, A1,A1l,T1,RH1,P1,index1, A2,A2l,T2,RH2,P2,index2];
+%D  = [A1,A1l,T1,RH1,P1,index1, A2,A2l,T2,RH2,P2,index2];
+
+idx = isinf(D);
+idx1 = sum(idx,2);
+idx2 = idx1>0;
+D1(idx2,:) = nan;
+
+%X1  = D1(:,[3:8]);   % LCS2a
+%X2  = D1(:,[9:14]);  % LCS2b
+
+disp(D_label)
+if mdl.NumPredictors ==1
+    X1 = D(:,4); % only PM2.5 and Temp
+    X2 = D(:,10); % only PM2.5 and Temp
+elseif mdl.NumPredictors ==2
+    X1 = D(:,[4:5]); % only PM2.5 and Temp
+    X2 = D(:,[10:11]); % only PM2.5 and Temp 
+elseif mdl.NumPredictors == 3
+    X1 = D(:,[4:6]); % only PM2.5, Temp, RH
+    X2 = D(:,[10:12]); % only PM2.5, Temp, RH 
+elseif mdl.NumPredictors == 4
+    X1 = D(:,[4:7]); % only PM2.5, Temp, RH, P
+    X2 = D(:,[10:13]); % only PM2.5, Temp, RH, P 
+else
+    error('num of predictors are not enough or too much')
+end
+
+Ylm1 = predict(mdl,X1); 
+Ylm2 = predict(mdl,X2);
+
+%Ds = Exp_smoking;
+%Dn = Exp_gas;
+Dt = Exp_smoking;%[Exp_smoking;Exp_gas]; % Exp_smoking;%
+
+figure(10); fig = gcf;
+plot(DATA5.DustTrak_c(Dt,2),'k--'); hold on; grid on
+title('We need to smooth the signal of LCS2a then by wavelet filter')
+plot(DATA5.LCS_G2_01(Dt,1),'b');
+plot(10.^Ylm1(Dt,1),'c');
+plot(DATA5.LCS_G2_02(Dt,1),'r');
+plot(10.^Ylm2(Dt,1),'y');
+ylabel('PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
+legend('Reference instrument','$\mathcal{L}_{2a}$', ...
+    '$\mathcal{L}_{2a}$ (cal)', '$\mathcal{L}_{2b}$', ...
+    '$\mathcal{L}_{2b}$ (cal)','interpreter','latex');
+set(gca, 'YScale', 'log');
+hold off
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+
+%%
+
+
+D00 = rmmissing(D0);
+D1 = [nan(size(D00,1),2),D00];
+
+idx = isinf(D1);
+idx1 = sum(idx,2);
+idx2 = idx1>0;
+D1(idx2,:) = [];
+
+
+
+
+
+
+
+
+
+
+%% To test the developed calibration on natural gas heater data
+
+DATAs2 = DATA2(Exp_gas,:);
+
+%PMx = 6;
+R      = DATAs2.DustTrak_c(:,2);
+Rl     = abs(log10(R));
+
+A1     = DATAs2.LCS_G2_01(:,1);
+A1l    = abs(log10(A1));
+T1     = DATAs2.LCS_G2_01_met(:,2);
+RH1    = DATAs2.LCS_G2_01_met(:,1);
+P1     = DATAs2.LCS_G2_01_met(:,3);
+index1 = linspace(1,size(A1,1),size(A1,1))';
+
+A2     = DATAs2.LCS_G2_02(:,1);
+A2l    = abs(log10(A2));
+T2     = DATAs2.LCS_G2_02_met(:,2);
+RH2    = DATAs2.LCS_G2_02_met(:,1);
+P2     = DATAs2.LCS_G2_02_met(:,3);
+index2 = linspace(1,size(A2,1),size(A2,1))';
+
+%%%%%%%%%%%%%%%%%%%
+
+%D  = [R,Rl, A1,A1l,T1,RH1,P1,index1, A2,A2l,T2,RH2,P2,index2];
+D0  = [A1,A1l,T1,RH1,P1,index1, A2,A2l,T2,RH2,P2,index2];
+D00 = rmmissing(D0);
+D1 = [nan(size(D00,1),2),D00];
+
+idx = isinf(D1);
+idx1 = sum(idx,2);
+idx2 = idx1>0;
+D1(idx2,:) = [];
+
+X1  = D1(:,[3:8]);   % LCS2a
+X1  = D1(:,[9:14]);  % LCS2b
+
+%Ylm = predict(mdl,X1(:,[2:3])); % only PM2.5 and Temp 
+Ylm = predict(mdl,X1(:,[2:5])); % only PM2.5, Temp, RH, P 
+
+
+index = X1(:,6);
+
+figure(6); fig = gcf;
+%plot(DATAs2.T1,DATAs2.LCS_G1(:,1),'b.');
+plot(DATAs2.T1,DATAs2.LCS_G2_02(:,1),'b.');
+%%%plot(DATAs2.T1(index),DATAs2.LCS_G2_01(index,1),'b.');
+hold on; grid on;
+%%plot(DATAs2.T1(index),10.^Xlog,'r.');
+plot(DATAs2.T1(index),10.^Ylm,'g.'); hold off
+ylabel('PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
+%legend('Reference instrument','$\mathcal{L}_{2a}$ before calibration', ...
+%    '$\mathcal{L}_{2a}$ after calibration','interpreter','latex');
+legend('$\mathcal{L}_{2a}$ before calibration', ...
+    '$\mathcal{L}_{2a}$ after calibration','interpreter','latex');
+set(gca, 'YScale', 'log');
+hold off
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+figure(7); fig = gcf;
+%scatter(DATAs2.LCS_G2_01(index,1),10.^Ylm);
+scatter(DATAs2.LCS_G2_02(index,1),10.^Ylm);
+xlabel('Uncalibrated PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
+ylabel('Calibrated PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
+set(gca, 'XScale', 'log');
+set(gca, 'YScale', 'log');
+xlim([1 1e3]);ylim([1 1e4]);
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+
+
+
+%%
+%%
+%%
+
+
+addpath(genpath('Functions'));
+addpath(genpath('Functions_special/BayesianNeuralNetworks'));
+rmpath('Functions_special/BayesianNeuralNetworks/netlab/Garbages');
+
+clear; close all; clc;
+
+load('DATA2.mat') 
+DATA = DATA2;
+
+Exp_smoking = [1:1:11521]';
+Exp_kerosine = [11522:1:30242]';
+Exp_gas = [30243:1:54721]';
+
+%% QUICK CORRELATION ANALYSIS including time-delayed features
+Ds = Exp_smoking; 
+Dg = Exp_gas;
+%Da =[Exp_smoking;Exp_gas];
+Da = [Ds;Dg]; Ds; 
+
+PN =1;
+
+% % time-delayed 0 (no time delayed)
+% Da_o = Da(1:end,1);
+% Da_i = Da(1:end,1);
+% % time-delayed 1
+% Da_o = Da(2:end,1);
+% Da_i = Da(1:end-1,1);
+% % time-delayed 2
+% Da_o = Da(3:end,1);
+% Da_i = Da(1:end-2,1);
+
+for T = 0:5
+    % time-delayed T
+    Da_o = Da(T+1:end,1);
+    Da_i = Da(1:end-T,1);
+    disp(['Time Delayed: ', num2str(T)])
+    
+    %CPC = DATA.PND_c([Ds;Dk;Dg],1);
+    CPC = DATA.PND_c(Da_o,PN);
+    CPClog = log10(CPC);
+    CPCgradient = gradient(CPC);
+    CPCdiff = diff(CPC);
+    CPCloggradient = gradient(CPClog);
+    idx = find(CPCgradient <= nanmedian(CPCgradient)+10);
+    CPCclean =CPC;
+    CPCclean(idx,:)=nan;
+    DATAo  = CPCclean;
+    DATAo1 = log10(DATAo);
+            
+    X0 = [DATA.AT_T(Da_i,1),DATA.AT_RH(Da_i,1),DATA.LCS_G2_01_met(Da_i,3),DATA.LCS_G1(Da_i,1)];
+    
+    for n = 1:4
+        Y = DATAo;DATAo1;
+        X = X0(:,n);
+        Rp = corr(X,Y,'Type','Pearson','Rows','complete');
+        Rs = corr(X,Y,'Type','Spearman','Rows','complete');
+        disp(['Rp: ',num2str(Rp), ' Rs: ',num2str(Rs), ' '])
+    end
+    disp('  ')
+    
+end
+
+% Cross-correlation
+
+T = 0;
+Da_o = Da(T+1:end,1);
+Da_i = Da(1:end-T,1);
+
+% INPUTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+X = [DATA.AT_T(Da_i,1),DATA.AT_RH(Da_i,1),DATA.LCS_G2_01_met(Da_i,3),DATA.LCS_G1(Da_i,1)];
+
+% OUTPUT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+CPC = DATA.PND_c(Da_o,PN);
+CPClog = log10(CPC);
+CPCgradient = gradient(CPC);
+CPCdiff = diff(CPC);
+CPCloggradient = gradient(CPClog);
+idx = find(CPCgradient <= nanmedian(CPCgradient)+10);
+CPCclean =CPC;
+CPCclean(idx,:)=nan;
+DATAo  = CPCclean;
+DATAo1 = log10(DATAo);
+Y = DATAo;DATAo1;
+
+% Compute XCORR and PLOT %%%%
+
+Vars_names = {'Temp','RH','Pressure','PM_{2.5}'};
+Corr_Type = 'Pearson';'Spearman';%'Pearson';%
+Lag =20;
+Lags = [-Lag:1:Lag]';
+for n = 1:4
+    [R,L,pvalue] = crosscorrelation(X(:,n)',Y',Lag,Corr_Type);
+    idx = find(R == max(R));
+    %max_positive_corr = L(idx);
+    disp(['Max positive correlation for var ', Vars_names{1,n}, ': ' , ... 
+        num2str(L(idx))]);
+    figure(1);
+    subplot(2,2,n)
+    stem(Lags,R)
+    title(Vars_names{1,n})
+end
+
+%% MODELLING Linear Models and Shallow Neural Networks (version 2)
+
+% 1) use all data, randominze, and predict CPC
+% 2) use Exp_smoking, estimate Exp_kerosine and Exp_gas
+
+Ds = Exp_smoking; 
+Dg = Exp_gas;
+Da =[Exp_smoking;Exp_gas];
+
+
+PN=2;
+% Available Output (with/without cleaning) and Input Features
+% Choose the method for cleaning PND data:
+CLEAN_PND = 0; 
+% Choose the model if we want to contain time delay or not:
+ModelDelay = 'DelayedModel'; DM = 1.5; 1.5;1;%1.5;1.5;2; 
+%ModelDelay = 'NoDelayedModel';
+
+% PND data cleaning Porcess: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if CLEAN_PND == 0
+    disp('CLEAN PND = 0 ')
+    disp('OUTPUT: We do not remove PND data which is not clean')
+    DATAo  = [DATA.PND_c([Ds;Dg],PN)];
+    DATAo1 = real(log10(DATAo));
+elseif CLEAN_PND == 1
+    disp('CLEAN PND = 1 ')
+    disp('OUTPUT: We remove PND data which is not clean and normalize it')
+    CPC = DATA.PND_c([Ds;Dg],PN);
+    %figure(100);plot(DATA.PND_c(Ds,1));hold on;plot(DATA.PND_c(Dk,1),'r');plot(DATA.PND_c(Dg,1),'g'); hold off
+    CPClog = log10(CPC);
+    CPCgradient = gradient(CPC);
+    CPCdiff = diff(CPC);
+    CPCloggradient = gradient(CPClog);
+    idx = find(CPCgradient <= nanmedian(CPCgradient)+10);
+    CPCclean =CPC;
+    CPCclean(idx,:)=nan;
+    %CPCclean = CPC(idx,:);   
+    %%%DATAo  = CPC;
+    DATAo  = CPCclean;
+    %DATAo  = [DATA.PND_c(Da,1)];
+    DATAo1 = real(log10(DATAo));
+elseif CLEAN_PND == 2
+    disp('CLEAN PND = 2 ')
+    disp('We make threshold, and clean the data')
+    DATAo  = [DATA.PND_c([Ds;Dg],PN)];
+    IDX = find(DATAo < 0.1e5); % 0.3e5
+    DATAo(IDX,:) = nan;
+    DATAo1 = log10(DATAo);
+end
+
+% PND data cleaning
+
+x1 = [DATA.AT_T(Ds,1);  DATA.LCS_G2_01_met(Dg,2)]; % Temp
+x1n = normalize_UFPsensors(x1,'Temp');
+
+x2 = [DATA.AT_RH(Ds,1); DATA.LCS_G2_01_met(Dg,1)]; % RH
+x2n = normalize_UFPsensors(x2,'RH');
+
+x3 = [DATA.LCS_G2_01_met(Ds,3); DATA.LCS_G2_01_met(Dg,3)]; % P
+x3n = normalize_UFPsensors(x3,'P');
+
+x4 = [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]; % PM2.5
+x4n = normalize_UFPsensors(x4,'PM25');
+
+switch ModelDelay
+    case {'NoDelayedModel'}
+        disp('The chosen model does not contain delayed inputs')
+        Xd  = [];
+        Xdn = [];
+    case {'DelayedModel'}
+        disp('The chosen model contains delayed inputs')
+        
+        if DM == 1
+            disp('Only Delay for PM2.5')
+            Xd  = []; % Input delayed
+            Xdn = []; % normalized input delayed
+            for T = 1 : 3
+                %T =1; % time delayed = 1
+                Ds_T = Ds(T+1:end,1);
+                Dg_T = Dg(T+1:end,1);
+                % Only Temp and PM2.5 included, necause the auto-correlation which we
+                % obtain indicate that these two variables influence PND
+                Xd0 = [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)];
+                %%%Xd0 = [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)];
+                Xd = [Xd,Xd0];
+                
+                % Normalized values:
+                Xdn0 = normalize_UFPsensors(Xd0(:,1),'PM25');
+                Xdn = [Xdn,Xdn0];
+            end
+        elseif DM == 1.5
+            disp('Delay for Temp(t-1) and PM2.5(t-1), PM2.5(t-2)')
+            Xd  = []; % Input delayed
+            Xdn = []; % normalized input delayed
+            for T = 1 : 2
+                %T =1; % time delayed = 1
+                Ds_T = Ds(T+1:end,1);
+                Dg_T = Dg(T+1:end,1);
+                % Only Temp and PM2.5 included, necause the auto-correlation which we
+                % obtain indicate that these two variables influence PND
+                if T == 1
+                    Xd0 = [[DATA.AT_T(Ds_T,1); nan(T,1); DATA.LCS_G2_01_met(Dg_T,2); nan(T,1)], ...
+                        [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)]];
+                elseif T == 2
+                    Xd0 = [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)];
+                else
+                    Xd0 = [[DATA.AT_T(Ds_T,1); nan(T,1); DATA.LCS_G2_01_met(Dg_T,2); nan(T,1)], ...
+                        [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)]];    
+                end
+                
+                Xd = [Xd,Xd0];
+                
+                % Normalized values:
+                if T == 2
+                    xdn0a = [];
+                    xdn0b = normalize_UFPsensors(Xd0(:,1),'PM25');
+                else
+                    xdn0a = normalize_UFPsensors(Xd0(:,1),'Temp');
+                    xdn0b = normalize_UFPsensors(Xd0(:,2),'PM25');
+                end
+                
+                Xdn0 = [xdn0a,xdn0b];
+                
+                Xdn = [Xdn,Xdn0];
+            end
+        elseif DM == 2
+            disp('Delay for Temp and PM2.5')
+            Xd  = []; % Input delayed
+            Xdn = []; % normalized input delayed
+            for T = 1 : 2
+                %T =1; % time delayed = 1
+                Ds_T = Ds(T+1:end,1);
+                Dg_T = Dg(T+1:end,1);
+                % Only Temp and PM2.5 included, necause the auto-correlation which we
+                % obtain indicate that these two variables influence PND
+                Xd0 = [[DATA.AT_T(Ds_T,1); nan(T,1); DATA.LCS_G2_01_met(Dg_T,2); nan(T,1)], ...
+                    [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)]];
+                %%%Xd0 = [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)];
+                Xd = [Xd,Xd0];
+                
+                % Normalized values:
+                xdn0a = normalize_UFPsensors(Xd0(:,1),'Temp');
+                xdn0b = normalize_UFPsensors(Xd0(:,2),'PM25');
+                Xdn0 = [xdn0a,xdn0b];
+                
+                Xdn = [Xdn,Xdn0];
+            end
+        else
+            warning('Choose DM')
+        end
+    otherwise
+        warning('Choose ModelDelay name properly: either DelayedModel or NoDelayedModel')
+end
+
+DMc = 3;
+DATAi  = [x1,x2,x3,x4,Xd];      %  DATA Input
+if DMc == 1
+    disp('DATAi1 = [x1n,x2n,x3n,x4n,Xdn]')
+    DATAi1 = [x1n,x2n,x3n,x4n,Xdn]; %  DATA input (with normalization)
+elseif DMc == 2
+    disp('DATAi1 = [x1n.*x4n,Xdn]')
+    DATAi1 = [x1n.*x4n,Xdn]; %  DATA input (with normalization)
+elseif DMc == 3
+    disp('DATAi1 = [x1n.*x2n,x4n,Xdn]')
+    DATAi1 = [x1n.*x2n,x4n,Xdn]; %  DATA input (with normalization)
+elseif DMc == 4
+    disp('DATAi1 = [x1n.*x2n.*x4n,Xdn]')
+    DATAi1 = [x1n.*x2n.*x4n,Xdn]; %  DATA input (with normalization)
+else
+    disp('DATAi1 = [x1n.*x2n.*x4n,Xdn]')
+    DATAi1 = [x1n.*x2n.*x3n.*x4n,Xdn]; %  DATA input (with normalization)
+end
+
+%DATAi1 = [x1n,x2n,x4n,Xdn]; %  DATA input (with normalization)
+%DATAi1 = [x1n,x4n,Xdn]; %  DATA input (with normalization)
+%DATAi1 = [x1n.*x2n,x4n,Xdn]; %  DATA input (with normalization)
+%DATAi1 = [x1n.*x2n.*x4n,Xdn]; %  DATA input (with normalization)
+%DATAi1 = [x1n.*x2n.*x3n.*x4n,Xdn]; %  DATA input (with normalization)
+%DATAi1 = [x1.*x2,x4n];
+
+% MODELLING
+% INPUT   = DATAi, DATAi1
+% OUTPUT  = DATAo, DATAo1
+
+R     = zeros(2,8);%zeros(2,12);
+MAPE  = zeros(2,8);%zeros(2,12);
+Ds_half = roundn(size(Ds,1)/2,0);
+Dg_half = roundn(size(Dg,1)/2,0);
+for test_no=1:8%12
+    disp(['Test Number: ' num2str(test_no)])
+    %if test_no == 1; TRAIN = [Ds;Dg]; TEST = [Ds;Dg]; end
+    if test_no == 1; TRAIN = Ds; TEST = Ds; end
+    if test_no == 2; TRAIN = Dg; TEST = Dg; end
+    if test_no == 3 
+        TRAIN = [Ds(1:Ds_half);Dg(1:Dg_half)]; 
+        TEST  = [Ds(Ds_half+1:end);Dg(Dg_half+1:end)]; 
+    end
+    if test_no == 4
+        TRAIN = [Ds(Ds_half+1:end);Dg(Dg_half+1:end)];  
+        TEST  = [Ds(1:Ds_half);Dg(1:Dg_half)]; 
+    end
+    if test_no == 5 
+        TRAIN = [Ds(1:Ds_half);Dg(Dg_half+1:end)]; 
+        TEST  = [Ds(Ds_half+1:end);Dg(1:Dg_half)]; 
+    end
+    if test_no == 6
+        TRAIN = [Ds(Ds_half+1:end);Dg(1:Dg_half)];  
+        TEST  = [Ds(1:Ds_half);Dg(Dg_half+1:end)]; 
+    end    
+    if test_no == 7; TRAIN = Ds; TEST = Dg; end
+    if test_no == 8; TRAIN = Dg; TEST = Ds; end
+    
+    
+    % Make the number for tracking
+    no = [Ds;Dg];
+    % Remove NaN data
+    DATAt  = [DATAi1,DATAo1,no];
+    DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
+    
+    Feature = 0;
+    if Feature == 1
+        disp('Wavelet filtering')
+        d = DATAt1(:,end-1);
+        xden = wdenoise(d,4);
+        DATAt1(:,end-1) = xden ;
+    else
+        disp('No feature extraction')
+    end
+       
+    tr = ismember(DATAt1(:,end),TRAIN);
+    te = ismember(DATAt1(:,end),TEST);
+    
+    X = DATAt1(tr,1:end-2);
+    Y = DATAt1(tr,end-1);
+    Xt = DATAt1(te,1:end-2);
+    Yt = DATAt1(te,end-1);
+    
+    % % Clustering Inputs and Coloring the outputs %%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % In order to understand how to select MoE data division,
+    % we need to understand inputs-output relation
+    figure(10); fig = gcf;
+    in=1;
+    if in == 3
+        c=Yt;
+        markerSize = 100;
+        fig10 = figure(10);
+        scatter3(X(:,1),X(:,2),X(:,3),markerSize,c,'filled')
+        xlabel('Temp');ylabel('RH');zlabel('PM_{2.5}')
+        colorbar
+        set(findall(fig,'-property','FontSize'),'FontSize',22);
+    elseif in == 2
+        c=Y;
+        markerSize = 100;       
+        %scatter3(DATAi1(:,1),DATAi1(:,2),DATAo1,markerSize,c,'filled')
+        %scatter3(X(:,1),X(:,2),Y)
+        fig10 = figure(10);
+        %IDX = kmeans([X(:,1),X(:,2),Y], 2);
+        
+        gmfit = fitgmdist([X(:,1),X(:,2),Y],2);
+        %gmfit = fitgmdist([X(:,1),X(:,2),Y],2,'CovarianceType','full', ...
+        %'SharedCovariance',false,'Start',cluster0{j}, ...
+        %'Options',options);
+        IDX = cluster(gmfit,[X(:,1),X(:,2),Y]); % Cluster index 
+        %mahalDist = mahal(gmfit,X0);
+        
+        
+        scatter3(X(IDX==1,1),X(IDX==1,2),Y(IDX==1,1),'bo');hold on
+        scatter3(X(IDX==2,1),X(IDX==2,2),Y(IDX==2,1),'ro');hold off
+        xlabel('Temp \times RH');ylabel('PM_{2.5}');zlabel('PND')
+        %colorbar
+        set(findall(fig,'-property','FontSize'),'FontSize',22);
+    elseif in == 1
+        fig10 =  figure(10);
+        scatter(X(:,1),Y(:,1))
+        xlabel('Temp \times RH \times PM_{2.5}');ylabel('PND')
+        %colorbar
+        set(findall(fig,'-property','FontSize'),'FontSize',22);
+    end
+    close(fig10)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+NumberExperts=2;
+noClus = 1 ;
+
+if noClus == 1
+    median_Y =  4;%4.5;% median(Y);%5.25;4.75;%4.75; %median(Y);%
+    %idx1 = IDX ==1 ;find(Y<median_Y);
+    %idx2 = IDX ==2 ;find(Y>=median_Y);
+    %idx3 = IDX ==3 ;
+    %idx4 = IDX ==4 ;
+    idx1 = find(Y<median_Y); %IDX ==1 ;find(Y<median_Y);
+    idx2 = find(Y>=median_Y); %IDX ==2 ;find(Y>=median_Y);
+    %idx1 = find(Y <= 4.5);
+    %idx2 = find(Y > 4.5 & Y <= 5);
+    %idx3 = find(Y > 5);
+elseif noClus == 2
+    IDX = kmeans([X(:,2) Y], 2);
+    idx1 = IDX ==1 ;
+    idx2 = IDX ==2 ;
+end
+
+IDX1={idx1,idx2};%,idx3,idx4};
+
+%Models = {'ANN1','LM1'} ;
+%Models = {'LM1','ANN1'} ;
+%Models = {'LM1','LM1'} ;
+%Models = {'ANN1','ANN1'} ;
+
+%[TotalOutput,TotalVar] = MixtureOfExperts(X,Y,Xt,Models,NumberExperts,IDX1);
+%Ypred_snn = TotalOutput;        
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     
+    Model1 = 'LM1';%'LM1'; 
+    Model2 = 'BLM';%'ANN1';
+    [Ypred_lm,~] = UFPmodelling(X,Y,Xt,Model1);
+    [Ypred_snn,~] = UFPmodelling(X,Y,Xt,Model2);
+    
+   
+    
+    R(1,test_no) = corr(Yt,Ypred_lm,'Type','Pearson','Rows','complete');
+    R(2,test_no) = corr(Yt,Ypred_snn,'Type','Pearson','Rows','complete');
+
+    MAPE(1,test_no)=errperf(Yt,Ypred_lm,'mape');
+    MAPE(2,test_no)=errperf(Yt,Ypred_snn,'mape');
+    
+    
+    % RESULT PLOTS and METRICS
+    figure(1); fig = gcf;
+    subplot(4,4, test_no);
+    scatter(Yt,Ypred_lm);hold on
+    Xlim1 = 0;3;
+    Ylim1 = 6;
+    xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+    x = linspace(Xlim1,Ylim1);
+    y = linspace(Xlim1,Ylim1);
+    plot(x,y,'r');hold off
+    title(['M1: Test No: ',num2str(test_no)])
+    xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
+    %set(findall(fig,'-property','FontSize'),'FontSize',22);
+    
+    %figure(2); fig =gcf;
+    subplot(4,4, test_no + 8);
+    scatter(Yt,Ypred_snn);hold on
+    Xlim1 = 0;3;
+    Ylim1 = 6;
+    xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+    x = linspace(Xlim1,Ylim1);
+    y = linspace(Xlim1,Ylim1);
+    plot(x,y,'r');hold off
+    title(['M2: Test No: ',num2str(test_no)])
+    xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
+    set(findall(fig,'-property','FontSize'),'FontSize',22);
+    
+    figure(3); fig = gcf;
+    subplot(4,2,test_no); %
+    %subplot(4,3,test_no);
+    plot(10.^Yt,'b.','MarkerSize',12);hold on;grid on
+    plot(10.^Ypred_lm,'g.','MarkerSize',12);
+    plot(10.^Ypred_snn,'r.','MarkerSize',12);
+    ylabel('PND [/cm$^{-3}$]','interpreter','latex')
+    xlabel('Time Index')
+    ylim([0 1e6])
+    set(gca, 'YScale', 'log')
+    legend('Real','M$_1$','M$_2$','interpreter','latex')
+    title(['Test No: ',num2str(test_no)])
+    hold off
+    set(findall(fig,'-property','FontSize'),'FontSize',22);
+    
+         
+end
+
+Rmean     = mean(R,2);
+MAPEmean  = mean(MAPE,2);
+disp(['Rmean of M1: ', num2str(Rmean(1)), ' and Rmean of M2: ', num2str(Rmean(2))])
+disp(['MAPEmean of M1: ', num2str(MAPEmean(1)), ' and MAPEmean of M2: ', num2str(MAPEmean(2))])
+
+%%
+
+
+% RESULT PLOTS and METRICS
+    figure(1); fig =gcf;
+    subplot(2,2, test_no*2 - 1 );
+    scatter(Yt,Ypred_lm);hold on
+    Xlim1 = 0;3;
+    Ylim1 = 6;
+    xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+    x = linspace(Xlim1,Ylim1);
+    y = linspace(Xlim1,Ylim1);
+    plot(x,y,'r');hold off
+    title(['M1: Test No: ',num2str(test_no)])
+    xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
+    subplot(2,2, test_no*2 );
+    scatter(Yt,Ypred_snn);hold on
+    Xlim1 = 0;3;
+    Ylim1 = 6;
+    xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+    x = linspace(Xlim1,Ylim1);
+    y = linspace(Xlim1,Ylim1);
+    plot(x,y,'r');hold off
+    title(['M2: Test No: ',num2str(test_no)])
+    xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
+    set(findall(fig,'-property','FontSize'),'FontSize',22);
+    
+    figure(2); fig = gcf;
+    subplot(2,1,test_no); %
+    %subplot(4,3,test_no);
+    plot(10.^Yt,'b.','MarkerSize',12);hold on;grid on
+    plot(10.^Ypred_lm,'g.','MarkerSize',12);
+    plot(10.^Ypred_snn,'r.','MarkerSize',12);
+    ylabel('PND [/cm$^{-3}$]','interpreter','latex')
+    xlabel('Time Index')
+    ylim([0 1e6])
+    set(gca, 'YScale', 'log')
+    legend('Real','M$_1$','M$_2$','interpreter','latex')
+    title(['Test No: ',num2str(test_no)])
+    hold off
+    set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+
+%%
+
+% CHOOSE THE DATA with the different types of inputs
+Di = 9;
+
+if Di == 1
+    disp('Temp and PM2.5')
+    DATAi = [ [DATA.AT_T(Ds,1);DATA.LCS_G2_01_met(Dg,2)], ...
+              [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]];
+elseif Di == 2
+    disp('RH and PM2.5')
+    DATAi = [[DATA.AT_RH(Ds,1);DATA.LCS_G2_01_met(Dg,1)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]];
+elseif Di == 3
+    disp('P and PM2.5')
+    DATAi = [[DATA.LCS_G2_01_met(Ds,3);DATA.LCS_G2_01_met(Dg,3)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]];
+elseif Di == 4
+    disp('Temp, RH and PM2.5')
+    DATAi = [[DATA.AT_T(Ds,1);DATA.LCS_G2_01_met(Dg,2)], ...
+             [DATA.AT_RH(Ds,1);DATA.LCS_G2_01_met(Dg,1)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]];
+elseif Di == 5         
+    disp('Temp, P and PM2.5')
+    DATAi = [[DATA.AT_T(Ds,1);DATA.LCS_G2_01_met(Dg,2)], ...
+             [DATA.LCS_G2_01_met(Ds,3);DATA.LCS_G2_01_met(Dg,3)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]];
+elseif Di == 6         
+    disp('RH, P and PM2.5')
+    DATAi = [[DATA.AT_RH(Ds,1);DATA.LCS_G2_01_met(Dg,1)], ...
+             [DATA.LCS_G2_01_met(Ds,3);DATA.LCS_G2_01_met(Dg,3)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]];
+elseif Di == 7
+    disp('Temp, RH, P and PM2.5')
+    %DATAi = [[DATA.AT_T(Ds,1);DATA.CO_T(Dk,1);DATA.LCS_G2_01_met(Dg,2)], ...
+    %         [DATA.AT_RH(Ds,1);DATA.CO_RH(Dk,1);DATA.LCS_G2_01_met(Dg,1)], ...
+    %         [DATA.LCS_G2_01_met(Ds,3);DATA.CO_P(Dk,1);DATA.LCS_G2_01_met(Dg,3)], ...
+    %         [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dk,1);DATA.LCS_G1(Dg,1)]];
+    DATAi = [[DATA.AT_T(Ds,1);DATA.LCS_G2_01_met(Dg,2)], ...
+             [DATA.AT_RH(Ds,1);DATA.LCS_G2_01_met(Dg,1)], ...
+             [DATA.LCS_G2_01_met(Ds,3);DATA.LCS_G2_01_met(Dg,3)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]];
+elseif Di == 8
+    disp('Temp, Temp(t-1), RH, P and PM2.5')
+    % Da_o = Da(T+1:end,1); Da_i = Da(1:end-T,1);
+    T = 1 ;
+    Ds_T = Ds(T+1:end,1);
+    Dg_T = Dg(T+1:end,1);
+    DATAi = [[DATA.AT_T(Ds,1);  DATA.LCS_G2_01_met(Dg,2)], ... 
+            [DATA.AT_T(Ds_T,1); nan(T,1); DATA.LCS_G2_01_met(Dg_T,2); nan(T,1)] ...
+             [DATA.AT_RH(Ds,1); DATA.LCS_G2_01_met(Dg,1)], ...
+             [DATA.LCS_G2_01_met(Ds,3); DATA.LCS_G2_01_met(Dg,3)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)]];
+elseif Di == 9
+    disp('Temp, Temp(t-1), RH, P and PM2.5, PM2.5(t-1)')
+    % Da_o = Da(T+1:end,1); Da_i = Da(1:end-T,1);
+    T = 1 ;
+    Ds_T = Ds(T+1:end,1);
+    Dg_T = Dg(T+1:end,1);
+    DATAi = [[DATA.AT_T(Ds,1);  DATA.LCS_G2_01_met(Dg,2)], ... 
+            [DATA.AT_T(Ds_T,1); nan(T,1); DATA.LCS_G2_01_met(Dg_T,2); nan(T,1)] ...
+             [DATA.AT_RH(Ds,1); DATA.LCS_G2_01_met(Dg,1)], ...
+             [DATA.LCS_G2_01_met(Ds,3); DATA.LCS_G2_01_met(Dg,3)], ...
+             [DATA.LCS_G1(Ds,1);DATA.LCS_G1(Dg,1)] ...
+             [DATA.LCS_G1(Ds_T,1);nan(T,1);DATA.LCS_G1(Dg_T,1); nan(T,1)]];
+end
+
+% NORMALIZATION
+NORM = 1; l = -1; u = 1;
+DATAi1 = zeros(size(DATAi));
+if NORM == 0
+    disp('No NORMALIZATION for MET vars')
+    DATAi1(:,1:end-1) = DATAi(:,1:end-1);
+    DATAi1(:,end) = log10(DATAi(:,end));
+elseif NORM == 1
+    disp('NORMALIZATION for MET vars')
+    if Di == 1
+        disp('Temp and PM2.5'); inmin = 10; inmax = 40;
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,end) = log10(DATAi(:,end));
+    elseif Di == 2
+        disp('RH and PM2.5'); inmin = 10; inmax = 50;
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,end) = log10(DATAi(:,end));
+    elseif Di == 3
+        disp('P and PM2.5'); inmin = 890; inmax = 910;
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,end) = log10(DATAi(:,end));
+    elseif Di == 4
+        disp('Temp, RH and PM2.5'); 
+        inmin = 10; inmax = 40; % Temp
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        inmin = 10; inmax = 50; % RH
+        DATAi1(:,2) = l + [(DATAi(:,2)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,end) = log10(DATAi(:,end));
+    elseif Di == 5
+        disp('Temp, RH and PM2.5'); 
+        inmin = 10; inmax = 40; % Temp
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        inmin = 890; inmax = 910; % P
+        DATAi1(:,2) = l + [(DATAi(:,2)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,end) = log10(DATAi(:,end));
+    elseif Di == 6
+        disp('RH, P and PM2.5'); 
+        inmin = 10; inmax = 50; % RH
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        inmin = 890; inmax = 910; % P
+        DATAi1(:,2) = l + [(DATAi(:,2)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,end) = log10(DATAi(:,end));
+    elseif Di == 7
+        disp('Temp, RH, P and PM2.5');
+        inmin = 10; inmax = 40; % T
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        inmin = 10; inmax = 50; % RH
+        DATAi1(:,2) = l + [(DATAi(:,2)-inmin)./(inmax-inmin)].*(u-l);
+        inmin = 890; inmax = 910; % P
+        DATAi1(:,3) = l + [(DATAi(:,3)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,end) = log10(DATAi(:,end));
+        
+     elseif Di == 8
+        disp('Temp, Temp(t-1), RH, P and PM2.5');
+        inmin = 10; inmax = 40; % T
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,2) = l + [(DATAi(:,2)-inmin)./(inmax-inmin)].*(u-l);
+        inmin = 10; inmax = 50; % RH
+        DATAi1(:,3) = l + [(DATAi(:,2)-inmin)./(inmax-inmin)].*(u-l);
+        inmin = 890; inmax = 910; % P
+        DATAi1(:,4) = l + [(DATAi(:,3)-inmin)./(inmax-inmin)].*(u-l);
+        % PM2.5
+        DATAi1(:,end) = log10(DATAi(:,end));
+        
+     elseif Di == 9
+        disp('Temp, Temp(t-1), RH, P and PM2.5, PM2.5(t-1)');
+        inmin = 10; inmax = 40; % T
+        DATAi1(:,1) = l + [(DATAi(:,1)-inmin)./(inmax-inmin)].*(u-l);
+        DATAi1(:,2) = l + [(DATAi(:,2)-inmin)./(inmax-inmin)].*(u-l);
+        inmin = 10; inmax = 50; % RH
+        DATAi1(:,3) = l + [(DATAi(:,2)-inmin)./(inmax-inmin)].*(u-l);
+        inmin = 890; inmax = 910; % P
+        DATAi1(:,4) = l + [(DATAi(:,3)-inmin)./(inmax-inmin)].*(u-l);
+        % PM2.5
+        DATAi1(:,end) = log10(DATAi(:,end-1));
+        DATAi1(:,end) = log10(DATAi(:,end));
+    end
+end
+
+% PND data cleaning
+CLEAN_PND = 1;
+if CLEAN_PND == 0
+    disp('We do not remove PND data which is not clean')
+    DATAo  = [DATA.PND_c([Ds;Dg],1)];
+    DATAo1 = log10(DATAo);
+elseif CLEAN_PND == 1
+    disp('We remove PND data which is not clean')
+    CPC = DATA.PND_c([Ds;Dg],1);
+    %figure(100);plot(DATA.PND_c(Ds,1));hold on;plot(DATA.PND_c(Dk,1),'r');plot(DATA.PND_c(Dg,1),'g'); hold off
+    CPClog = log10(CPC);
+    CPCgradient = gradient(CPC);
+    CPCdiff = diff(CPC);
+    CPCloggradient = gradient(CPClog);
+    idx = find(CPCgradient <= nanmedian(CPCgradient)+10);
+    CPCclean =CPC;
+    CPCclean(idx,:)=nan;
+    %CPCclean = CPC(idx,:);
+    
+    %%%DATAo  = CPC;
+    DATAo  = CPCclean;
+    %DATAo  = [DATA.PND_c(Da,1)];
+    DATAo1 = log10(DATAo);
+    % figure(100);plot(DATAo1(Ds,1));hold on;plot(DATAo1(Dk,1),'r');plot(DATAo1(Dg,1),'g'); hold off
+    
+% % %     figure(100)
+% % %     for n=1:size(DATAi,2)
+% % %         subplot(2,5,n);plot(DATAi(:,n),'.');hold on
+% % %         subplot(2,5,n+5);plot(DATAi1(:,n),'.');
+% % %     end
+% % %     subplot(2,5,5);plot(DATAo(:,1),'.');
+% % %     subplot(2,5,10);plot(DATAo1(:,1),'.');
+% % %     hold off
+    
+    figure(101);
+    subplot(511);plot(CPC,'b.');
+    hold on; plot(CPCgradient,'r.'); hold off
+    subplot(512);plot(CPClog,'b.');
+    hold on; plot(CPCloggradient,'r.'); hold off
+    subplot(513);plot(CPCgradient,'b.');hold on
+    subplot(513);plot(CPCloggradient,'r.');hold off
+    subplot(514);plot(CPC,'b.');hold on;plot(CPCclean,'r.');hold off
+    subplot(515);plot(log10(CPC),'b.');hold on;plot(log10(CPCclean),'r.');hold off
+else
+    disp('We need to choose CLEAN_PND either 0 or 1')
+end
+Dk = Dg;
+% SELECT TRAINING AND TESTING DATA
+R     = zeros(2,2);%zeros(2,12);
+MAPE  = zeros(2,2);%zeros(2,12);
+%R     = zeros(2,12);%zeros(2,12);
+%MAPE  = zeros(2,12);%zeros(2,12);
+
+
+for test_no=1:2%12
+    if test_no == 1; TRAIN = Ds; TEST = Dg; end
+    if test_no == 2; TRAIN = Dg; TEST = Ds; end
+    
+%     if test_no == 1; TRAIN = Ds; TEST = Dk; end
+%     if test_no == 2; TRAIN = Ds; TEST = Dg; end
+%     if test_no == 3; TRAIN = Ds; TEST = [Dk;Dg]; end
+%     if test_no == 4; TRAIN = Dk; TEST = Ds; end
+%     if test_no == 5; TRAIN = Dk; TEST = Dg; end
+%     if test_no == 6; TRAIN = Dk; TEST = [Ds;Dg]; end
+%     if test_no == 7; TRAIN = Dg; TEST = Ds; end
+%     if test_no == 8; TRAIN = Dg; TEST = Dk; end
+%     if test_no == 9; TRAIN = Dg; TEST = [Ds;Dk]; end
+%     if test_no == 10; TRAIN = [Ds;Dk]; TEST = Dg; end
+%     if test_no == 11; TRAIN = [Ds;Dg]; TEST = Dk; end
+%     if test_no == 12; TRAIN = [Dk;Dg]; TEST = Ds; end
+
+clc
+method = 7;
+if method == 1
+    disp('Training and Testing data is the same')
+    DATAt  = [DATAi1,DATAo1];
+    DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
+    Xtr = DATAt1(:,1:end-1);
+    Ytr = DATAt1(:,end);
+    Xte = DATAt1(:,1:end-1);
+    Yte = DATAt1(:,end); 
+elseif method == 2
+    disp('Training and Testing data only for smoking experiment')
+    
+    DATAt  = [DATAi1(Ds,:),DATAo1(Ds,:)];
+    DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
+    
+    Xtr = DATAt1(:,1:end-1);
+    Ytr = DATAt1(:,end);
+    Xte = DATAt1(:,1:end-1);
+    Yte = DATAt1(:,end);
+    
+    %Xtr = DATAi1(Ds,:);
+    %Ytr = DATAo1(Ds,:);
+    %Xte = DATAi1(Ds,:);
+    %Yte = DATAo1(Ds,:); 
+    
+elseif method == 3
+    disp('Training and Testing data only for smoking and kerosene experiments')
+    
+    DATAt  = [DATAi1([Ds;Dk],:),DATAo1([Ds;Dk],:)];
+    DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
+    
+    Xtr = DATAt1(:,1:end-1);
+    Ytr = DATAt1(:,end);
+    Xte = DATAt1(:,1:end-1);
+    Yte = DATAt1(:,end);
+    
+    %Xtr = DATAi1([Ds:Dk],:);
+    %Ytr = DATAo1([Ds:Dk],:);
+    %Xte = DATAi1([Ds:Dk],:);
+    %Yte = DATAo1([Ds:Dk],:); 
+
+elseif method == 4
+    
+    disp('Training and Testing data only for smoking, kerosene and gas experiments')  
+    
+    DATAt  = [DATAi1([Ds;Dk;Dg],:), DATAo1([Ds;Dk;Dg],:)];
+    DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
+    
+    Xtr = DATAt1(:,1:end-1);
+    Ytr = DATAt1(:,end);
+    Xte = DATAt1(:,1:end-1);
+    Yte = DATAt1(:,end);
+    
+    %Xtr = DATAi1([Ds:Dk:Dg],:);
+    %Ytr = DATAo1([Ds:Dk:Dg],:);
+    %Xte = DATAi1([Ds:Dk:Dg],:);
+    %Yte = DATAo1([Ds:Dk:Dg],:); 
+    
+elseif method == 5
+    disp('Training and Testing data are randomized')
+    
+    DATAt  = [DATAi1,DATAo1];
+    DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
+    
+    percent = 70/100;
+    p = size(DATAt1,1);
+    rng(1986);s = rng;
+    c = randperm(p)';
+    tr = c( 1 : roundn(percent * p,0)     , 1);
+    te = c( roundn(percent * p,0)+1 : end , 1);
+    
+    Xtr = DATAt1(tr,1:end-1);
+    Ytr = DATAt1(tr,end);
+    Xte = DATAt1(te,1:end-1);
+    Yte = DATAt1(te,end);
+    
+elseif method ==6
+    disp('Wavelet feature')
+    
+    DATAt  = [DATAi1,DATAo1];
+    DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
+    
+    for n =1:5
+        if n==4
+            %d = 10.^(DATAt1(:,n))';
+            d = DATAt1(:,n)';
+        elseif n == 5
+            %d = 10.^(DATAt1(:,n))';
+            d = DATAt1(:,n)';
+        else
+            d = DATAt1(:,n)';
+        end
+        wv = 'db2';
+        [c,l] = wavedec(d,3,wv);
+        % approx = appcoef(c,l,'db2');
+        xs = waverec(c,l,wv);
+        %xs = wrcoef('a',c,l,'sym4',2);
+        err = norm(d-xs)
+        % figure(100);plot(d,'b.');hold on;plot(xs,'r--');hold off
+        
+        [cd1,cd2,cd3] = detcoef(c,l,[1 2 3]);
+        
+        cfs = cwt(d,'amor');
+        %cfs = waveletScattering(d');
+        
+        d1 = abs(cfs(1,:)) ;
+        
+        
+        xden = wdenoise(d,4);
+        % xden = wdenoise(d);
+        %figure(100);plot(d);hold on;plot(xden,'r--');hold off
+        
+        DATAt1(:,n) = xden ;
+        %DATAt1(:,n) = abs(cfs(1,:))' ;
+        %DATAt1(:,n) = xs' ;
+        %DATAt1(:,n) = c' ;
+        %DATAt1(:,n) = d ;      
+    end
+    
+    percent = 70/100;
+    p = size(DATAt1,1);
+    rng(1986);s = rng;
+    c = randperm(p)';
+    tr = c( 1 : roundn(percent * p,0)     , 1);
+    te = c( roundn(percent * p,0)+1 : end , 1);
+    
+    Xtr = DATAt1(tr,1:end-1);
+    Ytr = DATAt1(tr,end);
+    Xte = DATAt1(te,1:end-1);
+    Yte = DATAt1(te,end);
+    
+    
+    elseif method == 7
+    disp('Wavelet feature 2')
+    
+    %[Ds;Dk;Dg]
+    %DATAt  = [DATAi1,DATAo1];
+    %%%no = linspace(1, size(DATAi1,1), size(DATAi1,1))' ;
+    no = [Ds;Dg];
+    DATAt  = [DATAi1,DATAo1,no];
+    DATAt1 = DATAt( ~any( isnan( DATAt ) | isinf( DATAt ), 2 ),: );
+    
+    for n =1:size(DATAt1 ,2)-1
+        if n==4
+            %d = 10.^(DATAt1(:,n))';
+            d = DATAt1(:,n)';
+        elseif n == 5
+            %d = 10.^(DATAt1(:,n))';
+            d = DATAt1(:,n)';
+        else
+            d = DATAt1(:,n)';
+        end
+        xden = d;
+        xden = wdenoise(d,4);
+        %figure(100);plot(d);hold on;plot(xden,'r--');hold off        
+        DATAt1(:,n) = xden ;
+    end
+    
+    %percent = 70/100;
+    %p = size(DATAt1,1);
+    %rng(1986);s = rng;
+    %c = randperm(p)';
+    %tr = c( 1 : roundn(percent * p,0)     , 1);
+    %te = c( roundn(percent * p,0)+1 : end , 1);
+    %%%tr = ismember(DATAt1(:,end),[Ds;Dg]);
+    %%%te = ismember(DATAt1(:,end),Dk);
+    %%%tr = ismember(DATAt1(:,end),[Ds]);
+    %%%te = ismember(DATAt1(:,end),Dg);
+    %%%tr = ismember(DATAt1(:,end),[Ds]);
+    %%%te = ismember(DATAt1(:,end),[Dg]);
+    
+    tr = ismember(DATAt1(:,end),TRAIN);
+    te = ismember(DATAt1(:,end),TEST);
+    
+    Xtr = DATAt1(tr,1:end-2);
+    Ytr = DATAt1(tr,end-1);
+    Xte = DATAt1(te,1:end-2);
+    Yte = DATAt1(te,end-1);
+    
+end
+
+
+% Linear model
+X = Xtr;
+Y = Ytr;
+
+Xt = Xte;
+Yt = Yte;
+
+LM = 1;
+% LINEAR MODEL:
+if LM == 1
+    disp('Standard Linear model')
+    mdl = fitlm(X,Y);
+    Ypred_lm = predict(mdl,Xt);
+elseif LM == 2
+end
+
+
+inputs = X';
+targets = Y';
+inputs_t = Xt';
+ANN = 5;
+if ANN ==1
+    disp('standard ANN')
+% ANN model
+% Create a Fitting Network
+hiddenLayerSize = 50;100;25;20;%15;
+net = fitnet(hiddenLayerSize);
+net.trainfcn = 'trainlm';%'trainbr'
+% Set up Division of Data for Training, Validation, Testing
+net.divideParam.trainRatio = 95/100;%70/100;
+net.divideParam.valRatio = 5/100;
+net.divideParam.testRatio = 0/100;
+ % Train the Network
+[net,tr] = train(net,inputs,targets);
+ % Test the Network
+outputs = net(inputs_t);
+Ypred_snn = outputs;
+elseif ANN ==2
+    disp('TDNN')
+     % https://se.mathworks.com/help/deeplearning/ref/timedelaynet.html
+    X = con2seq(inputs); % u =  con2seq(u0);
+    T = num2cell(targets);
+    Xnew = con2seq(inputs_t);
+    %net = timedelaynet(1:2,20);
+    net = timedelaynet(1:3,50);
+    [Xs,Xi,Ai,Ts] = preparets(net,X,T);
+    net = train(net,Xs,Ts,Xi,Ai);
+    [Y,Xf,Af] = net(Xs,Xi,Ai);
+    perf = perform(net,Ts,Y);
+    [netc,Xic,Aic] = closeloop(net,Xf,Af);
+    %view(netc)
+    y2 = netc(Xnew,Xic,Aic);
+    est_pm25 = cell2mat(y2');
+    Ypred_snn = est_pm25;
+elseif ANN == 3
+    disp('LSTM')
+   % Some very useful links for LSTM:
+    % https://se.mathworks.com/matlabcentral/answers/393034-i-am-unable-to-resolve-this-error-invalid-training-data-predictors-must-be-a-n-by-1-cell-array-of
+    % https://stats.stackexchange.com/questions/352036/what-should-i-do-when-my-neural-network-doesnt-learn/352037#352037
+    % https://se.mathworks.com/help/deeplearning/ref/trainingoptions.html
+    
+    inputs = inputs';
+    inputs_t = inputs_t';
+    outputs = targets';
+    
+    XTrain=cell(size(inputs,1),1);
+    XTest=cell(size(inputs_t,1),1);
+    
+    for n=1:size(inputs,1)
+        XTrain{n,1}=inputs(n,:)';%num2cell(inputs(n,:));
+    end
+    for n=1:size(inputs_t,1)
+        XTest{n,1}=inputs_t(n,:)';%num2cell(inputs_test1(n,:));
+    end
+    
+    YTrain =  num2cell(outputs);
+    
+    % Normalise training predictors
+    mu = mean([XTrain{:}],2);
+    sig = std([XTrain{:}],0,2);
+    
+    for i = 1:numel(XTrain)
+        XTrain{i} = (XTrain{i} - mu) ./ sig;
+    end
+    
+    % Define Network Architecture
+    numResponses = size(YTrain{1},1);
+    featureDimension = size(XTrain{1},1);
+    numHiddenUnits = 25;%200;%100;%200;
+    
+    layers = [ ...
+        sequenceInputLayer(featureDimension)
+        lstmLayer(numHiddenUnits,'OutputMode','sequence')
+        fullyConnectedLayer(30)%fullyConnectedLayer(30)%fullyConnectedLayer(50)
+        dropoutLayer(0.5)
+        fullyConnectedLayer(numResponses)
+        regressionLayer];
+    
+    maxEpochs = 100;%500; % 60;
+    %miniBatchSize = 20;
+    miniBatchSize = 300; %500;%1000;
+    
+    options = trainingOptions('sgdm', ...%'rmsprop', ...%'adam', ...
+        'MaxEpochs',maxEpochs, ...
+        'MiniBatchSize',miniBatchSize, ...
+        'InitialLearnRate',0.01, ...%0.01, ...
+        'GradientThreshold',1, ...
+        'Shuffle','never', ...
+        'Plots','training-progress',...
+        'Verbose',0);
+    
+    % Train the network
+    net = trainNetwork(XTrain,YTrain,layers,options);
+        
+    for i = 1:numel(XTest)
+        XTest{i} = (XTest{i} - mu) ./ sig;
+    end
+    
+    YPred = predict(net,XTest,'MiniBatchSize',1);
+    est_pm25 = cell2mat(YPred);
+    Ypred_snn = est_pm25 ; 
+elseif ANN == 4
+    disp('Bayesian LASSO regression')
+    
+    % Run standard LASSO first
+    [LassoBetaEstimates,FitInfo] = lasso(Xtr,Ytr','Standardize',false);
+    
+    
+    
+    PriorMdl = bayeslm(p,'ModelType','lasso');
+    table(PriorMdl.Lambda,'RowNames',PriorMdl.VarNames);
+    
+    ismissing = any(isnan(Xtr'),2);
+    n = sum(~ismissing); % Effective sample size
+    lambda = FitInfo.Lambda*n./sqrt(FitInfo.MSE);
+    
+    numlambda = numel(lambda);
+
+% Preallocate
+BayesLassoCoefficients = zeros(p+1,numlambda);
+BayesLassoCI95 = zeros(p+1,2,numlambda);
+fmseBayesLasso = zeros(numlambda,1);
+BLCPlot = zeros(p+1,numlambda);
+
+% Estimate and forecast
+rng(10); % For reproducibility
+for j = 1:numlambda
+    PriorMdl.Lambda = lambda(j);
+    [EstMdl,Summary] = estimate(PriorMdl,Xtr,Ytr','Display',false);
+    BayesLassoCoefficients(:,j) = Summary.Mean(1:(end - 1));
+    BLCPlot(:,j) = Summary.Mean(1:(end - 1));
+    BayesLassoCI95(:,:,j) = Summary.CI95(1:(end - 1),:);
+    idx = BayesLassoCI95(:,2,j) > 0 & BayesLassoCI95(:,1,j) <= 0;
+    BLCPlot(idx,j) = 0;
+    yFBayesLasso = forecast(EstMdl,XF);
+    fmseBayesLasso(j) = sqrt(mean((yF - yFBayesLasso).^2));
+end
+    
+L1Vals = sum(abs(BLCPlot(2:end,:)),1)/max(sum(abs(BLCPlot(2:end,:)),1));
+
+figure;
+plot(L1Vals,BLCPlot(2:end,:))
+xlabel('L1');
+ylabel('Coefficient Estimates');
+yyaxis right
+h = plot(L1Vals,fmseBayesLasso,'LineWidth',2,'LineStyle','--');
+legend(h,'FMSE','Location','SW');
+ylabel('FMSE');
+title('Bayesian Lasso')
+    
+    
+elseif ANN == 5
+    Ypred_snn = Ypred_lm;
+    disp('We do not work on ANN')
+end
+
+
+    %R0 =  corrcoef(Yt,Ypred_lm);
+    %R(1,test_no) = R0(2,1);
+    R(1,test_no) = corr(Yt,Ypred_lm,'Type','Spearman','Rows','complete');
+    
+    %R0 =  corrcoef(Yt,Ypred_snn);
+    %R(2,test_no) = R0(2,1);
+    R(2,test_no) = corr(Yt,Ypred_snn,'Type','Spearman','Rows','complete');
+
+    %MAPE(1,test_no) = nanmean(abs((Yt-Ypred_lm)./Yt));
+    MAPE(1,test_no)=errperf(Yt,Ypred_lm,'mape');
+    MAPE(2,test_no)=errperf(Yt,Ypred_snn,'mape');
+    
+    figure(1);
+    subplot(1,2,test_no);
+    %subplot(4,3,test_no);
+    scatter(Yt,Ypred_lm);hold on
+    Xlim1 = 0;3;
+    Ylim1 = 6;
+    xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+    x = linspace(Xlim1,Ylim1);
+    y = linspace(Xlim1,Ylim1);
+    plot(x,y,'r');hold off
+    title(['Test No: ',num2str(test_no)])
+    xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
+    
+    figure(2); %fig = gcf;
+    subplot(1,2,test_no); %
+    %subplot(4,3,test_no);
+    plot(10.^Yt,'b.','MarkerSize',12);hold on;grid on
+    plot(10.^Ypred_lm,'g.','MarkerSize',12);
+    plot(10.^Ypred_snn,'r.','MarkerSize',12);
+    ylabel('PND [/cm$^{-3}$]','interpreter','latex')
+    xlabel('Time Index')
+    ylim([0 1e6])
+    set(gca, 'YScale', 'log')
+    legend('Real','M$_1$','M$_2$','interpreter','latex')
+    title(['Test No: ',num2str(test_no)])
+    hold off
+    %set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+    
+    
+end
+
+Rmean     = mean(R,2);
+MAPEmean  = mean(MAPE,2); 
+disp(['Rmean of M1: ', num2str(Rmean(1)), ' and Rmean of M2: ', num2str(Rmean(2))])
+disp(['MAPEmean of M1: ', num2str(MAPEmean(1)), ' and MAPEmean of M2: ', num2str(MAPEmean(2))])
+
+
+figure(15); fig = gcf;
+subplot(221);
+scatter(Yt,Ypred_lm);hold on
+Xlim1 = 0;3;
+Ylim1 = 6;
+xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+x = linspace(Xlim1,Ylim1);
+y = linspace(Xlim1,Ylim1);
+plot(x,y,'r');hold off
+xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
+
+subplot(222);
+scatter(10.^Yt,10.^Ypred_lm);hold on
+Xlim1 = 1e3;
+Ylim1 = 1e6;7.5e5;
+xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+x = linspace(Xlim1,Ylim1);
+y = linspace(Xlim1,Ylim1);
+plot(x,y,'r');hold off
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+xlabel('Real PNC (CPC)');ylabel('Est PNC (CPC)')
+
+subplot(223);
+scatter(Yt,Ypred_snn);hold on
+Xlim1 = 0;3;
+Ylim1 = 6;
+xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+x = linspace(Xlim1,Ylim1);
+y = linspace(Xlim1,Ylim1);
+plot(x,y,'r');hold off
+xlabel('log Real PNC (CPC)');ylabel('log Est PNC (CPC)')
+
+subplot(224);
+scatter(10.^Yt,10.^Ypred_snn);hold on
+Xlim1 = 1e3;
+Ylim1 = 1e6;7.5e5;
+x = linspace(Xlim1,Ylim1);
+y = linspace(Xlim1,Ylim1);
+xlim([Xlim1 Ylim1]);ylim([Xlim1 Ylim1]);grid on
+plot(x,y,'r');hold off
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+xlabel('Real PNC (CPC)');ylabel('Est PNC (CPC)')
+
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+
+figure(16); fig = gcf;
+plot(10.^Yt,'b.','MarkerSize',12);hold on;grid on
+plot(10.^Ypred_lm,'g.','MarkerSize',12);
+plot(10.^Ypred_snn,'r.','MarkerSize',12);
+ylabel('PND [/cm$^{-3}$]','interpreter','latex')
+xlabel('Time Index')
+ylim([0 1e6])
+set(gca, 'YScale', 'log')
+legend('Real','LM','ANN','interpreter','latex')
+hold off
+set(findall(fig,'-property','FontSize'),'FontSize',22);
+
+
+%% THE BEST SOLUTIONS SO FAR ARE:
+% BY USING Smoking experiment only
+% (i) it seems that the upper regime is difficult to predict,
+% (ii) there may be a problem with gas experiments, check inputs and
+% outputs again for gas experiment because it give warning:
+% "Warning: Regression design matrix is rank deficient to within machine
+% precision."
+% solution: https://www.mathworks.com/matlabcentral/answers/637610-regression-design-matrix-is-rank-deficient-what-to-do-next
+% SOLUTION (i)
+% Time-frequency domains features, study wavelet, find correlation within
+% wavelet transform
+%
+% SOLUTION (ii)
+% We may need to establish a model, such as MoE, where aerosol models are 
+% divided into different regimes
+%
+
+
+
+
+%% QUESTIONS AND ANSWERS BY TAREQ:
+% Q1 Ptrak has one type of aerosol size in your data, what is the particle size?
+% A1: This one is monitored total particle number concentration for
+% everything larger than 25 nm, CPC is the same as Ptrak, but 10 nm instead of 25 nm
+%
+% Q2 SidePak has also one type of aerosol size in your data, 
+% what is the particle size? Is it PM.5 like the first smoking experiment?
+% A2: Yes PM2.5
+%
+% Q3 DustTrak has five type of aerosol size in your data, what is the particle size?
+% A3: This one is the same as sidepak but provides 5 classes: 
+% PM1, PM2.5, PM4, PM10, TOTAL
+%
+% Q4: What about PND and PMSD, what instruments did you use for obtaining 
+% these concentrations? and what are they for each column?
+% A4: These were a combination from CPC (1 col), PTRAK (1), AEROTRAK (6)
+%
+% Q5: OK, did you place them in this order?
+% AeroTrak (6 channels: 0.3-0.5, 0.5-1, 1- 2.5, 2.5 -5, 5-10, 10-45 )
+% CPC (above 10nm)
+% Ptrak (above 25nm)
+% the total should be 8 columns, instead for PMD, PMSD, PND and PNSD, 
+% you have 9 columns for the concentrations
+%
+% A5: Yes, 
+% CPC - PTRAK == 10 - 25 nm
+% Ptrak - sum(aerotrak) == 25 - 300 nm
+% These are the first two bins
+% Then comes the aerotrak bins
+%
+% Q6: what are the differences between three four variables: PMD, PMSD, PND
+% and PNSD?
+% A6: PND is just number concentration in each size bin
+% PNSD is the normalized concentration to the width of each size bin
+% dN/dlog(Dp)
+% Same for PMD PMSD
+%
+% Q7: so, the raw data from all instruments are either PND or PMD, right?
+% Q7: the instruments do not give normalized numbers?
+%
+% A7: The raw data is PN
+% I generate PND and PNSD
+% then calculate PMD PMSD
+
+
+
