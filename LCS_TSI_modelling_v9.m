@@ -246,6 +246,7 @@ R      = DATAs2.DustTrak_c(:,2); % Reference instruments (RI)
 Rl     = abs(log10(R));          % Log10(RI) because PM2.5 should be in log
 
 A1     = DATAs2.LCS_G2_01(:,1);  % LCSs
+filter=1;if filter==1;feature1=A1;idx0=feature1<1;A1(idx0)=nan;end
 A1l    = abs(log10(A1));
 T1     = DATAs2.LCS_G2_01_met(:,2);
 RH1    = DATAs2.LCS_G2_01_met(:,1);
@@ -333,7 +334,7 @@ for S = 1:4
             Ylm = predict(mdl,In1);
         end
         
-        if S == 1 && Cal  == 2%S == 4 && Cal  == 4
+        if S == 2 && Cal  == 2%S == 4 && Cal  == 4
             disp(['S = ',num2str(S), ', Cal = ',num2str(Cal) ])
             Re.X    = X ;
             Re.X1   = X1;
@@ -406,6 +407,7 @@ R      = DATA5.DustTrak_c(:,2);
 Rl     = abs(log10(R));
 
 A1     = DATA5.LCS_G2_01(:,1);
+filter=1;if filter==1;feature1=A1;idx0=feature1<1;A1(idx0)=nan;end
 A1l    = abs(log10(A1));
 T1     = DATA5.LCS_G2_01_met(:,2);
 RH1    = DATA5.LCS_G2_01_met(:,1);
@@ -454,7 +456,7 @@ Ylm2 = predict(mdl,X2);
 
 %Ds = Exp_smoking;
 %Dn = Exp_gas;
-Dt = Exp_smoking;%[Exp_smoking;Exp_gas]; % Exp_smoking;%
+Dt = [Exp_smoking;Exp_gas]; % Exp_smoking;%
 
 figure(10); fig = gcf;
 plot(DATA5.DustTrak_c(Dt,2),'k--'); hold on; grid on

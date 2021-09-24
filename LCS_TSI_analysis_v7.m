@@ -633,6 +633,10 @@ DATA4_label = {'year','month','day','hour','minute','second',...
         'PND_c8','PND_c9', ...
         'PMD_c1','PMD_c2','PMD_c3','PMD_c4','PMD_c5','PMD_c6','PMD_c7', ...
         'PMD_c8','PMD_c9', ...
+        'PNSD_c1','PNSD_c2','PNSD_c3','PNSD_c4','PNSD_c5','PNSD_c6','PNSD_c7', ...
+        'PNSD_c8','PNSD_c9', ...
+        'PMSD_c1','PMSD_c2','PMSD_c3','PMSD_c4','PMSD_c5','PMSD_c6','PMSD_c7', ...
+        'PMSD_c8','PMSD_c9', ...
         'LCS_G1', ...
         'LCS_G2_01','LCS_G2_01_RH', 'LCS_G2_01_T', 'LCS_G2_01_P', ...
         'LCS_G2_02','LCS_G2_02_RH', 'LCS_G2_02_T', 'LCS_G2_02_P'};
@@ -1117,6 +1121,85 @@ ylabel('PM$_{2.5}$ ($\mu$g/m$^3$)','interpreter','latex')
 set(gca, 'YScale', 'log')
 %set(gca, 'YTick', [0 : 1e4 : 1e5])
 set(gca, 'YTick', [1e1,1e3,1e5])
+xtickangle(15)
+
+nexttile % subplot(212)
+h1 = pcolor(DATA.T1(Exp_smoking,1)',inst_res_PND',[DATA1.PNSD_c(Exp_smoking,1),DATA1.PNSD_c(Exp_smoking,3:end)]');
+set(h1, 'EdgeColor', 'none')
+xlabel('Date','interpreter','latex')
+ylabel('Particle size (nm)','interpreter','latex')
+%title('PNSD Smoking','interpreter','latex')
+colormap jet
+caxis([lc,hc])
+set(gca, 'YScale', 'log','colorscale','log')
+xtickangle(15)
+
+cb = colorbar;
+%cb.Limits= [1e0, 1e5];
+cb.Layout.Tile = 'east';
+%cb.Location = 'southoutside';
+%cb.Label.String= 'cm$^{-3}$';
+cb=colorbar;
+cb.Title.String='   cm^{-3}';
+set(cb.XLabel,{'String','Rotation','Position'},{'XLabel',0,[0.5 -0.01]})
+
+% - Build title axes and title.
+axes( 'Position', [0, 0.95, 1, 0.05] ) ;
+set( gca, 'Color', 'None', 'XColor', 'White', 'YColor', 'White' ) ;
+%text( 0.5, 0, 'After syncronize', 'FontSize', 14', 'FontWeight', 'Bold', ...
+%      'HorizontalAlignment', 'Center', 'VerticalAlignment', 'Bottom' ) ;
+
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+
+%% Only Smoking: PM2.5 [DustTrak and LCSs] and using PNSD:
+DATA4_label;
+
+% Figure 7 uses raw data (DATA4), they show the same, with the interpolated
+% data, where LCS2 needs to be filtered
+
+figure(7); fig = gcf;
+plot(DATA4(Exp_smoking,13),'b.');
+hold on; grid on;
+plot(DATA4(Exp_smoking,55),'m.');
+plot(DATA4(Exp_smoking,59),'r.');
+set(gca, 'YScale', 'log'); 
+title('$\mathcal{L}_{2}$ needs filters','interpreter','latex')
+legend('$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
+hold off
+set(findall(fig,'-property','FontSize'),'FontSize',FS);
+
+figure(8);fig=gcf; 
+fig.Position = [100 100 590 400].*2.0;
+FS=26; 
+lc =1e0; hc=10e5;
+tiledlayout(2,1);
+nexttile % subplot(211)
+%plot(DATA.T1(Exp_smoking,1),DATA.LCS_G1(Exp_smoking,1),'b.');
+plot(DATA.T1(Exp_smoking,1),DATA.DustTrak_c(Exp_smoking,2),'b.'); hold on
+plot(DATA.T1(Exp_smoking,1),DATA.LCS_G2_01(Exp_smoking,1),'r.');
+plot(DATA.T1(Exp_smoking,1),DATA.LCS_G2_02(Exp_smoking,1),'g.');
+%%%% FILTERING/SMOOTHING
+feature1 = DATA.LCS_G2_01(Exp_smoking,1);
+feature2 = DATA.LCS_G2_02(Exp_smoking,1);
+idx0 = feature1 < 1;
+feature1(idx0) = 0;
+idx0 = feature2 < 1;
+feature2(idx0) = 0;
+plot(DATA.T1(Exp_smoking,1),feature1,'c--');
+plot(DATA.T1(Exp_smoking,1),feature2,'c--');
+%%%%
+hold off
+%legend('PMD','$\mathcal{L}_{1}$','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$','interpreter','latex')
+legend('DT','$\mathcal{L}_{2a}$','$\mathcal{L}_{2b}$', 'filter1', 'filter2', ...
+    'Orientation','horizontal','interpreter','latex')
+ylim([1e-3 1e5]); grid on %ylim([0.8e0 1e5]); grid on
+xlabel('Date','interpreter','latex')
+ylabel('PM$_{2.5}$ ($\mu$g/m$^3$)','interpreter','latex')
+%title('PM$_{2.5}$','interpreter','latex')
+set(gca, 'YScale', 'log')
+%set(gca, 'YTick', [0 : 1e4 : 1e5])
+set(gca, 'YTick', [1e-3,1e-1,1e1,1e3,1e5])
 xtickangle(15)
 
 nexttile % subplot(212)
