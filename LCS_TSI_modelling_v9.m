@@ -356,6 +356,9 @@ for S = 1:4
     end
 end
 
+% Next, apply l-fold cross-validation:
+% https://machinelearningmastery.com/k-fold-cross-validation/
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot the chose one from the loop %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %close all; clc
@@ -460,7 +463,7 @@ Dt = [Exp_smoking;Exp_gas]; % Exp_smoking;%
 
 figure(10); fig = gcf;
 plot(DATA5.DustTrak_c(Dt,2),'k--'); hold on; grid on
-title('We need to smooth the signal of LCS2a then by wavelet filter')
+%title('We need to smooth the signal of LCS2a then by wavelet filter')
 plot(DATA5.LCS_G2_01(Dt,1),'b');
 plot(10.^Ylm1(Dt,1),'c');
 plot(DATA5.LCS_G2_02(Dt,1),'r');
@@ -473,102 +476,16 @@ set(gca, 'YScale', 'log');
 hold off
 set(findall(fig,'-property','FontSize'),'FontSize',FS);
 
+DATA5 = addvars(DATA5,Ylm1,'After','LCS_G2_01');
+DATA5 = addvars(DATA5,Ylm2,'After','LCS_G2_02');
 
-%%
-
-
-D00 = rmmissing(D0);
-D1 = [nan(size(D00,1),2),D00];
-
-idx = isinf(D1);
-idx1 = sum(idx,2);
-idx2 = idx1>0;
-D1(idx2,:) = [];
+% saved DATA2, perlu diulang lagi, karena PNSD dan PMSD belum masuk
+% Trus save DATA5 dan pakai untuk virtual sensors development
 
 
-
-
-
-
-
-
-
-
-%% To test the developed calibration on natural gas heater data
-
-DATAs2 = DATA2(Exp_gas,:);
-
-%PMx = 6;
-R      = DATAs2.DustTrak_c(:,2);
-Rl     = abs(log10(R));
-
-A1     = DATAs2.LCS_G2_01(:,1);
-A1l    = abs(log10(A1));
-T1     = DATAs2.LCS_G2_01_met(:,2);
-RH1    = DATAs2.LCS_G2_01_met(:,1);
-P1     = DATAs2.LCS_G2_01_met(:,3);
-index1 = linspace(1,size(A1,1),size(A1,1))';
-
-A2     = DATAs2.LCS_G2_02(:,1);
-A2l    = abs(log10(A2));
-T2     = DATAs2.LCS_G2_02_met(:,2);
-RH2    = DATAs2.LCS_G2_02_met(:,1);
-P2     = DATAs2.LCS_G2_02_met(:,3);
-index2 = linspace(1,size(A2,1),size(A2,1))';
-
-%%%%%%%%%%%%%%%%%%%
-
-%D  = [R,Rl, A1,A1l,T1,RH1,P1,index1, A2,A2l,T2,RH2,P2,index2];
-D0  = [A1,A1l,T1,RH1,P1,index1, A2,A2l,T2,RH2,P2,index2];
-D00 = rmmissing(D0);
-D1 = [nan(size(D00,1),2),D00];
-
-idx = isinf(D1);
-idx1 = sum(idx,2);
-idx2 = idx1>0;
-D1(idx2,:) = [];
-
-X1  = D1(:,[3:8]);   % LCS2a
-X1  = D1(:,[9:14]);  % LCS2b
-
-%Ylm = predict(mdl,X1(:,[2:3])); % only PM2.5 and Temp 
-Ylm = predict(mdl,X1(:,[2:5])); % only PM2.5, Temp, RH, P 
-
-
-index = X1(:,6);
-
-figure(6); fig = gcf;
-%plot(DATAs2.T1,DATAs2.LCS_G1(:,1),'b.');
-plot(DATAs2.T1,DATAs2.LCS_G2_02(:,1),'b.');
-%%%plot(DATAs2.T1(index),DATAs2.LCS_G2_01(index,1),'b.');
-hold on; grid on;
-%%plot(DATAs2.T1(index),10.^Xlog,'r.');
-plot(DATAs2.T1(index),10.^Ylm,'g.'); hold off
-ylabel('PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
-%legend('Reference instrument','$\mathcal{L}_{2a}$ before calibration', ...
-%    '$\mathcal{L}_{2a}$ after calibration','interpreter','latex');
-legend('$\mathcal{L}_{2a}$ before calibration', ...
-    '$\mathcal{L}_{2a}$ after calibration','interpreter','latex');
-set(gca, 'YScale', 'log');
-hold off
-set(findall(fig,'-property','FontSize'),'FontSize',FS);
-
-figure(7); fig = gcf;
-%scatter(DATAs2.LCS_G2_01(index,1),10.^Ylm);
-scatter(DATAs2.LCS_G2_02(index,1),10.^Ylm);
-xlabel('Uncalibrated PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
-ylabel('Calibrated PM$_{2.5}$ [$\mu$g/m$^3$]','interpreter','latex');
-set(gca, 'XScale', 'log');
-set(gca, 'YScale', 'log');
-xlim([1 1e3]);ylim([1 1e4]);
-set(findall(fig,'-property','FontSize'),'FontSize',FS);
-
-
-
-
-%%
-%%
-%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                        VIRTUAL SENSOR 
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 addpath(genpath('Functions'));
@@ -577,8 +494,10 @@ rmpath('Functions_special/BayesianNeuralNetworks/netlab/Garbages');
 
 clear; close all; clc;
 
-load('DATA2.mat') 
-DATA = DATA2;
+%load('DATA2.mat') 
+%DATA = DATA2;
+load('DATA5.mat') 
+DATA = DATA5;
 
 Exp_smoking = [1:1:11521]';
 Exp_kerosine = [11522:1:30242]';
